@@ -1,0 +1,2 @@
+# libmsym
+molecular symmetry lib
