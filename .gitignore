@@ -1,0 +1,13 @@
+/examples/msym_example
+
+*.swp
+*.exe
+*.dll
+*.do
+*.o
+*.obj
+*.so
+*.dylib
+*.dSYM
+
+.DS_Store
