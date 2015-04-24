@@ -2,24 +2,35 @@ LELEMENTS = msym msym_error context symmetry symmetrize linalg point_group chara
 		permutation symop equivalence_set elements
 
 SRC = example.c
-OBJS = example.o
+OBJDIR = ../obj
+BINDIR = ../bin
+OBJS = $(OBJDIR)/example.o
 LSRC = $(foreach I,$(LELEMENTS),../src/$I.c)
-LOBJS = $(foreach I,$(LELEMENTS),../src/$I.o)
+LOBJS = $(foreach I,$(LELEMENTS),$(OBJDIR)/$I.o)
 
 
 
 CC = gcc
-EXE = msym_example
+EXE = $(BINDIR)/msym_example
 CFLAGS = -g -O2 -flto -std=c99
 INC = ../src
 LIBS = -lm
 
-all:    $(OBJS) $(LOBJS)
+all:    $(OBJDIR) $(BINDIR) $(OBJS) $(LOBJS)
 	$(CC) -o $(EXE) $(CFLAGS) $(OBJS) $(LOBJS) $(LIBS)
 
-%.o: %.c
+$(OBJDIR) :
+	mkdir -p $(OBJDIR)
+
+$(BINDIR) :
+	mkdir -p $(BINDIR)
+
+../obj/example.o: example.c
+	$(CC) ${CFLAGS} -I $(INC) -o $@ -c $<
+
+../obj/%.o: ../src/%.c
 	$(CC) ${CFLAGS} -I $(INC) -o $@ -c $<
 
 clean:  
-	$(RM) -f $(OBJS) $(LOBJS)
+	$(RM) -rf $(OBJDIR) $(BINDIR)
 

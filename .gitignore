@@ -1,4 +1,5 @@
-/examples/msym_example
+/obj
+/bin
 
 *.swp
 *.exe
