@@ -124,7 +124,7 @@ int example(const char* in_file){
     /* Mess them up a bit */
     for(int i = 0;i < length;i++){
         for(int j = 0;j < length;j++){
-            coefficients[i][j] += 0.0001*i - 0.0001*j;
+            coefficients[i][j] += i*0.001/length - j*0.001/length;
         }
     }
     

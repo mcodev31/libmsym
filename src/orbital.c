@@ -276,7 +276,7 @@ msym_error_t generateOrbitalSubspaces(msym_point_group_t *pg, int esl, msym_equi
                 msym_subspace_t *ss = &iss[k].subspace[i];
                 ispan[k] = (((int)round(lspan[l][k]))/pg->order);
                 mlscale(((double) pg->ct->irrep[k].d)/pg->order, d, mlproj[k], mlproj[k]);
-                nirrepl = mgs(d, mlproj[k], mlproj[pg->ct->l], nirrepl, thresholds->orthogonalization);
+                nirrepl = mgs(d, mlproj[k], mlproj[pg->ct->l], nirrepl, thresholds->orthogonalization/basisl);
                 
                 if(nirrepl - lirrepl != ispan[k]*pg->ct->irrep[k].d){
                     //printTransform(d, d, mlproj[k]);
