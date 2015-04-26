@@ -25,7 +25,6 @@ msym_error_t msymFindSymmetry(msym_context ctx){
     int elementsl = 0, esl = 0;
     msym_element_t *elements = NULL;
     msym_thresholds_t *t = NULL;
-    geometry_t g;
     double ev[3][3];
     msym_equivalence_set_t *es = NULL;
     msym_point_group_t *pg = NULL;
@@ -54,9 +53,8 @@ msym_error_t msymFindSymmetry(msym_context ctx){
         end = clock();
         time = (double)(end - start) / CLOCKS_PER_SEC;
         printf("time: %lf seconds to find %d symmetry operations in %d equivalence sets\n",time,sopsl,esl);
-        if(MSYM_SUCCESS != (ret = ctxGetGeometry(ctx, &g, ev))) goto err;
         start = clock();
-        if(MSYM_SUCCESS != (ret = findPointGroup(sopsl, sops, g, t, &pg))) goto err;
+        if(MSYM_SUCCESS != (ret = findPointGroup(sopsl, sops, t, &pg))) goto err;
         end = clock();
         time = (double)(end - start) / CLOCKS_PER_SEC;
         printf("time: %lf seconds to find point group %s\n",time,pg->name);
@@ -158,6 +156,8 @@ msym_error_t msymFindEquivalenceSets(msym_context ctx){
     msym_element_t **pelements = NULL;
     msym_thresholds_t *t = NULL;
     msym_point_group_t *pg = NULL;
+    geometry_t g = GEOMETRY_UNKNOWN;
+    double ev[3][3];
     int esl = 0;
     msym_equivalence_set_t *es;
     
@@ -167,8 +167,9 @@ msym_error_t msymFindEquivalenceSets(msym_context ctx){
     if(MSYM_SUCCESS != (ret = ctxGetElementPtrs(ctx, &pelementsl, &pelements))) goto err;
     if(MSYM_SUCCESS != (ret = msymGetThresholds(ctx, &t))) goto err;
     if(MSYM_SUCCESS != (ret = ctxGetPointGroup(ctx, &pg))) {
+        if(MSYM_SUCCESS != (ret = ctxGetGeometry(ctx, &g, ev))) goto err;
         start = clock();
-        if(MSYM_SUCCESS != (ret = findEquivalenceSets(pelementsl, pelements, &esl, &es, t))) goto err;
+        if(MSYM_SUCCESS != (ret = findEquivalenceSets(pelementsl, pelements, g, &esl, &es, t))) goto err;
         end = clock();
         time = (double)(end - start) / CLOCKS_PER_SEC;
         printf("time: %lf seconds to find %d equivalence sets in %d element molecule\n",time,esl,pelementsl);

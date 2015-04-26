@@ -19,7 +19,7 @@
 
 #define SQR(x) ((x)*(x))
 
-msym_error_t partitionEquivalenceSets(int length, msym_element_t *elements[length], msym_element_t *pelements[length], int *esl, msym_equivalence_set_t **es, msym_thresholds_t *thresholds);
+msym_error_t partitionEquivalenceSets(int length, msym_element_t *elements[length], msym_element_t *pelements[length], geometry_t g, int *esl, msym_equivalence_set_t **es, msym_thresholds_t *thresholds);
 msym_error_t partitionPointGroupEquivalenceSets(msym_point_group_t *pg, int length, msym_element_t *elements[length], msym_element_t *pelements[length], int *esl, msym_equivalence_set_t **es, msym_thresholds_t *thresholds);
 
 
@@ -258,19 +258,19 @@ err:
 
 }
 
-msym_error_t findEquivalenceSets(int length, msym_element_t *elements[length], int *esl, msym_equivalence_set_t **es, msym_thresholds_t *thresholds) {    
+msym_error_t findEquivalenceSets(int length, msym_element_t *elements[length], geometry_t g, int *esl, msym_equivalence_set_t **es, msym_thresholds_t *thresholds) {
     msym_error_t ret = MSYM_SUCCESS;
     int sesl = 0;
     msym_equivalence_set_t *ses = NULL;
     msym_element_t **pelements = calloc(length,sizeof(msym_element_t *));
     
-    if(MSYM_SUCCESS != (ret = partitionEquivalenceSets(length, elements,pelements,&sesl,&ses,thresholds))) goto err;
+    if(MSYM_SUCCESS != (ret = partitionEquivalenceSets(length, elements,pelements,g,&sesl,&ses,thresholds))) goto err;
     
     if(sesl > 1){
         for(int i = 0; i < sesl;i++){
             int rsesl = 0;
             msym_equivalence_set_t *rses = NULL;
-            if(MSYM_SUCCESS != (ret = partitionEquivalenceSets(ses[i].length, ses[i].elements,ses[i].elements,&rsesl,&rses,thresholds))) goto err;
+            if(MSYM_SUCCESS != (ret = partitionEquivalenceSets(ses[i].length, ses[i].elements,ses[i].elements,g, &rsesl,&rses,thresholds))) goto err;
             
             if(rsesl > 1){
                 ses[i].elements = rses[0].elements;
@@ -305,9 +305,9 @@ err:
 }
 
 
-msym_error_t partitionEquivalenceSets(int length, msym_element_t *elements[length], msym_element_t *pelements[length], int *esl, msym_equivalence_set_t **es, msym_thresholds_t *thresholds) {
+msym_error_t partitionEquivalenceSets(int length, msym_element_t *elements[length], msym_element_t *pelements[length], geometry_t g, int *esl, msym_equivalence_set_t **es, msym_thresholds_t *thresholds) {
     
-    int ns = 0;
+    int ns = 0, gd = geometryDegenerate(g);
     double *e = calloc(length,sizeof(double));
     double *s = calloc(length,sizeof(double));
     
@@ -320,18 +320,8 @@ msym_error_t partitionEquivalenceSets(int length, msym_element_t *elements[lengt
     double (*vec)[3] = calloc(length, sizeof(double[3]));
     double *m = calloc(length, sizeof(double));
     
-    //double cm[3] = {0,0,0};
-    
-    /* center of mass can have a large impact on plane projection, but so can small measurement errors,
-     * unfortunately plane proj is the best way of detecting differences in non degenerate cases,
-     * consider checking geometry and determining strategy based on that.
-    if(pelements == elements) {
-        findCenterOfMass(length,elements,cm);
-    }*/
-    
     for(int i = 0;i < length;i++){
         vcopy(elements[i]->v, vec[i]);
-        //vsub(vec[i],cm,vec[i]);
         m[i] = elements[i]->m;
     }
 
@@ -384,7 +374,8 @@ msym_error_t partitionEquivalenceSets(int length, msym_element_t *elements[lengt
         // Plane projection can't really differentiate certain types of structures when we add the initial vector,
         // but not doing so will result in huge cancellation errors on degenerate point groups,
         // also large masses will mess up the eq check when this is 0.
-        vadd(ep[i],v,ep[i]);
+        if(gd) vadd(ep[i],v,ep[i]);
+        
         e[i] += dii;
         s[i] += SQR(dii);
     }

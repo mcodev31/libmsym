@@ -31,6 +31,7 @@ typedef enum geometry geometry_t;
 enum geometry find_geometry(double e[3]);
 msym_error_t findGeometry(int length, msym_element_t *elements[length], double cm[3], msym_thresholds_t *thresholds, geometry_t *g, double v[3][3]);
 msym_error_t findCenterOfMass(int length, msym_element_t *elements[length], double v[3]);
+int geometryDegenerate(geometry_t g);
 void printGeometry(geometry_t g);
 
 #endif /* defined(__MSYM__GEOMETRY_h) */

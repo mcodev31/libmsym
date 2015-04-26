@@ -93,6 +93,9 @@ geometry_t eigenvaluesToGeometry(double e[3], msym_thresholds_t *thresholds){
     
 }
 
+int geometryDegenerate(geometry_t g){
+    return !(g == PLANAR_IRREGULAR || g == ASSYMETRIC) && g != GEOMETRY_UNKNOWN;
+}
 
 void inertialTensor(int length, msym_element_t *elements[length], double cm[3], double e[3], double v[3][3], msym_thresholds_t *thresholds){
     double Ixx = 0, Iyy = 0, Izz = 0, Ixy = 0, Ixz = 0, Iyz = 0;

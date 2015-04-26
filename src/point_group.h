@@ -51,7 +51,7 @@ typedef struct {
     char name[6];
 } msym_point_group_t;
 
-msym_error_t findPointGroup(int sopsl, msym_symmetry_operation_t *sops, enum geometry g, msym_thresholds_t *thresholds, msym_point_group_t **pg);
+msym_error_t findPointGroup(int sopsl, msym_symmetry_operation_t *sops, msym_thresholds_t *thresholds, msym_point_group_t **pg);
 msym_error_t findCharacterTable(msym_point_group_t *pg);
 msym_error_t generatePointGroup(char *name, msym_thresholds_t *thresholds, msym_point_group_t **opg);
 
