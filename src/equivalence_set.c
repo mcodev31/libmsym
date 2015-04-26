@@ -320,17 +320,23 @@ msym_error_t partitionEquivalenceSets(int length, msym_element_t *elements[lengt
     double (*vec)[3] = calloc(length, sizeof(double[3]));
     double *m = calloc(length, sizeof(double));
     
+    //double cm[3] = {0,0,0};
     
-    //This is cheap in comparison to the dereferencing below
+    /* center of mass can have a large impact on plane projection, but so can small measurement errors,
+     * unfortunately plane proj is the best way of detecting differences in non degenerate cases,
+     * consider checking geometry and determining strategy based on that.
+    if(pelements == elements) {
+        findCenterOfMass(length,elements,cm);
+    }*/
+    
     for(int i = 0;i < length;i++){
         vcopy(elements[i]->v, vec[i]);
+        //vsub(vec[i],cm,vec[i]);
         m[i] = elements[i]->m;
     }
 
     for(int i=0; i < length; i++){
-        //msym_element_t *ai = elements[i];
         for(int j = i+1; j < length;j++){
-            //msym_element_t *aj = elements[j];
             double w = m[i]*m[j]/(m[i]+m[j]);
             double dist;
             double v[3];
@@ -367,14 +373,18 @@ msym_error_t partitionEquivalenceSets(int length, msym_element_t *elements[lengt
     }
 
     for(int i = 0; i < length; i++){
+        
         double v[3];
-        double w = elements[i]->m/2.0;
-        double dist = vnorm2(elements[i]->v,v);
+        double w = m[i]/2.0;
+        double dist = vabs(elements[i]->v);
         double dii = w*dist;
         vscale(w,elements[i]->v,v);
         vsub(ev[i],v,ev[i]);
-        vadd(ep[i],v,ep[i]); //Large masses will mess up the eq check when this is 0
         
+        // Plane projection can't really differentiate certain types of structures when we add the initial vector,
+        // but not doing so will result in huge cancellation errors on degenerate point groups,
+        // also large masses will mess up the eq check when this is 0.
+        vadd(ep[i],v,ep[i]);
         e[i] += dii;
         s[i] += SQR(dii);
     }
@@ -383,19 +393,15 @@ msym_error_t partitionEquivalenceSets(int length, msym_element_t *elements[lengt
             sp[i] = i;
             for(int j = i+1; j < length;j++){
                 if(e[j] >= 0.0){
-                    double vabsevi = vabs(ev[i]);
-                    double vabsevj = vabs(ev[j]);
-                    double vabsepi = vabs(ep[i]);
-                    double vabsepj = vabs(ep[j]);
-                    double eep = 0.0;
-                    double eev = fabs((vabsevi)-(vabsevj))/((vabsevi)+(vabsevj));
-                    double ee = fabs((e[i])-(e[j]))/((e[i])+(e[j]));
-                    double es = fabs((s[i])-(s[j]))/((s[i])+(s[j]));
-                
-                    if(!(fabs(vabsepi) < thresholds->zero && fabs(vabsepj) < thresholds->zero)){
+                    double vabsevi = vabs(ev[i]), vabsevj = vabs(ev[j]), vabsepi = vabs(ep[i]), vabsepj = vabs(ep[j]);
+                    double eep = 0.0, eev = fabs((vabsevi)-(vabsevj))/((vabsevi)+(vabsevj)), ee = fabs((e[i])-(e[j]))/((e[i])+(e[j])), es = fabs((s[i])-(s[j]))/((s[i])+(s[j]));
+                    
+                    if(!(vabsepi < thresholds->zero && vabsepj < thresholds->zero)){
                         eep = fabs((vabsepi)-(vabsepj))/((vabsepi)+(vabsepj));
                     }
+                    
                     double max = fmax(eev,fmax(eep,fmax(ee, es)));
+                    
                     if(max < thresholds->equivalence && elements[i]->n == elements[j]->n){
                         e[j] = max > 0.0 ? -max : -1.0;
                         sp[j] = i;

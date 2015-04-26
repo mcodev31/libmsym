@@ -869,15 +869,16 @@ msym_error_t findSymmetryCubic(msym_equivalence_set_t *es, double cm[3], double 
                     }
                     c3b = ac[4];
                     nc3b = &(nc[4]);
-                    
+                    break;
                     //Look for C2 that have 4 other perpendicular C2 this will be a C4
                 case 15 :
                     ec[5] = 6; ec[3] = 10; ec[2] = 15;
                     ncb = &(nc[2]);
                     ecb = &(ec[2]);
                     cb = ac[2];
+                    break;
                 default :
-                    msymSetErrorDetails("Unexpected number of C2 axes (%d) in cubic point group",nc[2]);
+                    msymSetErrorDetails("Unexpected number of C2 axes (%d) in cubic point group",ec[2]);
                     ret = MSYM_SYMMETRY_ERROR;
                     goto err;
                     
