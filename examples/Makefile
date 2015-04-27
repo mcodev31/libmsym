@@ -12,7 +12,7 @@ LOBJS = $(foreach I,$(LELEMENTS),$(OBJDIR)/$I.o)
 
 CC = gcc
 EXE = $(BINDIR)/msym_example
-CFLAGS = -g -O2 -flto -std=c99
+CFLAGS = -g -O2 -flto -std=c99 -pedantic
 INC = ../src
 LIBS = -lm
 

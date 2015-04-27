@@ -1426,11 +1426,9 @@ msym_error_t findCharacterTable(msym_point_group_t *pg){
     }
     
     ct = realloc(ct, sizeof(CharacterTable)+sizeof(int[ct->l])+ct->l*sizeof(*ct->name));
-    void *ptr = ((void *)ct);
-    ptr += sizeof(CharacterTable);
-    ct->classc = ptr;
-    ptr += sizeof(int[ct->l]);
-    ct->name = ptr;
+
+    ct->classc = (int*)(ct + 1);
+    ct->name = (char (*)[6]) ((int *)ct->classc + ct->l);
         
     memset(ct->classc, 0, sizeof(int[ct->l]));
     memset(ct->name, 0, ct->l*sizeof(*(ct->name)));

@@ -25,7 +25,6 @@ msym_error_t msymFindSymmetry(msym_context ctx){
     int elementsl = 0, esl = 0;
     msym_element_t *elements = NULL;
     msym_thresholds_t *t = NULL;
-    double ev[3][3];
     msym_equivalence_set_t *es = NULL;
     msym_point_group_t *pg = NULL;
     int sopsl = 0;

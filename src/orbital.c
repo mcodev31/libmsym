@@ -147,7 +147,7 @@ msym_error_t findProjection(CharacterTable *ct, int sopsl, msym_symmetry_operati
     free(mperm);
     free(mkron);
     return ret;
-};
+}
 
 msym_error_t generateOrbitalTransforms(int sopsl, msym_symmetry_operation_t sops[sopsl], int l, double transform[sopsl][2*l+1][2*l+1]){
     msym_error_t ret = MSYM_SUCCESS;

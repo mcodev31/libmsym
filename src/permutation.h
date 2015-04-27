@@ -37,7 +37,7 @@ typedef struct _msym_permutation_morphism {
     union {
         int *bijection;
         msym_permutation_cycle_t *surjection;
-    };
+    } function;
     
 } msym_permutation_morphism_t;
 
