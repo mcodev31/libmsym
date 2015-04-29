@@ -283,12 +283,12 @@ msym_error_t findEquivalenceSets(int length, msym_element_t *elements[length], g
             free(rses);
         }
     }
-    //So we can free everything at once when generating temporary sets for cubic groups
+
     ses = realloc(ses, sizeof(msym_equivalence_set_t[sesl]) + sizeof(msym_element_t *[length]));
     msym_element_t **ep = (msym_element_t **) &ses[sesl];
-    memcpy(ep, pelements, sizeof(msym_element_t *[length]));
     
     for(int i = 0;i < sesl;i++){
+        memcpy(ep, ses[i].elements, sizeof(msym_element_t *[ses[i].length]));
         ses[i].elements = ep;
         ep += ses[i].length;
     }
