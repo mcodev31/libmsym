@@ -39,7 +39,7 @@ msym_error_t ctxSetEquivalenceSetPermutations(msym_context ctx, int r, int c, ms
 msym_error_t ctxGetEquivalenceSetPermutations(msym_context ctx, int *r, int *c, msym_permutation_t ***perm);
 msym_error_t ctxGetOrbitalSubspaces(msym_context ctx, int *ssl, msym_subspace_t **ss, int **span);
 msym_error_t ctxSetOrbitalSubspaces(msym_context ctx, int ssl, msym_subspace_t *ss, int *span);
-msym_error_t ctxGetGeometry(msym_context ctx, geometry_t *g, double ev[3][3]);
+msym_error_t ctxGetGeometry(msym_context ctx, msym_geometry_t *g, double eigval[3], double eigvec[3][3]);
 
 msym_error_t ctxDestroyElements(msym_context ctx);
 msym_error_t ctxDestroyEquivalcenceSets(msym_context ctx);

@@ -47,8 +47,9 @@ struct _msym_context {
     int es_perml;
     msym_point_group_t *pg;
     double cm[3];
-    geometry_t geometry;
-    double ev[3][3];
+    msym_geometry_t geometry;
+    double eigval[3];
+    double eigvec[3][3];
     struct _external_data {
         msym_element_t *elements;
         msym_orbital_t *orbitals;
@@ -172,7 +173,7 @@ msym_error_t msymSetElements(msym_context ctx, int length, msym_element_t elemen
     
     double zero[3] = {0,0,0};
     
-    if(MSYM_SUCCESS != (ret = findGeometry(length, ctx->pelements, zero, thresholds, &ctx->geometry, ctx->ev))) goto err;
+    if(MSYM_SUCCESS != (ret = findGeometry(length, ctx->pelements, zero, thresholds, &ctx->geometry, ctx->eigval, ctx->eigvec))) goto err;
     
     return ret;
 err:
@@ -269,6 +270,33 @@ msym_error_t msymGetCenterOfMass(msym_context ctx, double v[3]){
     if(ctx == NULL) {ret = MSYM_INVALID_CONTEXT;goto err;}
     if(ctx->elements == NULL) {ret = MSYM_INVALID_ELEMENTS;goto err;}
     vcopy(ctx->cm, v);
+err:
+    return ret;
+}
+
+msym_error_t msymGetGeometry(msym_context ctx, msym_geometry_t *geometry){
+    msym_error_t ret = MSYM_SUCCESS;
+    if(ctx == NULL) {ret = MSYM_INVALID_CONTEXT;goto err;}
+    if(ctx->elements == NULL) {ret = MSYM_INVALID_ELEMENTS;goto err;}
+    if(ctx->geometry == GEOMETRY_UNKNOWN) {ret = MSYM_INVALID_GEOMETRY;goto err;}
+    *geometry = ctx->geometry;
+err:
+    return ret;
+}
+
+msym_error_t msymGetPrincipalMoments(msym_context ctx, double eigval[3]){
+    msym_error_t ret = MSYM_SUCCESS;
+    if(ctx == NULL) {ret = MSYM_INVALID_CONTEXT;goto err;}
+    if(ctx->elements == NULL) {ret = MSYM_INVALID_ELEMENTS;goto err;}
+    vcopy(ctx->eigval, eigval);
+err:
+    return ret;
+}
+msym_error_t msymGetPrincipalAxes(msym_context ctx, double eigvec[3][3]){
+    msym_error_t ret = MSYM_SUCCESS;
+    if(ctx == NULL) {ret = MSYM_INVALID_CONTEXT;goto err;}
+    if(ctx->elements == NULL) {ret = MSYM_INVALID_ELEMENTS;goto err;}
+    mcopy(ctx->eigvec, eigvec);
 err:
     return ret;
 }
@@ -502,12 +530,13 @@ err:
     return ret;
 }
 
-msym_error_t ctxGetGeometry(msym_context ctx, geometry_t *g, double ev[3][3]){
+msym_error_t ctxGetGeometry(msym_context ctx, msym_geometry_t *g, double eigval[3], double eigvec[3][3]){
     msym_error_t ret = MSYM_SUCCESS;
     if(ctx == NULL) {ret = MSYM_INVALID_CONTEXT; goto err;}
     if(ctx->geometry == GEOMETRY_UNKNOWN) {ret = MSYM_INVALID_GEOMETRY; goto err;}
     *g = ctx->geometry;
-    mcopy(ctx->ev, ev);
+    mcopy(ctx->eigvec, eigvec);
+    vcopy(ctx->eigval, eigval);
 err:
     return ret;
 }
@@ -535,8 +564,9 @@ msym_error_t ctxDestroyElements(msym_context ctx){
     ctx->el = 0;
     ctx->ol = 0;
     ctx->geometry = GEOMETRY_UNKNOWN;
-    memset(ctx->ev,0,sizeof(ctx->ev));
-    memset(ctx->ev,0,sizeof(ctx->cm));
+    memset(ctx->eigvec,0,sizeof(ctx->eigvec));
+    memset(ctx->eigval,0,sizeof(ctx->eigval));
+    memset(ctx->cm,0,sizeof(ctx->cm));
 err:
     return ret;
 }

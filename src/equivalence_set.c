@@ -19,7 +19,7 @@
 
 #define SQR(x) ((x)*(x))
 
-msym_error_t partitionEquivalenceSets(int length, msym_element_t *elements[length], msym_element_t *pelements[length], geometry_t g, int *esl, msym_equivalence_set_t **es, msym_thresholds_t *thresholds);
+msym_error_t partitionEquivalenceSets(int length, msym_element_t *elements[length], msym_element_t *pelements[length], msym_geometry_t g, int *esl, msym_equivalence_set_t **es, msym_thresholds_t *thresholds);
 msym_error_t partitionPointGroupEquivalenceSets(msym_point_group_t *pg, int length, msym_element_t *elements[length], msym_element_t *pelements[length], int *esl, msym_equivalence_set_t **es, msym_thresholds_t *thresholds);
 
 
@@ -258,7 +258,7 @@ err:
 
 }
 
-msym_error_t findEquivalenceSets(int length, msym_element_t *elements[length], geometry_t g, int *esl, msym_equivalence_set_t **es, msym_thresholds_t *thresholds) {
+msym_error_t findEquivalenceSets(int length, msym_element_t *elements[length], msym_geometry_t g, int *esl, msym_equivalence_set_t **es, msym_thresholds_t *thresholds) {
     msym_error_t ret = MSYM_SUCCESS;
     int sesl = 0;
     msym_equivalence_set_t *ses = NULL;
@@ -305,7 +305,7 @@ err:
 }
 
 
-msym_error_t partitionEquivalenceSets(int length, msym_element_t *elements[length], msym_element_t *pelements[length], geometry_t g, int *esl, msym_equivalence_set_t **es, msym_thresholds_t *thresholds) {
+msym_error_t partitionEquivalenceSets(int length, msym_element_t *elements[length], msym_element_t *pelements[length], msym_geometry_t g, int *esl, msym_equivalence_set_t **es, msym_thresholds_t *thresholds) {
     
     int ns = 0, gd = geometryDegenerate(g);
     double *e = calloc(length,sizeof(double));

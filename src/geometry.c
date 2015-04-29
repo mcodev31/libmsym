@@ -18,10 +18,9 @@
 #define SQR(x) ((x)*(x))
 
 void inertialTensor(int length, msym_element_t *elements[length], double cm[3], double e[3], double v[3][3], msym_thresholds_t *thresholds);
-enum geometry eigenvaluesToGeometry(double e[3], msym_thresholds_t *thresholds);
+msym_geometry_t eigenvaluesToGeometry(double e[3], msym_thresholds_t *thresholds);
 
-msym_error_t findGeometry(int length, msym_element_t *elements[length], double cm[3], msym_thresholds_t *thresholds, geometry_t *g, double v[3][3]){
-    double e[3];
+msym_error_t findGeometry(int length, msym_element_t *elements[length], double cm[3], msym_thresholds_t *thresholds, msym_geometry_t *g, double e[3], double v[3][3]){
     inertialTensor(length, elements, cm, e, v, thresholds);
     *g = eigenvaluesToGeometry(e,thresholds);
     return MSYM_SUCCESS;
@@ -55,7 +54,7 @@ msym_error_t findCenterOfMass(int length, msym_element_t *elements[length], doub
 #define EQUAL_REL(A,B,T) (fabs(((A)-(B))/((A)+(B))) < T)
 
 //Lookup table would look alot nicer
-geometry_t eigenvaluesToGeometry(double e[3], msym_thresholds_t *thresholds){
+msym_geometry_t eigenvaluesToGeometry(double e[3], msym_thresholds_t *thresholds){
     int e01 = EQUAL(0.0, e[0], thresholds->geometry);
     int e12, e23, planar;
     
@@ -93,7 +92,7 @@ geometry_t eigenvaluesToGeometry(double e[3], msym_thresholds_t *thresholds){
     
 }
 
-int geometryDegenerate(geometry_t g){
+int geometryDegenerate(msym_geometry_t g){
     return !(g == PLANAR_IRREGULAR || g == ASSYMETRIC) && g != GEOMETRY_UNKNOWN;
 }
 
@@ -125,7 +124,7 @@ void inertialTensor(int length, msym_element_t *elements[length], double cm[3], 
     }
 }
 
-void printGeometry(geometry_t g){
+void printGeometry(msym_geometry_t g){
     char *s;
     switch(g) {
         case SPHERICAL		: s = "spherical"; break;

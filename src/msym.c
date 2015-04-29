@@ -155,8 +155,9 @@ msym_error_t msymFindEquivalenceSets(msym_context ctx){
     msym_element_t **pelements = NULL;
     msym_thresholds_t *t = NULL;
     msym_point_group_t *pg = NULL;
-    geometry_t g = GEOMETRY_UNKNOWN;
-    double ev[3][3];
+    msym_geometry_t g = GEOMETRY_UNKNOWN;
+    double eigvec[3][3];
+    double eigval[3];
     int esl = 0;
     msym_equivalence_set_t *es;
     
@@ -166,7 +167,7 @@ msym_error_t msymFindEquivalenceSets(msym_context ctx){
     if(MSYM_SUCCESS != (ret = ctxGetElementPtrs(ctx, &pelementsl, &pelements))) goto err;
     if(MSYM_SUCCESS != (ret = msymGetThresholds(ctx, &t))) goto err;
     if(MSYM_SUCCESS != (ret = ctxGetPointGroup(ctx, &pg))) {
-        if(MSYM_SUCCESS != (ret = ctxGetGeometry(ctx, &g, ev))) goto err;
+        if(MSYM_SUCCESS != (ret = ctxGetGeometry(ctx, &g, eigval, eigvec))) goto err;
         start = clock();
         if(MSYM_SUCCESS != (ret = findEquivalenceSets(pelementsl, pelements, g, &esl, &es, t))) goto err;
         end = clock();

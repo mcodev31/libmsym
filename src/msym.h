@@ -19,6 +19,17 @@ extern "C" {
 
     typedef struct _msym_context * msym_context;
 
+    typedef enum _msym_geometry {
+        GEOMETRY_UNKNOWN = -1,
+        SPHERICAL,
+        LINEAR,
+        PLANAR_REGULAR,
+        PLANAR_IRREGULAR,
+        POLYHEDRAL_PROLATE,
+        POLYHEDRAL_OBLATE,
+        ASSYMETRIC
+    } msym_geometry_t;
+    
     typedef enum _msym_symmetry_operation_type {
         IDENTITY = 0,
         PROPER_ROTATION = 1,
@@ -116,6 +127,9 @@ extern "C" {
     
     msym_error_t msymGetCenterOfMass(msym_context ctx, double v[3]);
     msym_error_t msymGetRadius(msym_context ctx, double *radius);
+    msym_error_t msymGetGeometry(msym_context ctx, msym_geometry_t *geometry);
+    msym_error_t msymGetPrincipalMoments(msym_context ctx, double eigval[3]);
+    msym_error_t msymGetPrincipalAxes(msym_context ctx, double eigvec[3][3]);
     msym_error_t msymGetAlignmentAxes(msym_context ctx, double primary[3], double secondary[3]);
     msym_error_t msymSetAlignmentAxes(msym_context ctx, double primary[3], double secondary[3]);
     msym_error_t msymGetAlignmentTransform(msym_context ctx, double transform[3][3]);

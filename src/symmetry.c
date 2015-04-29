@@ -75,7 +75,7 @@ msym_error_t findEquivalenceSetSymmetryOperations(msym_equivalence_set_t *es, ms
     //function pointer syntax is a little ambiguous, this is technically less correct, but nicer to read
     
     const struct _fmap {
-        geometry_t g;
+        msym_geometry_t g;
         msym_error_t (*f)(msym_equivalence_set_t*,double[3],double[3][3],msym_thresholds_t*,int*,msym_symmetry_operation_t**);
         
     } fmap[8] = {
@@ -93,17 +93,18 @@ msym_error_t findEquivalenceSetSymmetryOperations(msym_equivalence_set_t *es, ms
     msym_symmetry_operation_t *fsops = NULL;
     int lfsops = 0;
     double cm[3];
-    geometry_t g;
-    double ev[3][3];
+    msym_geometry_t g;
+    double eigvec[3][3];
+    double eigval[3];
 
     
     if(MSYM_SUCCESS != (ret = findCenterOfMass(es->length, es->elements, cm))) goto err;
-    if(MSYM_SUCCESS != (ret = findGeometry(es->length, es->elements, cm, t, &g, ev))) goto err;
+    if(MSYM_SUCCESS != (ret = findGeometry(es->length, es->elements, cm, t, &g, eigval, eigvec))) goto err;
     
     int fi, fil = sizeof(fmap)/sizeof(fmap[0]);
     for(fi = 0; fi < fil;fi++){
         if(fmap[fi].g == g) {
-            if(MSYM_SUCCESS != (ret = fmap[fi].f(es,cm,ev,t,&lfsops,&fsops))) goto err;
+            if(MSYM_SUCCESS != (ret = fmap[fi].f(es,cm,eigvec,t,&lfsops,&fsops))) goto err;
             break;
         }
     }

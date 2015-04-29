@@ -14,24 +14,9 @@
 #include <stdio.h>
 #include "msym.h"
 
-enum geometry {
-    GEOMETRY_UNKNOWN = -1,
-    SPHERICAL,
-    LINEAR,
-    PLANAR_REGULAR,
-    PLANAR_IRREGULAR,
-    POLYHEDRAL_PROLATE,
-    POLYHEDRAL_OBLATE,
-    ASSYMETRIC
-};
-
-
-typedef enum geometry geometry_t;
-
-enum geometry find_geometry(double e[3]);
-msym_error_t findGeometry(int length, msym_element_t *elements[length], double cm[3], msym_thresholds_t *thresholds, geometry_t *g, double v[3][3]);
+msym_error_t findGeometry(int length, msym_element_t *elements[length], double cm[3], msym_thresholds_t *thresholds, msym_geometry_t *g, double e[3], double v[3][3]);
 msym_error_t findCenterOfMass(int length, msym_element_t *elements[length], double v[3]);
-int geometryDegenerate(geometry_t g);
-void printGeometry(geometry_t g);
+int geometryDegenerate(msym_geometry_t g);
+void printGeometry(msym_geometry_t g);
 
 #endif /* defined(__MSYM__GEOMETRY_h) */
