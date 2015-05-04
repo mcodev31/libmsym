@@ -212,7 +212,7 @@ msym_error_t findSymmetryPlanarRegular(msym_equivalence_set_t *es, double cm[3],
         vnorm(vi_proj);
         theta = vangle(v0_proj,vi_proj);
         
-        if(LT(theta,2*M_PI/es->length,thresholds->angle) && es->length % 2 == 0){
+        if(LT(theta,2*M_PI/es->length,asin(thresholds->angle)) && es->length % 2 == 0){
             order = es->length/2;
             split = 1;
             vadd(v0_proj, vi_proj, v_init);
@@ -420,7 +420,7 @@ msym_error_t findSymmetrySymmetricPolyhedron(msym_equivalence_set_t *es, double 
         
         if(dot0*doti > 0.0){
             theta_sigma = theta/2;
-            if(LT(theta, 4*M_PI/es->length, thresholds->angle) && es->length % 4 == 0){
+            if(LT(theta, 4*M_PI/es->length, asin(thresholds->angle)) && es->length % 4 == 0){
                 vadd(v0,vi,v_init);
                 vproj_plane(v_init, ev[prim], v_init);
                 vnorm(v_init);
@@ -432,12 +432,12 @@ msym_error_t findSymmetrySymmetricPolyhedron(msym_equivalence_set_t *es, double 
             }
         } else {
             //This can potentially find a staggered form if split by squal amounts (should be ok, TODO: check)
-            if(fabs(theta - 2*M_PI/es->length) < thresholds->angle){
+            if(fabs(theta - 2*M_PI/es->length) < asin(thresholds->angle)){
                 staggered = 1;
             }
             // if we have not yet found that we are are staggerd/eclipsed or split this will either be over-written or this is a C2 axis for Dn
             if(!split && !staggered && !sigma_h){
-                if(LT(theta, 2*M_PI/es->length, thresholds->angle)){
+                if(LT(theta, 2*M_PI/es->length, asin(thresholds->angle))){
                     vadd(v0_proj, vi_proj, v_init);
                     vnorm(v_init);
                 }
@@ -815,7 +815,7 @@ msym_error_t findSymmetryCubic(msym_equivalence_set_t *es, double cm[3], double 
                 for(int i = 0; i < nsigma && gsigma < 3;i++){
                     for(int j = i+1; j < nsigma && gsigma < 3;j++){
                         double theta = vangle(sigma[i]->v, sigma[j]->v);
-                        if(fabs(theta - M_PI/2) < thresholds->angle){
+                        if(fabs(theta - M_PI/2) < asin(thresholds->angle)){
                             sops[sopsl].type = REFLECTION;
                             vadd(sigma[i]->v, sigma[j]->v, sops[sopsl].v);
                             vnorm(sops[sopsl].v);
@@ -949,7 +949,7 @@ msym_error_t findSymmetryCubic(msym_equivalence_set_t *es, double cm[3], double 
             }
             for(int k = 2; k < 6;k++){
                 
-                if(fabs(theta - thetac[k]) < thresholds->angle){
+                if(fabs(theta - thetac[k]) < asin(thresholds->angle)){
                     vcrossnorm(cb[i]->v, cb[j]->v, sops[sopsl].v);
                     sops[sopsl].type = PROPER_ROTATION;
                     sops[sopsl].order = k;
