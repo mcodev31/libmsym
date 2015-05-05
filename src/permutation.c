@@ -183,19 +183,6 @@ err:
     return ret;
 }
 
-int recursePermutationSubgroups(int l, msym_permutation_t perm[l], int min, int index, int group[l]){
-    int run = index >= min;
-    if(group[index] == 1 && run){
-        for(int i = 0;i < l;i++){
-            int next = perm[index].p[i];
-            group[next]++;
-            recursePermutationSubgroups(l, perm, min, next, group);
-        }
-    }
-    return run;
-}
-
-
 msym_error_t findSymmetryOperationPermutations(int l, msym_symmetry_operation_t sops[l], msym_thresholds_t *t, msym_permutation_t **rperm){
     
     msym_error_t ret = MSYM_SUCCESS;
