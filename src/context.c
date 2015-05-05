@@ -45,7 +45,9 @@ struct _msym_context {
     int esl;
     int ssl;
     int es_perml;
+    int sgl;
     msym_point_group_t *pg;
+    msym_subgroup_t *sg;
     double cm[3];
     msym_geometry_t geometry;
     double eigval[3];
@@ -55,6 +57,7 @@ struct _msym_context {
         msym_orbital_t *orbitals;
         msym_orbital_t **porbitals;
         msym_symmetry_operation_t *sops;
+        msym_subgroup_t *sg;
         msym_equivalence_set_t *es;
     } ext;
 };
@@ -265,6 +268,51 @@ err:
     return ret;
 }
 
+msym_error_t msymGetSubgroups(msym_context ctx, int *sgl, msym_subgroup_t **sg){
+    msym_error_t ret = MSYM_SUCCESS;
+    if(ctx == NULL) {ret = MSYM_INVALID_CONTEXT;goto err;}
+    if(ctx->pg == NULL) {ret = MSYM_INVALID_POINT_GROUP;goto err;}
+    if(ctx->pg->perm == NULL) {ret = MSYM_INVALID_PERMUTATION;goto err;}
+    
+    if(ctx->ext.sops == NULL){
+        msym_symmetry_operation_t *extsops = NULL;
+        int extsopsl = 0;
+        if(MSYM_SUCCESS != (ret = msymGetSymmetryOperations(ctx, &extsopsl, &extsops))) goto err;
+    }
+    if(ctx->sg == NULL){
+        if(MSYM_SUCCESS != (ret = findPermutationSubgroups(ctx->pg->sopsl, ctx->pg->perm, ctx->pg->sops, &ctx->sgl, &ctx->sg))) goto err;
+
+        for(int i = 0;i < ctx->sgl;i++){
+            if(MSYM_SUCCESS != (ret = findSubgroup(&ctx->sg[i], ctx->thresholds))) goto err;
+        }
+        
+    }
+    
+    if(ctx->ext.sg == NULL){
+        ctx->ext.sg = malloc(sizeof(msym_subgroup_t[ctx->sgl]));
+        memcpy(ctx->ext.sg, ctx->sg, sizeof(msym_subgroup_t[ctx->sgl]));
+        for(int i = 0;i < ctx->sgl;i++){
+            ctx->ext.sg[i].sops = malloc(sizeof(msym_symmetry_operation_t *[ctx->sg[i].sopsl]));
+            for(int j = 0;j < ctx->sg[i].sopsl;j++){
+                ctx->ext.sg[i].sops[j] = ctx->sg[i].sops[j] - ctx->pg->sops + ctx->ext.sops;
+            }
+        }
+    }
+    
+
+    *sgl = ctx->sgl;
+    *sg = ctx->ext.sg;
+    return ret;
+    
+err:
+    return ret;
+    
+    
+    
+}
+
+
+
 msym_error_t msymGetCenterOfMass(msym_context ctx, double v[3]){
     msym_error_t ret = MSYM_SUCCESS;
     if(ctx == NULL) {ret = MSYM_INVALID_CONTEXT;goto err;}
@@ -420,6 +468,20 @@ msym_error_t ctxGetInternalElement(msym_context ctx, msym_element_t *ext, msym_e
         goto err;
     }
     *element = ext - ctx->ext.elements + ctx->elements;
+err:
+    return ret;
+}
+
+msym_error_t ctxGetInternalSubgroup(msym_context ctx, msym_subgroup_t *ext, msym_subgroup_t **sg){
+    msym_error_t ret = MSYM_SUCCESS;
+    if(ctx == NULL) {ret = MSYM_INVALID_CONTEXT;goto err;}
+    if(ctx->ext.sg == NULL) {ret = MSYM_INVALID_POINT_GROUP;goto err;}
+    if(ext < ctx->ext.sg || ext >= ctx->ext.sg+ctx->sgl){
+        msymSetErrorDetails("Subgroup pointer (%p) outside memory block (%p -> %p)", ext, ctx->ext.sg, ctx->ext.sg + ctx->sgl);
+        ret = MSYM_INVALID_POINT_GROUP;
+        goto err;
+    }
+    *sg = ext - ctx->ext.sg + ctx->sg;
 err:
     return ret;
 }
@@ -607,14 +669,23 @@ msym_error_t ctxDestroyPointGroup(msym_context ctx){
     for(int i = 0;i < ctx->pg->sopsl && ctx->pg->perm != NULL;i++){
         freePermutationData(&ctx->pg->perm[i]);
     }
+    for(int i = 0;i < ctx->sgl && ctx->sg != NULL;i++){
+        free(ctx->sg[i].sops);
+    }
+    for(int i = 0;i < ctx->sgl && ctx->ext.sg != NULL;i++){
+        free(ctx->ext.sg[i].sops);
+    }
     free(ctx->pg->perm);
     free(ctx->pg->ct);
     free(ctx->pg->sops);
     free(ctx->pg);
     free(ctx->ext.sops);
     
+    
     ctx->pg = NULL;
+    ctx->sg = NULL;
     ctx->ext.sops = NULL;
+    ctx->ext.sg = NULL;
 err:
     return ret;
 }

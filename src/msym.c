@@ -325,6 +325,23 @@ err:
     return ret;
 }
 
+msym_error_t msymSelectSubgroup(msym_context ctx, msym_subgroup_t *ext){
+    msym_error_t ret = MSYM_SUCCESS;
+    msym_subgroup_t *sg;
+    msym_point_group_t *pg;
+    msym_thresholds_t *t = NULL;
+    
+    if(MSYM_SUCCESS != (ret = ctxGetInternalSubgroup(ctx, ext, &sg))) goto err;
+    if(MSYM_SUCCESS != (ret = msymGetThresholds(ctx, &t))) goto err;
+    if(MSYM_SUCCESS != (ret = pointGroupFromSubgroup(sg, t, &pg))) goto err;
+    if(MSYM_SUCCESS != (ret = ctxSetPointGroup(ctx, pg))) goto err;
+    if(MSYM_SUCCESS != (ret = msymFindEquivalenceSets(ctx))) goto err;
+    if(MSYM_SUCCESS != (ret = msymFindEquivalenceSetPermutations(ctx))) goto err;
+
+err:
+    return ret;
+}
+
 msym_error_t msymSymmetrizeMolecule(msym_context ctx, double *err){
     msym_error_t ret = MSYM_SUCCESS;
     

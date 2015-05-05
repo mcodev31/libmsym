@@ -43,6 +43,7 @@ extern "C" {
         MASS_WEIGHTED_COORDINATES
     } msym_basis_type_t;
     
+    
     typedef struct _msym_symmetry_operation {
         msym_symmetry_operation_type_t type;
         int order;                              // Order of proper/improper rotation
@@ -50,6 +51,37 @@ extern "C" {
         double v[3];                            // Proper/improper rotation vector or reflection plane normal
         int cla;                                // Class of symmetry operation (point group dependant)
     } msym_symmetry_operation_t;
+    
+    typedef enum _msym_point_group_type {
+        POINT_GROUP_Ci,
+        POINT_GROUP_Cs,
+        POINT_GROUP_Cn,
+        POINT_GROUP_Cnh,
+        POINT_GROUP_Cnv,
+        POINT_GROUP_Dn,
+        POINT_GROUP_Dnh,
+        POINT_GROUP_Dnd,
+        POINT_GROUP_S2n,
+        POINT_GROUP_T,
+        POINT_GROUP_Td,
+        POINT_GROUP_Th,
+        POINT_GROUP_O,
+        POINT_GROUP_Oh,
+        POINT_GROUP_I,
+        POINT_GROUP_Ih,
+        POINT_GROUP_K,
+        POINT_GROUP_Kh
+    } msym_point_group_type_t;
+    
+    typedef struct _msym_subgroup {
+        msym_point_group_type_t type;
+        int n;
+        int sopsl;
+        msym_symmetry_operation_t *primary;
+        msym_symmetry_operation_t **sops;
+        struct _msym_subgroup *subgroup[2];
+        char name[6];
+    } msym_subgroup_t;
     
     typedef struct _msym_thresholds {
         double zero;                            // For determining if something is zero (e.g. vectors close to center of mass)
@@ -111,6 +143,8 @@ extern "C" {
     msym_error_t msymGetElements(msym_context ctx, int *length, msym_element_t **elements);
     msym_error_t msymSetPointGroup(msym_context ctx, char *name);
     msym_error_t msymGetPointGroup(msym_context ctx, int l, char buf[l]);
+    msym_error_t msymGetSubgroups(msym_context ctx, int *l, msym_subgroup_t **subgroups);
+    msym_error_t msymSelectSubgroup(msym_context ctx, msym_subgroup_t *subgroup);
     msym_error_t msymGetSymmetryOperations(msym_context ctx, int *sopsl, msym_symmetry_operation_t **sops);
     msym_error_t msymGetEquivalenceSets(msym_context ctx, int *l, msym_equivalence_set_t **es);
     

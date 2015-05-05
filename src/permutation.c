@@ -62,7 +62,139 @@ err:
 }
 
 
-//This is not functioning properly
+typedef struct _perm_subgroup {
+    int sopsl;
+    int *sops;
+    struct _perm_subgroup *subgroup[2];
+} perm_subgroup_t;
+
+
+msym_error_t findPermutationSubgroups(int l, msym_permutation_t perm[l], msym_symmetry_operation_t *sops, int *subgroupl, msym_subgroup_t **subgroup){
+    msym_error_t ret = MSYM_SUCCESS;
+    perm_subgroup_t *group = calloc(l, sizeof(perm_subgroup_t));
+    int *isops = malloc(sizeof(int[l]));
+    int *msops = malloc(sizeof(int[l]));
+    int gl = 0;
+    
+    for(int i = 0;i < l;i++){
+        if(sops[i].power == 1 || sops[i].type == INVERSION || sops[i].type == REFLECTION){
+            msym_permutation_cycle_t* c = perm[i].c;
+            memset(msops, 0, sizeof(int[l]));
+            group[gl].sopsl = c->l;
+            group[gl].sops = calloc(c->l, sizeof(int));
+            for(int next = c->s, j = 0;j < c->l;j++){
+                msops[next] = 1;
+                group[gl].sops[j] = next;
+                next = perm[i].p[next];
+            }
+            
+            int n = 0;
+            for(int k = 0;k < l;k++){
+                if(msops[k]){
+                    group[gl].sops[n] = k;
+                    n++;
+                }
+            }
+            gl++;
+        }
+    }
+    
+    for(int i = 0;i < gl;i++){
+        for(int j = i+1;j < gl;j++){
+            int minl = group[i].sopsl < group[j].sopsl ? group[i].sopsl : group[j].sopsl;
+            if(0 == memcmp(group[i].sops,group[j].sops,sizeof(int[minl]))) continue;
+            
+            int n = 0;
+            memset(isops, 0, sizeof(int[l]));
+            memset(msops, 0, sizeof(int[l]));
+            
+            for(int k = 0;k < group[i].sopsl;k++){
+                int s = group[i].sops[k];
+                msops[s] = 1;
+                isops[k] = s;
+            }
+            n = group[i].sopsl;
+            for(int k = 0;k < group[j].sopsl;k++){
+                int s = group[j].sops[k];
+                if(msops[s] == 0){
+                    msops[s] = 1;
+                    isops[n] = s;
+                    n++;
+                }
+            }
+            for(int p = 0;p < n && n < l;p++){
+                for(int q = 0;q < n && n < l;q++){
+                    int next = perm[isops[p]].p[isops[q]];
+                    if(msops[next] == 0){
+                        msops[next] = 1;
+                        isops[n] = next;
+                        n++;
+                    }
+                }
+            }
+            
+            if(n < l) {
+                n = 0;
+                memset(isops, 0, sizeof(int[l]));
+
+                for(int k = 0;k < l;k++){
+                    if(msops[k]){
+                        isops[n] = k;
+                        n++;
+                    }
+                }
+                int f;
+                for(f = 0;f < gl;f++){
+                    if(group[f].sopsl == n && 0 == memcmp(group[f].sops, isops, sizeof(int[n]))){
+                        break;
+                    }
+                }
+                if(f == gl){
+                    group = realloc(group, sizeof(perm_subgroup_t[gl+1]));
+                    group[gl].sopsl = n;
+                    group[gl].sops = malloc(sizeof(int[n]));
+                    memcpy(group[gl].sops, isops, sizeof(int[n]));
+                    group[gl].subgroup[0] = &group[i];
+                    group[gl].subgroup[1] = &group[j];
+                    gl++;
+                }
+            }
+        }
+    }
+
+    msym_subgroup_t *mgroup = calloc(gl, sizeof(msym_subgroup_t));
+    for(int i = 0;i < gl;i++){
+        mgroup[i].sops = calloc(group[i].sopsl, sizeof(msym_symmetry_operation_t *));
+        mgroup[i].sopsl = group[i].sopsl;
+        mgroup[i].subgroup[0] = &mgroup[group[i].subgroup[0] - group];
+        mgroup[i].subgroup[1] = &mgroup[group[i].subgroup[1] - group];
+        for(int j = 0;j < group[i].sopsl;j++){
+            mgroup[i].sops[j] = &sops[group[i].sops[j]];
+        }
+    }
+    
+    *subgroup = mgroup;
+    *subgroupl = gl;
+    
+err:
+    free(group);
+    free(isops);
+    free(msops);
+    return ret;
+}
+
+int recursePermutationSubgroups(int l, msym_permutation_t perm[l], int min, int index, int group[l]){
+    int run = index >= min;
+    if(group[index] == 1 && run){
+        for(int i = 0;i < l;i++){
+            int next = perm[index].p[i];
+            group[next]++;
+            recursePermutationSubgroups(l, perm, min, next, group);
+        }
+    }
+    return run;
+}
+
 
 msym_error_t findSymmetryOperationPermutations(int l, msym_symmetry_operation_t sops[l], msym_thresholds_t *t, msym_permutation_t **rperm){
     
@@ -183,7 +315,7 @@ void permutationMatrix(msym_permutation_t *perm, double m[perm->p_length][perm->
 }
 
 void printPermutation(msym_permutation_t *perm){
-    /*int l = perm->p_length;
+    int l = perm->p_length;
     printf("(");
     for(int j = 0; j < l; j++){
         printf(j == l -1 ? "%d" : "%d\t",j);
@@ -192,7 +324,7 @@ void printPermutation(msym_permutation_t *perm){
     for(int j = 0; j < l; j++){
         printf(j == l -1 ? "%d" : "%d\t",perm->p[j]);
     }
-    printf(")\n");*/
+    printf(")\n");
     
     for(msym_permutation_cycle_t* c = perm->c; c < (perm->c + perm->c_length);c++){
         printf("(");

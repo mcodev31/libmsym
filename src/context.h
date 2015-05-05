@@ -29,6 +29,7 @@
 msym_error_t ctxGetElements(msym_context, int *l, msym_element_t **elements);
 msym_error_t ctxGetElementPtrs(msym_context ctx, int *l, msym_element_t ***pelements);
 msym_error_t ctxGetInternalElement(msym_context ctx, msym_element_t *ext, msym_element_t **element);
+msym_error_t ctxGetInternalSubgroup(msym_context ctx, msym_subgroup_t *ext, msym_subgroup_t **sg);
 msym_error_t ctxGetOrbitals(msym_context ctx, int *l, msym_orbital_t **orbitals);
 msym_error_t ctxSetCenterOfMass(msym_context ctx, double cm[3]);
 msym_error_t ctxSetPointGroup(msym_context ctx, msym_point_group_t *pg);
