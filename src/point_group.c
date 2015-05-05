@@ -705,6 +705,9 @@ msym_error_t pointGroupFromSubgroup(msym_subgroup_t *sg, msym_thresholds_t *thre
         memcpy(&pg->sops[i], sg->sops[i], sizeof(msym_symmetry_operation_t));
     }
     
+    int classes = classifySymmetryOperations(pg);
+    sortSymmetryOperations(pg,classes);
+    
     return ret;
 err:
     *opg = NULL;
