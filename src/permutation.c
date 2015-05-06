@@ -99,7 +99,7 @@ msym_error_t findPermutationSubgroups(int l, msym_permutation_t perm[l], int sgm
             gl += n < l;
         }
     }
-    
+        
     for(int i = 0;i < gl && gl < sgmax;i++){
         for(int j = i+1;j < gl && gl < sgmax;j++){
             int minl = group[i].sopsl < group[j].sopsl ? group[i].sopsl : group[j].sopsl;

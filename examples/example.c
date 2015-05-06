@@ -39,7 +39,8 @@ int example(const char* in_file){
     /* Do not free these variables */
     msym_element_t *melements = NULL;
     msym_symmetry_operation_t *msops = NULL;
-    int msopsl = 0, mlength = 0;
+    msym_subgroup_t *msg = NULL;
+    int msgl = 0, msopsl = 0, mlength = 0;
     
     /* This function reads xyz files.
      * It initializes an array of msym_element_t to 0,
@@ -92,7 +93,23 @@ int example(const char* in_file){
     
     /* Get the point group name */
     if(MSYM_SUCCESS != (ret = msymGetPointGroup(ctx, sizeof(char[6]), point_group))) goto err;
-    printf("Found point group %s\n",point_group);
+    if(MSYM_SUCCESS != (ret = msymGetSubgroups(ctx, &msgl, &msg))) goto err;
+    printf("Found point group [0] %s select subgroup\n",point_group);
+    for(int i = 0; i < msgl;i++) printf("\t [%d] %s\n",i+1,msg[i].name);
+    int ssg = 0;
+    printf("\nEnter point group[0-%d]:",msgl);
+    while(scanf("%d", &ssg) <= 0 && ssg >= 0 && ssg <= msgl) printf("\nEnter point group[0-%d]:",msgl);
+    if(ssg > 0){
+        ssg--;
+        printf("Selected point group %s\n",msg[ssg].name);
+        if(MSYM_SUCCESS != (ret = msymSelectSubgroup(ctx, &msg[ssg]))) goto err;
+        /* Retreive the symmetry operations again.
+         * Everything has been rebuilt, and the old msops is no longer valid
+         * Neither are the equivalence sets
+         */
+        if(MSYM_SUCCESS != (ret = msymGetSymmetryOperations(ctx, &msopsl, &msops))) goto err;
+        
+    }
     
     /* Set pointgroup to the D2h subgroup if it has Th symmetry
      * using the same alignment as the original.
@@ -100,6 +117,7 @@ int example(const char* in_file){
      * And of course you can keep Th if you want =D */
     if(0 == strncmp(point_group, "Th", 2)){
         double transform[3][3];
+        printf("Changing pointgroup from Th -> D2h\n");
         if(MSYM_SUCCESS != (ret = msymGetAlignmentTransform(ctx, transform))) goto err;
         if(MSYM_SUCCESS != (ret = msymSetPointGroup(ctx, "D2h"))) goto err;
         if(MSYM_SUCCESS != (ret = msymSetAlignmentTransform(ctx, transform))) goto err;

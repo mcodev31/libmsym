@@ -696,8 +696,11 @@ msym_error_t pointGroupFromSubgroup(msym_subgroup_t *sg, msym_thresholds_t *thre
     if(MSYM_SUCCESS != (ret = setPointGroupOrder(pg))) goto err;
     
     for(int i = 0;i < sg->sopsl;i++){
+        if(sg->primary == sg->sops[i]) pg->primary = &pg->sops[i];
         memcpy(&pg->sops[i], sg->sops[i], sizeof(msym_symmetry_operation_t));
     }
+    
+    mleye(3, pg->transform);
     
     if(MSYM_SUCCESS != (ret = transformAxes(pg, thresholds))) goto err;
     
