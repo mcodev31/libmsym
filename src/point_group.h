@@ -36,5 +36,6 @@ msym_error_t findSubgroup(msym_subgroup_t *subgroup, msym_thresholds_t *threshol
 msym_error_t findCharacterTable(msym_point_group_t *pg);
 msym_error_t generatePointGroup(char *name, msym_thresholds_t *thresholds, msym_point_group_t **opg);
 msym_error_t pointGroupFromSubgroup(msym_subgroup_t *sg, msym_thresholds_t *thresholds, msym_point_group_t **opg);
+int numberOfSubgroups(msym_point_group_t *pg);
 
 #endif /* defined(__MSYM__POINT_GROUP_h) */

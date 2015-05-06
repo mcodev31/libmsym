@@ -69,7 +69,8 @@ typedef struct _perm_subgroup {
 } perm_subgroup_t;
 
 
-msym_error_t findPermutationSubgroups(int l, msym_permutation_t perm[l], msym_symmetry_operation_t *sops, int *subgroupl, msym_subgroup_t **subgroup){
+
+msym_error_t findPermutationSubgroups(int l, msym_permutation_t perm[l], int sgmax, msym_symmetry_operation_t *sops, int *subgroupl, msym_subgroup_t **subgroup){
     msym_error_t ret = MSYM_SUCCESS;
     perm_subgroup_t *group = calloc(l, sizeof(perm_subgroup_t));
     int *isops = malloc(sizeof(int[l]));
@@ -89,18 +90,18 @@ msym_error_t findPermutationSubgroups(int l, msym_permutation_t perm[l], msym_sy
             }
             
             int n = 0;
-            for(int k = 0;k < l;k++){
+            for(int k = 0;k < l && n < l;k++){
                 if(msops[k]){
                     group[gl].sops[n] = k;
                     n++;
                 }
             }
-            gl++;
+            gl += n < l;
         }
     }
     
-    for(int i = 0;i < gl;i++){
-        for(int j = i+1;j < gl;j++){
+    for(int i = 0;i < gl && gl < sgmax;i++){
+        for(int j = i+1;j < gl && gl < sgmax;j++){
             int minl = group[i].sopsl < group[j].sopsl ? group[i].sopsl : group[j].sopsl;
             if(0 == memcmp(group[i].sops,group[j].sops,sizeof(int[minl]))) continue;
             
@@ -133,7 +134,7 @@ msym_error_t findPermutationSubgroups(int l, msym_permutation_t perm[l], msym_sy
                 }
             }
             
-            if(n < l) {
+            if(n < l && n > 1) {
                 n = 0;
                 memset(isops, 0, sizeof(int[l]));
 

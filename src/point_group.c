@@ -852,9 +852,6 @@ msym_error_t copyPointGroup(msym_point_group_t *ipg, msym_point_group_t *opg){
     }
     return MSYM_SUCCESS;
 err:
-    for(int i = 0; i < ipg->sopsl;i++){
-        printSymmetryOperation(&ipg->sops[i]);
-    }
     
     msymSetErrorDetails("More symmetry operations than order of point group (%s). Order: %d Number of operations: %d",ipg->name, ipg->order,ipg->sopsl);
     return MSYM_POINT_GROUP_ERROR;
@@ -1575,6 +1572,67 @@ void sortSymmetryOperations(msym_point_group_t *pg, int classes){
     memcpy(pg->sops, tmp,pg->sopsl*sizeof(msym_symmetry_operation_t));
 
     free(tmp);
+}
+
+int numberOfSubgroups(msym_point_group_t *pg){
+    
+    int n = pg->n;
+    int size = 0, ndiv = n >= 2, sdiv = 0, nodd = 0, sodd = 0, neven = 0, seven = 0;
+    
+    switch (pg->type) {
+        case POINT_GROUP_Kh  : size = -1; break;
+        case POINT_GROUP_K   : size = -1; break;
+        case POINT_GROUP_Ih  : size = 162; break;
+        case POINT_GROUP_I   : size = 57; break;
+        case POINT_GROUP_Oh  : size = 96; break;
+        case POINT_GROUP_O   : size = 28; break;
+        case POINT_GROUP_Th  : size = 24; break;
+        case POINT_GROUP_Td  : size = 28; break;
+        case POINT_GROUP_T   : size = 9; break;
+        case POINT_GROUP_Ci  : size = 0; break;
+        case POINT_GROUP_Cs  : size = 0; break;
+        default: {
+            for(int i = 2; i < n;i++){
+                if(n % i == 0){ ndiv++; sdiv += i; }
+            }
+            for(int i = 3; i < n;i += 2){
+                if(n % i == 0){ nodd++; sodd += i;}
+            }
+            for(int i = 4; i <= n;i += 2){
+                if(n % i == 0){ neven++; seven += (n << 1)/i; }
+            }
+            switch (pg->type) {
+                case POINT_GROUP_Cnh : {
+                    size = 2*ndiv;
+                    if(n % 2 == 0){
+                        int n2 = n >> 1;
+                        for(int i = 2; i < n2;i++){
+                            if(n2 % i == 0){ size++;}
+                        }
+                        size += 1 + (n2 >= 2);
+                    }
+                    break;
+                }
+                case POINT_GROUP_Dn  :
+                case POINT_GROUP_Cnv : size = n + ndiv + sdiv; break;
+                case POINT_GROUP_Cn  : size = ndiv - 1; break;
+                case POINT_GROUP_Dnh : {
+                    if(n % 2 == 0) size = 4*n + 2*ndiv + 3*sdiv + 4 + neven + seven;
+                    else size = 3*(n+sdiv+1) + 2*ndiv;
+                    break;
+                }
+                case POINT_GROUP_Dnd : {
+                    if(n % 2 == 0) size = 2*n + 3 + ndiv + 2*sdiv + nodd + sodd;
+                    else size = 3*(n+sdiv+1) + 2*ndiv;
+                    break;
+                }
+                case POINT_GROUP_S2n : size = ndiv - 1; break;
+                default : break;
+            }
+        }
+    }
+    
+    return size;
 }
 
 msym_error_t findCharacterTable(msym_point_group_t *pg){

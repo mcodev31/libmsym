@@ -280,7 +280,8 @@ msym_error_t msymGetSubgroups(msym_context ctx, int *sgl, msym_subgroup_t **sg){
         if(MSYM_SUCCESS != (ret = msymGetSymmetryOperations(ctx, &extsopsl, &extsops))) goto err;
     }
     if(ctx->sg == NULL){
-        if(MSYM_SUCCESS != (ret = findPermutationSubgroups(ctx->pg->sopsl, ctx->pg->perm, ctx->pg->sops, &ctx->sgl, &ctx->sg))) goto err;
+        int sgmax = numberOfSubgroups(ctx->pg);
+        if(MSYM_SUCCESS != (ret = findPermutationSubgroups(ctx->pg->sopsl, ctx->pg->perm, sgmax, ctx->pg->sops, &ctx->sgl, &ctx->sg))) goto err;
 
         for(int i = 0;i < ctx->sgl;i++){
             if(MSYM_SUCCESS != (ret = findSubgroup(&ctx->sg[i], ctx->thresholds))) goto err;
