@@ -621,7 +621,7 @@ msym_error_t transformAxes(msym_point_group_t *pg, msym_thresholds_t *thresholds
         case (POINT_GROUP_Kh)  :
             break;
         case (POINT_GROUP_Cs)  :
-            pg->primary = pg->sops; //Transform sigma normal to z
+            for(pg->primary = pg->sops; pg->primary < (pg->primary + pg->sopsl) && pg->primary->type != REFLECTION; pg->primary++){};
         case (POINT_GROUP_Cn)  :
         case (POINT_GROUP_Cnh) :
         case (POINT_GROUP_S2n) :
