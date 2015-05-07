@@ -115,7 +115,7 @@ int example(const char* in_file){
      * using the same alignment as the original.
      * If specific axes are wanted the alignment axes can be set instead
      * And of course you can keep Th if you want =D */
-    if(0 == strncmp(point_group, "Th", 2)){
+    if(0 == strncmp(point_group, "Ih", 2) && ssg == 0){
         double transform[3][3];
         printf("Changing pointgroup from Th -> D2h\n");
         if(MSYM_SUCCESS != (ret = msymGetAlignmentTransform(ctx, transform))) goto err;

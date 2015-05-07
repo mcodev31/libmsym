@@ -78,7 +78,7 @@ msym_error_t findPermutationSubgroups(int l, msym_permutation_t perm[l], int sgm
     int gl = 0;
     
     for(int i = 0;i < l;i++){
-        if(sops[i].power == 1 || sops[i].type == INVERSION || sops[i].type == REFLECTION){
+        if((sops[i].power == 1 && (sops[i].type == PROPER_ROTATION || sops[i].type == IMPROPER_ROTATION)) || sops[i].type == INVERSION || sops[i].type == REFLECTION){
             msym_permutation_cycle_t* c = perm[i].c;
             memset(msops, 0, sizeof(int[l]));
             group[gl].sopsl = c->l;
@@ -303,7 +303,7 @@ void permutationMatrix(msym_permutation_t *perm, double m[perm->p_length][perm->
 }
 
 void printPermutation(msym_permutation_t *perm){
-    int l = perm->p_length;
+    /*int l = perm->p_length;
     printf("(");
     for(int j = 0; j < l; j++){
         printf(j == l -1 ? "%d" : "%d\t",j);
@@ -312,7 +312,7 @@ void printPermutation(msym_permutation_t *perm){
     for(int j = 0; j < l; j++){
         printf(j == l -1 ? "%d" : "%d\t",perm->p[j]);
     }
-    printf(")\n");
+    printf(")\n");*/
     
     for(msym_permutation_cycle_t* c = perm->c; c < (perm->c + perm->c_length);c++){
         printf("(");

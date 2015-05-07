@@ -704,12 +704,23 @@ msym_error_t pointGroupFromSubgroup(msym_subgroup_t *sg, msym_thresholds_t *thre
     
     if(MSYM_SUCCESS != (ret = transformAxes(pg, thresholds))) goto err;
     
-    for(int i = 0;i < sg->sopsl;i++){
-        memcpy(&pg->sops[i], sg->sops[i], sizeof(msym_symmetry_operation_t));
-    }
+    /* Unfortunately we need to regenerate these as they need a specific
+     * class ordering for orbital symmetrization */
+    free(pg->sops);
+    pg->sops = NULL;
+    pg->sopsl = 0;
+    pg->primary = NULL;
     
+    if(MSYM_SUCCESS != (ret = generateSymmetryOperations(pg,thresholds))) goto err;
     int classes = classifySymmetryOperations(pg);
     sortSymmetryOperations(pg,classes);
+    
+    double T[3][3];
+    minv(pg->transform, T);
+    
+    for(int i = 0; i < pg->sopsl;i++){
+        mvmul(pg->sops[i].v,T,pg->sops[i].v);
+    }
     
     return ret;
 err:
