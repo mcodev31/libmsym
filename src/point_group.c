@@ -24,6 +24,11 @@
 #define M_PI 3.14159265358979323846264338327950288419716939937510582
 #endif
 
+#ifndef M_PI_2
+#define M_PI_2 (M_PI/2)
+#endif
+
+
 #define CLASSIFICATION_THRESHOLD 0.01
 
 
@@ -1525,6 +1530,399 @@ void generateSymmetryOperationsIh(msym_point_group_t *pg){
     }
     
     pg->sopsl = n;
+}
+
+void generatePointGroupDn(int n, int k, int cla, int l, msym_symmetry_operation_t sops[l]);
+void generatePointGroupDnd(int n, int k, int cla, int l, msym_symmetry_operation_t sops[l]);
+void generatePointGroupDnh(int n, int k, int cla, int l, msym_symmetry_operation_t sops[l]);
+void generatePointGroupSn(int n, int k, int cla, int l, msym_symmetry_operation_t sops[l]);
+void generatePointGroupCn(int n, int k, int cla, int l, msym_symmetry_operation_t sops[l]);
+void generatePointGroupCnv(int n, int k, int cla, int l, msym_symmetry_operation_t sops[l]);
+void generatePointGroupCnh(int n, int k, int cla, int l, msym_symmetry_operation_t sops[l]);
+
+void generatePointGroupDnhTest(int n){
+    msym_symmetry_operation_t *sops = calloc(n << 2, sizeof(msym_symmetry_operation_t));
+    generatePointGroupDnd(n,1,1,n << 2,sops);
+    for(int i = 0;i < n << 2;i++){
+        printSymmetryOperation(&sops[i]);
+    }
+}
+
+void generateReflectionPlanes(int n, int k, int cla, int l, msym_symmetry_operation_t sops[l]){
+    double z[3] = {0.0,0.0,1.0}, y[3] = {0.0,1.0,0.0};
+    msym_symmetry_operation_t sigma = {.type = REFLECTION, .order = 2, .power = 1};
+    vcopy(y,sigma.v);
+    for(int i = 0;i < n;i++){
+        int e = 1 & ~n, ie = ((i & e)), power = 1 - (ie << 1), index = k + (i >> e) + (ie ? (n >> 1) : 0);
+        memcpy(&(sops[index]), &sigma, sizeof(msym_symmetry_operation_t));
+        vrotate(i*M_PI/n, sigma.v, z, sops[index].v);
+        sops[index].power = power; // Used the finding of eigenvalues for character tables
+        sops[index].cla = cla + ie;
+    }
+    
+    k += n;
+    cla += 1 << (~n & 1); //1 or 2 added classes
+    printf("------ R %d operations %d classes------\n",k, cla);
+}
+
+void generateC2Axes(int n, int k, int cla, int l, msym_symmetry_operation_t sops[l]){
+    double z[3] = {0.0,0.0,1.0}, x[3] = {1.0,0.0,0.0};
+    msym_symmetry_operation_t c2 = {.type = PROPER_ROTATION, .order = 2, .power = 1};
+    vcopy(x,c2.v);
+    for(int i = 0;i < n;i++){
+        int e = 1 & ~n, ie = ((i & e)), power = 1 - (ie << 1), index = k + (i >> e) + (ie ? (n >> 1) : 0);
+        memcpy(&(sops[index]), &c2, sizeof(msym_symmetry_operation_t));
+        vrotate(i*M_PI/n, c2.v, z, sops[index].v);
+        sops[index].power = power; // Used the finding of eigenvalues for character tables
+        sops[index].cla = cla + ie;
+    }
+    
+    k += n;
+    cla += 1 << (~n & 1); //1 or 2 added classes
+    printf("------ C2 %d operations %d classes------\n",k, cla);
+}
+
+void generatePointGroupSn(int n, int k, int cla, int l, msym_symmetry_operation_t sops[l]){
+    double z[3] = {0.0,0.0,1.0};
+    msym_symmetry_operation_t sn = {.type = IMPROPER_ROTATION, .order = n, .power = 1};
+    vcopy(z,sn.v);
+    int m = (n << (n & 1));
+    for(int i = 1;i <= m >> 1;i++){
+        int index = k + ((i-1) << 1);
+        symopPow(&sn, i, &sops[index]);
+        sops[index].cla = cla + i - 1;
+        printf("i = %d m = %d index = %d ",i,m,index);
+        printSymmetryOperation(&sops[index]);
+    }
+    
+    for(int i = 1;i < m >> 1;i++){
+        int index = k + 1 + ((i-1) << 1);
+        symopPow(&sn, m-i, &sops[index]);
+        sops[index].cla = cla + i - 1;
+        printf("i = %d m = %d index = %d ",i,m,index);
+        printSymmetryOperation(&sops[index]);
+        
+    }
+    k += m - 1;
+    cla += m >> 1;
+    
+    printf("------ Sn %d operations %d classes------\n",k, cla);
+}
+
+void generatePointGroupCn(int n, int k, int cla, int l, msym_symmetry_operation_t sops[l]){
+    double z[3] = {0.0,0.0,1.0};
+    msym_symmetry_operation_t cn = {.type = PROPER_ROTATION, .order = n, .power = 1};
+    vcopy(z,cn.v);
+    
+    for(int i = 1;i <= (n >> 1);i++){
+        int index = k + (i << 1) - 2;
+        symopPow(&cn, i, &sops[index]);
+        sops[index].cla = cla + (index >> 1);
+        printf("i = %d index = %d ",i,index);
+        printSymmetryOperation(&sops[index]);
+    }
+    
+    for(int i = 1;i < (n >> 1) + (n & 1);i++){
+        int index = k + (i << 1) - 1;
+        symopPow(&cn, n-i, &sops[index]);
+        sops[index].cla = cla + ((index - 1) >> 1);
+        printf("i = %d index = %d ",i,index);
+        printSymmetryOperation(&sops[index]);
+    }
+    
+    k += n - 1;
+    cla += n >> 1;
+    
+    printf("------ Cn %d operations %d classes------\n",k, cla);
+}
+
+void generatePointGroupCnh(int n, int k, int cla, int l, msym_symmetry_operation_t sops[l]){
+    double z[3] = {0.0,0.0,1.0};
+    msym_symmetry_operation_t cn = {.type = PROPER_ROTATION, .order = n, .power = 1};
+    msym_symmetry_operation_t sn = {.type = IMPROPER_ROTATION, .order = n, .power = 1};
+    vcopy(z,cn.v); vcopy(z,sn.v);
+    int s = 0;
+    
+    for(s = n;s % 2 == 0;s = s >> 1){
+        cn.order = s;
+        printf("-------- 1s = %d ---------\n",s);
+        for(int i = 1;i <= s >> 1;i += 2){
+            int index = k + ((i >> 1) << 1);
+            symopPow(&cn, i, &sops[index]);
+            sops[index].cla = cla + (i >> 1);
+            printf("i = %d s = %d index = %d ",i,s,index);
+            printSymmetryOperation(&sops[index]);
+        }
+        printf("-------- 2s = %d ---------\n",s);
+        for(int i = 1;i < s >> 1;i += 2){
+            int index = k + 1 + ((i >> 1) << 1);
+            symopPow(&cn, s-i, &sops[index]);
+            sops[index].cla = cla + (i >> 1);
+            printf("i = %d s = %d index = %d ",i,s,index);
+            printSymmetryOperation(&sops[index]);
+        }
+        
+        k += (s >> 1);
+        cla += (s >> 2) + ((s >> 1) & 1);
+        
+        printf("-------- 3s = %d ---------\n",s);
+        sn.order = s;
+        for(int i = 1;i <= s >> 1;i += 2){
+            int index = k + ((i >> 1) << 1);
+            symopPow(&sn, i, &sops[index]);
+            sops[index].cla = cla + (i >> 1);
+            printf("i = %d s = %d index = %d ",i,s,index);
+            printSymmetryOperation(&sops[index]);
+        }
+        printf("-------- 4s = %d ---------\n",s);
+        for(int i = 1;i < s >> 1;i += 2){
+            int index = k + 1 + ((i >> 1) << 1);
+            symopPow(&sn, s-i, &sops[index]);
+            sops[index].cla = cla + (i >> 1);
+            printf("i = %d s = %d index = %d ",i,s,index);
+            printSymmetryOperation(&sops[index]);
+        }
+        printf("-------- 5s = %d ---------\n",s);
+        k += (s >> 1);
+        cla += (s >> 2) + ((s >> 1) & 1);
+        
+    }
+    
+    generatePointGroupSn(s,k,cla,l,sops);
+    
+    k += (s << (s & 1)) - 1;
+    cla = sops[k-1].cla + 1;
+    
+    
+    printf("------ Cnh %d operations %d classes------\n",k, cla);
+    
+}
+
+void generatePointGroupCnv(int n, int k, int cla, int l, msym_symmetry_operation_t sops[l]){
+    generatePointGroupCn(n,k,cla,l,sops);
+    k += n-1;
+    cla = sops[k-1].cla + 1;
+    generateReflectionPlanes(n,k,cla,l,sops);
+    k += n;
+    cla = sops[k-1].cla + 1;
+    printf("------ Cnv %d operations %d classes------\n",k, cla);
+}
+
+void generatePointGroupDn(int n, int k, int cla, int l, msym_symmetry_operation_t sops[l]){
+    generatePointGroupCn(n,k,cla,l,sops);
+    k += (n << 1) - 1;
+    cla = sops[k-1].cla + 1;
+    generateReflectionPlanes(n,k,cla,l,sops);
+    k += n;
+    cla = sops[k-1].cla + 1;
+    printf("xR %d ", cla);
+    generateC2Axes(n,k,cla,l,sops);
+    k += n;
+    cla = sops[k-1].cla + 1;
+    printf("xC2 %d ", cla);
+    
+    printf("\n------ Dn %d operations %d classes------\n",k, cla);
+}
+
+void generatePointGroupDnh(int n, int k, int cla, int l, msym_symmetry_operation_t sops[l]){
+    
+    generatePointGroupCnh(n,k,cla,l,sops);
+    k += (n << 1) - 1;
+    cla = sops[k-1].cla + 1;
+    generateReflectionPlanes(n,k,cla,l,sops);
+    k += n;
+    cla = sops[k-1].cla + 1;
+    printf("xR %d ", cla);
+    generateC2Axes(n,k,cla,l,sops);
+    k += n;
+    cla = sops[k-1].cla + 1;
+    printf("xC2 %d ", cla);
+    
+    printf("\n------ Dnh %d operations %d classes------\n",k, cla);
+}
+
+void generatePointGroupDnd(int n, int k, int cla, int l, msym_symmetry_operation_t sops[l]){
+    double x[3] = {1.0,0.0,0.0}, y[3] = {0.0,1.0,0.0}, z[3] = {0.0,0.0,1.0};
+    msym_symmetry_operation_t sigma = {.type = REFLECTION, .order = 2, .power = 1};
+    msym_symmetry_operation_t c2 = {.type = PROPER_ROTATION, .order = 2, .power = 1};
+    vcopy(x,c2.v); vrotate(M_PI_2/n, y, z, sigma.v);
+    
+    generatePointGroupSn((n << 1),k,cla,l,sops);
+    k += (n << 1) - 1;
+    cla = sops[k-1].cla + 1;
+    
+    for(int i = 0;i < n;i++){
+        memcpy(&(sops[k+i]), &sigma, sizeof(msym_symmetry_operation_t));
+        vrotate(i*M_PI/n, sigma.v, z, sops[k+i].v);
+        sops[k+i].cla = cla;
+    }
+    k += n;
+    cla += 1;
+    
+    for(int i = 0;i < n;i++){
+        memcpy(&(sops[k+i]), &c2, sizeof(msym_symmetry_operation_t));
+        vrotate(i*M_PI/n, c2.v, z, sops[k+i].v);
+        sops[k+i].cla = cla;
+    }
+    k += n;
+    cla += 1;
+    
+    
+    printf("\n------ Dnd %d operations %d classes------\n",k, cla);
+}
+
+void generatePointGroupDnh2(int n, int l, msym_symmetry_operation_t sops[l]){
+    double x[3] = {1.0,0.0,0.0}, y[3] = {0.0,1.0,0.0}, z[3] = {0.0,0.0,1.0};
+    int k = 0, cla = 0, order = n == 0 ? 4 : n << 2;
+    
+    msym_symmetry_operation_t cn = {.type = PROPER_ROTATION, .order = n, .power = 1};
+    msym_symmetry_operation_t s2n = {.type = IMPROPER_ROTATION, .order = n, .power = 1};
+    msym_symmetry_operation_t c2 = {.type = PROPER_ROTATION, .order = 2, .power = -1};
+    msym_symmetry_operation_t sigma = {.type = REFLECTION, .order = 2, .power = 1};
+    vcopy(x,c2.v); vcopy(y,sigma.v); vcopy(z,cn.v); vcopy(z,s2n.v);
+    
+    sops[k].type = IDENTITY;
+    sops[k++].cla = cla++;
+    
+    if(n > 0){
+        
+        /*int m = (n << (n & 1));
+        for(int i = 1;i <= m >> 1;i++){
+            int index = k + ((i-1) << 1);
+            symopPow(&s2n, i, &sops[index]);
+            sops[index].cla = cla + i - 1;
+            printf("i = %d m = %d index = %d ",i,m,index);
+            printSymmetryOperation(&sops[index]);
+        }
+        
+        for(int i = 1;i < m >> 1;i++){
+            int index = k + 1 + ((i-1) << 1);
+            symopPow(&s2n, m-i, &sops[index]);
+            sops[index].cla = cla + i - 1;
+            printf("i = %d m = %d index = %d ",i,m,index);
+            printSymmetryOperation(&sops[index]);
+
+        }
+        
+        k += m - 1;
+        cla += m >> 1;*/
+        
+        for(int s = n << 1;s % 2 == 0;s = s >> 1){
+            printf("-------- s = %d ---------\n",s);
+            s2n.order = s >> 1;
+            int sm = (s >> ((~s >> 1) & 1));
+            for(int i = 1;i <= sm >> 1;i++){
+                int index = k + ((i-1) << 1);
+                symopPow(&s2n, i, &sops[index]);
+                sops[index].cla = cla + i - 1;
+                printf("i = %d m = %d index = %d ",i,sm,index);
+                printSymmetryOperation(&sops[index]);
+            }
+
+            for(int i = 1;i < sm >> 1;i++){
+                int index = k + 1 + ((i-1) << 1);
+                symopPow(&s2n, sm-i, &sops[index]);
+                sops[index].cla = cla + i - 1;
+                printf("i = %d m = %d index = %d ",i,sm,index);
+                printSymmetryOperation(&sops[index]);
+            }
+            
+            k += sm - 1;
+            cla += sm >> 1;
+            
+        }
+    
+        
+        /*for(int s = n;s % 2 == 0;s /= 2){
+            s2n.order = (s >> 1);
+            for(int i = 1;i < (s >> 1);i += 2){
+                int index = k + ((i >> 1) << 1);
+                symopPow(&s2n, i, &sops[index]);
+                sops[index].cla = cla + (i >> 1) - 1;
+            }
+            
+            for(int i = 1;i < (s >> 1);i += 2){
+                int index = k + 1 + ((i >> 1) << 1);
+                printf("2index = %d\n",index);
+                symopPow(&s2n, s-i, &sops[index]);
+                sops[index].cla = cla + (i >> 1) - 1;
+            }
+            
+            k += (s >> 1) + ((s >> 2) % 2);
+            //k += (s >> 2) + ((s >> 2) % 2);
+            cla += (s >> 3) + ((s >> 2) % 2);
+            //cla += (s >> 3) + ((s >> 2) % 2);
+        }*/
+        
+        for(int i = 1;i <= (n >> 1) && (~n & 1);i += 2){
+            int index = k + ((i >> 1) << 1);
+            symopPow(&cn, i, &sops[index]);
+            sops[index].cla = cla + (i >> 1) - 1;
+        }
+        
+        for(int i = 1;i < (n >> 1) && (~n & 1);i += 2){
+            int index = k + 1 + ((i >> 1) << 1), m = (n << (n & 1));
+            printf("2index = %d\n",index);
+            symopPow(&cn, m-i, &sops[index]);
+            sops[index].cla = cla + (i >> 1) - 1;
+        }
+        
+        k += (~n & 1) ? (n >> 1) : 0;
+        cla += (~n & 1) ? n >> 2 : 0;
+        
+        
+        for(int i = 0;i < n;i++){
+            int e = 1 & ~n, ie = ((i & e)), power = 1 - (ie << 1), index = k + (i >> e) + (ie ? (n >> 1) : 0);
+            
+            memcpy(&(sops[index]), &c2, sizeof(msym_symmetry_operation_t));
+            vrotate(i*M_PI/n, c2.v, z, sops[index].v);
+            sops[index].power = power; // Used the finding of eigenvalues for character tables
+            sops[index].cla = cla + ie;
+            index += n;
+            memcpy(&(sops[index]), &sigma, sizeof(msym_symmetry_operation_t));
+            vrotate(i*M_PI/n, sigma.v, z, sops[index].v);
+            sops[index].power = power;
+            sops[index].cla = cla + (1 << e) + ie;
+        }
+        
+        k += n << 1;
+        cla += 2 << (~n & 1); //2 or four added classes
+        
+        /*
+        for(int i = 1, clas = 0, sp =  n << (n % 2); i < sp;i += 2){
+            symopPow(&s2n, i, &sops[k]);
+            sops[k].cla = cla + ((i << 1)/sp ? n - (i+1)/2 : (i+1)/2 - 1) - clas;
+            clas += (sops[k].type != IMPROPER_ROTATION) && (i << 1) < sp;
+            k += sops[k].type == IMPROPER_ROTATION;
+        }
+        
+        cla += n/2 - ((n + 1) % 2);
+        
+        sops[k].type = REFLECTION; sops[k].order = 0; sops[k].power = 1;
+        vcopy(z,sops[k].v);
+        sops[k++].cla = cla++;*/
+        
+    } else {
+        sops[k].type = INVERSION;
+        sops[k].order = 0;
+        sops[k].power = 1;
+        sops[k++].cla = cla++;
+    }
+    
+    /*if((n+1) % 2){
+        sops[k].type = INVERSION;
+        sops[k].order = 0;
+        sops[k].power = 1;
+        sops[k++].cla = cla++;
+    }*/
+    
+    printf("%d sops %d order\n--------\n",k,order);
+    for(int i = 0;i < order;i++){
+
+        printSymmetryOperation(&sops[i]);
+    }
+    printf("--------\n");
+    
 }
 
 int classifySymmetryOperations(msym_point_group_t *pg){

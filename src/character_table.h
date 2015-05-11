@@ -321,6 +321,13 @@ typedef struct {
     int l;
 } CharacterTable;
 
+typedef struct _msym_irreducible_representation {
+    int d;
+    struct {
+        int p, v, h, i, l;
+    } eig;
+} msym_irreducible_representation_t;
+
 msym_error_t characterTableUnknown(int n, CharacterTable *ct);
 msym_error_t characterTableCnv(int n, CharacterTable *ct);
 msym_error_t characterTableCnh(int n, CharacterTable *ct);
@@ -329,5 +336,8 @@ msym_error_t characterTableTd(int n, CharacterTable *ct);
 msym_error_t characterTableIh(int n, CharacterTable *ct);
 
 void printCharacterTable(CharacterTable *ct);
+
+
+
 
 #endif /* defined(__MSYM__CHARACTER_TABLE_h) */
