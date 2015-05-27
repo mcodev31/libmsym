@@ -260,8 +260,8 @@ msym_error_t generateOrbitalSubspaces(msym_point_group_t *pg, int esl, msym_equi
                 permutationMatrix(&perm[i][s], mperm);
                 kron(perm[i][s].p_length,mperm,lts[l].d,lt[s],d,mkron);
                 
-                //printSymmetryOperation(&pg->sops[s]);
-                //printTransform(d, d, mkron);
+                printSymmetryOperation(&pg->sops[s]);
+                printTransform(d, d, mkron);
                 
                 for(int k = 0;k < pg->ct->l;k++){
                     lspan[l][k] += pg->ct->irrep[k].v[pg->sops[s].cla]*mltrace(d, mkron);
@@ -277,7 +277,7 @@ msym_error_t generateOrbitalSubspaces(msym_point_group_t *pg, int esl, msym_equi
                 ispan[k] = (((int)round(lspan[l][k]))/pg->order);
                 mlscale(((double) pg->ct->irrep[k].d)/pg->order, d, mlproj[k], mlproj[k]);
                 nirrepl = mgs(d, mlproj[k], mlproj[pg->ct->l], nirrepl, thresholds->orthogonalization/basisl);
-                
+                printTransform(d, d, mlproj[pg->ct->l]);
                 if(nirrepl - lirrepl != ispan[k]*pg->ct->irrep[k].d){
                     //printTransform(d, d, mlproj[k]);
                     ret = MSYM_ORBITAL_ERROR;

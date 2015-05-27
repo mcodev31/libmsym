@@ -142,7 +142,11 @@ msym_error_t msymSetElements(msym_context ctx, int length, msym_element_t elemen
     }
     
     if(ctx->ol > 0){
-        if(aorb.e - aorb.s != ctx->ol) {ret = MSYM_INVALID_ORBITALS; goto err;} //Make sure we're pointing into a sequential array
+        if(aorb.e - aorb.s != ctx->ol) { //Make sure we're pointing into a sequential array
+            ret = MSYM_INVALID_ORBITALS;
+            msymSetErrorDetails("Orbital data not in continuous memory block");
+            goto err;
+        }
         ctx->orbitals = malloc(ctx->ol*sizeof(msym_orbital_t));
         ctx->porbitals = malloc(ctx->ol*sizeof(msym_orbital_t*));
         msym_orbital_t **porb = ctx->porbitals;
