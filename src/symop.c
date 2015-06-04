@@ -88,18 +88,35 @@ void symopPow(msym_symmetry_operation_t *A, int pow, msym_symmetry_operation_t *
 
 #define PHI 1.618033988749894848204586834
 
-double symmetryOperationCharacter3D(msym_symmetry_operation_t *sop){
+double symmetryOperationCartesianCharacter(msym_symmetry_operation_t *sop){
     double x = 0.0;
     switch (sop->type) {
         case IDENTITY          : x = 3; break;
         case INVERSION         : x = -3; break;
-        case REFLECTION        : x = 1;
-        case PROPER_ROTATION   : x = 2*cos(2*M_PI/sop->order) + 1; break;
-        case IMPROPER_ROTATION : x = 2*cos(2*M_PI/sop->order) - 1; break;
+        case REFLECTION        : x = 1; break;
+        case PROPER_ROTATION   : x = 2*cos(sop->power*2*M_PI/sop->order) + 1; break;
+        case IMPROPER_ROTATION : x = 2*cos(sop->power*2*M_PI/sop->order) - 1; break;
         default:
             break;
     }
     return x;
+}
+
+/* character of spherical harmonics basis */
+double symmetryOperationYCharacter(msym_symmetry_operation_t *sop, int l){
+    double x = 0.0, a = sop->power*2*M_PI/sop->order;
+    switch (sop->type) {
+        case IDENTITY          : x = 2*l+1; break;
+        case INVERSION         : x = -2*l+1; break;
+        case REFLECTION        : x = 1; break;
+        case PROPER_ROTATION   : x = sin((l+0.5)*a)/sin(a/2); break;
+        case IMPROPER_ROTATION : x = cos((l+0.5)*a)/cos(a/2); break;
+        default:
+            break;
+    }
+    return x;
+    
+
 }
 
 double symmetryOperationCharacter(msym_symmetry_operation_t *sop, int dim, int eig){

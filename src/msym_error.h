@@ -35,7 +35,7 @@ extern "C" {
         MSYM_PERMUTATION_ERROR = -14,
         MSYM_POINT_GROUP_ERROR = -15,
         MSYM_SYMMETRIZATION_ERROR = -16,
-        MSYM_ORBITAL_ERROR = -17
+        MSYM_SUBSPACE_ERROR = -17
     };
     
     typedef enum _msym_error msym_error_t;

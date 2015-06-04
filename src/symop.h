@@ -24,6 +24,7 @@ double symmetryOperationCharacter(msym_symmetry_operation_t *sop, int d, int l);
 void copySymmetryOperation(msym_symmetry_operation_t *dst, msym_symmetry_operation_t *src);
 msym_symmetry_operation_t *findSymmetryOperation(msym_symmetry_operation_t*, msym_symmetry_operation_t*, int, msym_thresholds_t *thresholds);
 void invertSymmetryOperation(msym_symmetry_operation_t *sop, msym_symmetry_operation_t *isop);
+double symmetryOperationCartesianCharacter(msym_symmetry_operation_t *sop);
 void symmetryOperationName(msym_symmetry_operation_t* sop, int l, char buf[l]);
 void symmetryOperationShortName(msym_symmetry_operation_t* sop, int l, char buf[l]);
 void printSymmetryOperation(msym_symmetry_operation_t *sop);

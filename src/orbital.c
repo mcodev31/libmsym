@@ -20,6 +20,7 @@
 #include "symop.h"
 #include "permutation.h"
 #include "point_group.h"
+#include "subspace.h"
 
 void printTransform(int r, int c, double M[r][c]);
 void tabPrintTransform(int r, int c, double M[r][c],int indent);
@@ -260,8 +261,14 @@ msym_error_t generateOrbitalSubspaces(msym_point_group_t *pg, int esl, msym_equi
                 permutationMatrix(&perm[i][s], mperm);
                 kron(perm[i][s].p_length,mperm,lts[l].d,lt[s],d,mkron);
                 
-                printSymmetryOperation(&pg->sops[s]);
+                char buf[16];
+                symmetryOperationShortName(&pg->sops[s], 16, buf);
+                printf("%s%d=\n",buf,s);
+                //printSymmetryOperation(&pg->sops[s]);
+                
                 printTransform(d, d, mkron);
+                
+                printf("Sops = union(Sops,(%s%d,))\n",buf,s);
                 
                 for(int k = 0;k < pg->ct->l;k++){
                     lspan[l][k] += pg->ct->irrep[k].v[pg->sops[s].cla]*mltrace(d, mkron);
@@ -277,10 +284,10 @@ msym_error_t generateOrbitalSubspaces(msym_point_group_t *pg, int esl, msym_equi
                 ispan[k] = (((int)round(lspan[l][k]))/pg->order);
                 mlscale(((double) pg->ct->irrep[k].d)/pg->order, d, mlproj[k], mlproj[k]);
                 nirrepl = mgs(d, mlproj[k], mlproj[pg->ct->l], nirrepl, thresholds->orthogonalization/basisl);
-                printTransform(d, d, mlproj[pg->ct->l]);
+                //printTransform(d, d, mlproj[pg->ct->l]);
                 if(nirrepl - lirrepl != ispan[k]*pg->ct->irrep[k].d){
                     //printTransform(d, d, mlproj[k]);
-                    ret = MSYM_ORBITAL_ERROR;
+                    ret = MSYM_SUBSPACE_ERROR;
                     msymSetErrorDetails("Ortogonal subspace of dimension (%d) inconsistent with span (%d) in %s",nirrepl - lirrepl,ispan[k]*pg->ct->irrep[k].d,pg->ct->irrep[k].name);
                     goto err;
                     
@@ -315,7 +322,7 @@ msym_error_t generateOrbitalSubspaces(msym_point_group_t *pg, int esl, msym_equi
                         }
                         ss->subspacel++;
                         if(nss->basisl != d) {
-                            ret = MSYM_ORBITAL_ERROR;
+                            ret = MSYM_SUBSPACE_ERROR;
                             msymSetErrorDetails("Basis length (%d) inconsistent with projection operator dimensions (%d)",nss->basisl,d);
                             goto err;
                         }
@@ -336,6 +343,8 @@ msym_error_t generateOrbitalSubspaces(msym_point_group_t *pg, int esl, msym_equi
     *subspace = tss.subspace;
     *subspacel = tss.subspacel;
     *pspan = aspan;
+    
+    printSubspace(pg->ct, &tss);
     
     free(omap);
     free(nl);
@@ -427,81 +436,6 @@ err:
     return ret;
 }
 
-//Should filter so we don't get subspaces with just one subspace as well
-int filterSubspace(msym_subspace_t *ss){
-    int ret = 0;
-    if(ss->subspacel == 0){
-        ret = ss->d > 0 && ss->basisl > 0;
-    } else {
-        for(int i = 0;i < ss->subspacel;i++){
-            if(!filterSubspace(&ss->subspace[i])){
-                ss->subspacel--;
-                
-                if(ss->subspacel == 0){
-                    free(ss->subspace);
-                    ss->subspace = NULL;
-                    break;
-                } else {
-                    memcpy(&ss->subspace[i], &ss->subspace[ss->subspacel], sizeof(msym_subspace_t));
-                    ss->subspace = realloc(ss->subspace, sizeof(msym_subspace_t[ss->subspacel]));
-                    i--;
-                }
-                
-            }
-        }
-        ret = ss->subspacel > 0;
-    }
-    return ret;
-}
-
-
-void freeSubspace(msym_subspace_t *ss){
-    free(ss->basis.o);
-    free(ss->space);
-    for(int i = 0; i < ss->subspacel;i++){
-        freeSubspace(&ss->subspace[i]);
-    }
-    
-    free(ss->subspace);
-}
-
-
-void printSubspace(CharacterTable *ct, msym_subspace_t *ss){
-    printSubspaceTree(ct,ss,0);
-}
-
-void printSubspaceTree(CharacterTable *ct, msym_subspace_t *ss,int indent){
-    if(ct == NULL){
-        tabprintf("Subspace irrep: %d\n", indent,ss->irrep);
-    } else {
-        tabprintf("Subspace irrep: %s\n", indent,ct->irrep[ss->irrep].name);
-    }
-    if(ss->subspacel == 0){
-        if(ss->d > 0 && ss->basisl > 0){
-            tabprintf("", indent);
-            for(int i = 0;i < ss->basisl;i++) printf("  %s\t",ss->basis.o[i]->name);
-            printf("\n");
-            double (*space)[ss->basisl] = (double (*)[ss->basisl]) ss->space;
-            tabPrintTransform(ss->d,ss->basisl,space,indent);
-        } else {
-            tabprintf("No subspaces spaned\n", indent);
-        }
-    } else {
-        for(int i = 0; i < ss->subspacel;i++){
-            printSubspaceTree(ct,&ss->subspace[i],indent+1);
-        }
-    }
-}
-
-void tabprintf(char *format, int indent, ...){
-    for(int i = 0; i < indent;i++) printf("\t");
-    va_list args;
-    va_start (args, indent);
-    vprintf (format, args);
-    va_end (args);
-}
-
-
 //Density matrix without occupation numbers
 void densityMatrix(int l, double M[l][l], double D[l][l]){
     memset(D,0,sizeof(double[l][l]));
@@ -518,39 +452,5 @@ void printOrbital(msym_orbital_t *orb){
     printf("Orbital(%d,%d,%d) : %s\n",orb->n, orb->l, orb->m, orb->name);
 }
 
-void printTransform(int r, int c, double M[r][c]) {
-    
-    printf("\n[");
-    for(int i = 0;i < r;i++){
-        for(int j = 0;j<c;j++){
-            char *pre = signbit(M[i][j]) ? "" : " ";
-            char *post1 = "";
-            char *post2 = (j == (c - 1)) ? (i == (r - 1)) ? "" : ";" : " ";
-            
-            printf("%s%.8lf%s%s",pre,M[i][j],post1,post2);
-        }
-        printf("%s",(i == (r - 1)) ? "]\n" : "\n ");
-    }
-    
-}
-
-void tabPrintTransform(int r, int c, double M[r][c],int indent) {
-    if(r == 0 || c == 0) {tabprintf("[]\n",indent);return;}
-    //printf("\n");
-    tabprintf("[",indent);
-    for(int i = 0;i < r;i++){
-        for(int j = 0;j<c;j++){
-            char *pre = signbit(M[i][j]) ? "" : " ";
-            char *post1 = "\t";
-            char *post2 = (j == (c - 1)) ? (i == (r - 1)) ? "" : ";" : " ";
-            
-            printf("%s%.3lf%s%s",pre,M[i][j],post1,post2);
-        }
-        printf("%s",(i == (r - 1)) ? "]\n" : "\n ");
-        tabprintf(" ", indent);
-    }
-    printf("\n");
-    
-}
 
 

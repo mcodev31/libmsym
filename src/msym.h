@@ -93,31 +93,14 @@ extern "C" {
         double orthogonalization;               // For orthogonalizing orbital subspaces
     } msym_thresholds_t;
     
+    
+    
     typedef struct _msym_orbital {
         int n;                                  // Principal
         int l;                                  // Azimuthal
         int m;                                  // Liniear combination of magnetic quantum number (e.g. 2pz = 0, 2px = 1, 2py = -1)
         char name[8];                           // Name
     } msym_orbital_t;
-    
-    
-    typedef struct _msym_displacement {
-        double v[3];
-    } msym_displacement_t;
-    
-    typedef struct _msym_subspace {
-        msym_basis_type_t type;                 // Type
-        double *space;                          // double[d][basisl] with coefficients of orbitals
-        union {
-            msym_orbital_t **o;                 // Atomic orbital basis
-            msym_displacement_t **q;            // Mass weighted coordinates vibration basis NYI
-        } basis;                                // Basis functions
-        struct _msym_subspace *subspace;        // Subspaces
-        int d;                                  // Dimension of subspace
-        int basisl;                             // Length of basis vectors
-        int irrep;                              // Irreducable representation
-        int subspacel;                          // Number of subspaces
-    } msym_subspace_t;
     
     typedef struct _msym_element {
         msym_orbital_t **ao;                    // Pointers into block allocated list of atomic orbitals
@@ -127,6 +110,25 @@ extern "C" {
         int aol;                                // Number of atomic orbitals
         char name[4];                           // Name
     } msym_element_t;
+    
+    typedef struct _msym_displacement {
+        msym_element_t *element;
+        double v[3];
+    } msym_displacement_t;
+    
+    typedef struct _msym_subspace {
+        msym_basis_type_t type;                 // Type
+        double *space;                          // double[d][basisl] with coefficients of basis
+        union {
+            msym_orbital_t **o;                 // Atomic orbital basis
+            msym_displacement_t *q;             // Cartesian displacement coordinates (x,y,z)
+        } basis;                                // Basis functions
+        struct _msym_subspace *subspace;        // Subspaces
+        int d;                                  // Dimension of subspace
+        int basisl;                             // Length of basis vectors
+        int irrep;                              // Irreducable representation
+        int subspacel;                          // Number of subspaces
+    } msym_subspace_t;
     
     typedef struct _msym_equivalence_set {
         msym_element_t **elements;              // Pointers to elements
@@ -156,6 +158,7 @@ extern "C" {
     msym_error_t msymSymmetrizeOrbitals(msym_context ctx, int l, double c[l][l]);
     msym_error_t msymGenerateElements(msym_context ctx, int length, msym_element_t elements[length]);
     msym_error_t msymGenerateOrbitalSubspaces(msym_context ctx);
+    msym_error_t msymGenerateDisplacementSubspaces(msym_context ctx);
     msym_error_t msymGetOrbitalSubspaces(msym_context ctx, int l, double c[l][l]);
     msym_error_t msymAlignAxes(msym_context ctx);
     

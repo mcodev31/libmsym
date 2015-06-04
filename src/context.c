@@ -18,6 +18,7 @@
 #include "equivalence_set.h"
 #include "geometry.h"
 #include "linalg.h"
+#include "subspace.h"
 
 msym_thresholds_t default_thresholds = {
     .zero = DEFAULT_ZERO_THRESHOLD,
@@ -38,12 +39,15 @@ struct _msym_context {
     msym_orbital_t **porbitals;
     msym_equivalence_set_t *es;
     msym_permutation_t **es_perm;
-    msym_subspace_t *ss;
-    int *ss_span;
+    msym_subspace_t *oss;
+    msym_subspace_t *dss;
+    int *oss_span;
+    int *dss_span;
     int el;
     int ol;
     int esl;
-    int ssl;
+    int ossl;
+    int dssl;
     int es_perml;
     int sgl;
     msym_point_group_t *pg;
@@ -193,7 +197,7 @@ err:
     ctx->orbitals = NULL;
     ctx->porbitals = NULL;
     ctx->el = 0;
-    ctx->ssl = 0;
+    ctx->ossl = 0;
     ctx->ol = 0;
 
     return ret;
@@ -579,10 +583,10 @@ err:
 msym_error_t ctxGetOrbitalSubspaces(msym_context ctx, int *ssl, msym_subspace_t **ss, int **span){
     msym_error_t ret = MSYM_SUCCESS;
     if(ctx == NULL) {ret = MSYM_INVALID_CONTEXT; goto err;}
-    if(ctx->ss == NULL) {ret = MSYM_INVALID_SUBSPACE; goto err;}
-    *ssl = ctx->ssl;
-    *ss = ctx->ss;
-    *span = ctx->ss_span;
+    if(ctx->oss == NULL) {ret = MSYM_INVALID_SUBSPACE; goto err;}
+    *ssl = ctx->ossl;
+    *ss = ctx->oss;
+    *span = ctx->oss_span;
 err:
     return ret;
 }
@@ -590,9 +594,30 @@ err:
 msym_error_t ctxSetOrbitalSubspaces(msym_context ctx, int ssl, msym_subspace_t *ss, int *span){
     msym_error_t ret = MSYM_SUCCESS;
     if(MSYM_SUCCESS != (ret = ctxDestroyOrbitalSubspaces(ctx))) goto err;
-    ctx->ssl = ssl;
-    ctx->ss = ss;
-    ctx->ss_span = span;
+    ctx->ossl = ssl;
+    ctx->oss = ss;
+    ctx->oss_span = span;
+err:
+    return ret;
+}
+
+msym_error_t ctxGetDisplacementSubspaces(msym_context ctx, int *ssl, msym_subspace_t **ss, int **span){
+    msym_error_t ret = MSYM_SUCCESS;
+    if(ctx == NULL) {ret = MSYM_INVALID_CONTEXT; goto err;}
+    if(ctx->dss == NULL) {ret = MSYM_INVALID_SUBSPACE; goto err;}
+    *ssl = ctx->dssl;
+    *ss = ctx->dss;
+    *span = ctx->dss_span;
+err:
+    return ret;
+}
+
+msym_error_t ctxSetDisplacementSubspaces(msym_context ctx, int ssl, msym_subspace_t *ss, int *span){
+    msym_error_t ret = MSYM_SUCCESS;
+    if(MSYM_SUCCESS != (ret = ctxDestroyDisplacementSubspaces(ctx))) goto err;
+    ctx->dssl = ssl;
+    ctx->dss = ss;
+    ctx->dss_span = span;
 err:
     return ret;
 }
@@ -614,6 +639,7 @@ msym_error_t ctxDestroyElements(msym_context ctx){
     if(ctx == NULL) {ret = MSYM_INVALID_CONTEXT; goto err;}
     ctxDestroyEquivalcenceSets(ctx);
     ctxDestroyOrbitalSubspaces(ctx);
+    ctxDestroyDisplacementSubspaces(ctx);
     free(ctx->elements);
     free(ctx->pelements);
     free(ctx->orbitals);
@@ -698,14 +724,29 @@ err:
 msym_error_t ctxDestroyOrbitalSubspaces(msym_context ctx){
     msym_error_t ret = MSYM_SUCCESS;
     if(ctx == NULL) {ret = MSYM_INVALID_CONTEXT; goto err;}
-    for(int i = 0;i < ctx->ssl && ctx->ss != NULL;i++){
-        freeSubspace(&ctx->ss[i]);
+    for(int i = 0;i < ctx->ossl && ctx->oss != NULL;i++){
+        freeSubspace(&ctx->oss[i]);
     }
-    free(ctx->ss);
-    free(ctx->ss_span);
-    ctx->ss_span = NULL;
-    ctx->ss = NULL;
-    ctx->ssl = 0;
+    free(ctx->oss);
+    free(ctx->oss_span);
+    ctx->oss_span = NULL;
+    ctx->oss = NULL;
+    ctx->ossl = 0;
+err:
+    return ret;
+}
+
+msym_error_t ctxDestroyDisplacementSubspaces(msym_context ctx){
+    msym_error_t ret = MSYM_SUCCESS;
+    if(ctx == NULL) {ret = MSYM_INVALID_CONTEXT; goto err;}
+    for(int i = 0;i < ctx->dssl && ctx->dss != NULL;i++){
+        freeSubspace(&ctx->dss[i]);
+    }
+    free(ctx->dss);
+    free(ctx->dss_span);
+    ctx->dss_span = NULL;
+    ctx->dss = NULL;
+    ctx->dssl = 0;
 err:
     return ret;
 }

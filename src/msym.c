@@ -18,6 +18,8 @@
 #include "equivalence_set.h"
 #include "point_group.h"
 #include "symmetrize.h"
+#include "orbital.h"
+#include "vibration.h"
 #include "linalg.h"
 
 msym_error_t msymFindSymmetry(msym_context ctx){
@@ -475,6 +477,48 @@ err:
     return ret;
 }
 
+msym_error_t msymGenerateDisplacementSubspaces(msym_context ctx){
+    msym_error_t ret = MSYM_SUCCESS;
+    
+    msym_point_group_t *pg = NULL;
+    msym_equivalence_set_t *es = NULL;
+    msym_permutation_t **perm = NULL;
+    msym_thresholds_t *t = NULL;
+    msym_subspace_t *ss = NULL;
+    int *span = NULL;
+    
+    clock_t start = clock();
+    int esl = 0, perml = 0, sopsl = 0, ssl = 0;
+    
+    if(MSYM_SUCCESS != (ret = msymGetThresholds(ctx, &t))) goto err;
+    if(MSYM_SUCCESS != (ret = ctxGetPointGroup(ctx, &pg))) goto err;
+    if(pg->ct == NULL){
+        if(MSYM_SUCCESS != (ret = findCharacterTable(pg))) goto err;
+    }
+    if(MSYM_SUCCESS != (ret = ctxGetEquivalenceSets(ctx, &esl, &es))) goto err;
+    if(MSYM_SUCCESS != (ret = ctxGetEquivalenceSetPermutations(ctx, &perml, &sopsl, &perm))) goto err;
+    if(sopsl != pg->sopsl || perml != esl) {ret = MSYM_INVALID_PERMUTATION; goto err;}
+    
+    if(MSYM_SUCCESS != (ret = generateDisplacementSubspaces(pg, esl, es, perm, t, &ssl, &ss, &span))) goto err;
+    
+    clock_t end = clock();
+    double time = (double)(end - start) / CLOCKS_PER_SEC;
+    printf("time: %lf seconds to generate %d root vibrational subspaces from\n",time,ssl);
+    
+    //for(int i = 0;i < ssl;i++) printSubspace(pg->ct, &ss[i]);
+    
+    if(MSYM_SUCCESS != (ret = ctxSetDisplacementSubspaces(ctx, ssl, ss, span))) goto err;
+    
+    return ret;
+err:
+    for(int i = 0;i < ssl;i++){
+        freeSubspace(&ss[i]);
+    }
+    free(ss);
+    free(span);
+    return ret;
+}
+
 msym_error_t msymGetOrbitalSubspaces(msym_context ctx, int l, double c[l][l]){
     msym_error_t ret = MSYM_SUCCESS;
     msym_subspace_t *ss = NULL;
@@ -511,6 +555,44 @@ err:
     return ret;
 
 }
+
+msym_error_t msymGetDisplacementSubspaces(msym_context ctx, int l, double c[l][l]){
+    msym_error_t ret = MSYM_SUCCESS;
+    msym_subspace_t *ss = NULL;
+    msym_orbital_t *basis = NULL;
+    int *span = NULL;
+    int ssl = 0, basisl = 0;
+    
+    if(MSYM_SUCCESS != (ret = ctxGetOrbitals(ctx, &basisl, &basis))) goto err;
+    
+    if(basisl != l) {
+        ret = MSYM_INVALID_ORBITALS;
+        msymSetErrorDetails("Number of orbital coefficients (%d) do not match orbital basis (%d)",l,basisl);
+        goto err;
+    }
+    
+    if(MSYM_SUCCESS != (ret = ctxGetDisplacementSubspaces(ctx, &ssl, &ss,&span))){
+        if(MSYM_SUCCESS != (ret = msymGenerateDisplacementSubspaces(ctx))) goto err;
+        if(MSYM_SUCCESS != (ret = ctxGetDisplacementSubspaces(ctx, &ssl, &ss,&span))) goto err;
+    }
+    
+    //printf("getting orbital subspaces\n");
+    
+    if(MSYM_SUCCESS != (ret = getOrbitalSubspaces(ssl, ss, basisl, basis, c))) goto err;
+    
+    //msym_point_group_t *pg = NULL;
+    //if(MSYM_SUCCESS != (ret = ctxGetPointGroup(ctx, &pg))) goto err;
+    //for(int i = 0;i < ssl;i++) printSubspace(pg->ct, &ss[i]);
+    //printTransform(l,l,c);
+    
+    //printf("get ok\n");
+    
+    return ret;
+err:
+    return ret;
+    
+}
+
 
 msym_error_t msymSymmetrizeOrbitals(msym_context ctx, int l, double c[l][l]){
     msym_error_t ret = MSYM_SUCCESS;
