@@ -188,8 +188,82 @@ err:
     return ret;
 }
 
+
+msym_error_t testSpan(msym_point_group_t *pg, int esl, msym_equivalence_set_t *es, msym_permutation_t **perm, int basisl, msym_orbital_t basis[basisl], msym_thresholds_t *thresholds, int *subspacel, msym_subspace_t **subspace, int **ospan){
+    msym_error_t ret = MSYM_SUCCESS;
+    msym_subspace_t *iss = calloc(pg->ct->l, sizeof(msym_subspace_t));
+    
+    int (*ispan)[pg->ct->l] = calloc(esl,sizeof(int[pg->ct->l]));
+    int (*aspan) = calloc(pg->ct->l, sizeof(int));
+    
+    int ssl = 0;
+    
+    int lmax = -1, nmax = -1, eslmax = -1;
+    for(int i = 0;i < basisl;i++){
+        lmax = basis[i].l > lmax ? basis[i].l : lmax;
+        nmax = basis[i].n > nmax ? basis[i].n : nmax;
+    }
+    
+    lmax = 11;
+    
+    double (*lspan)[lmax] = calloc(pg->ct->l, sizeof(double[lmax]));
+    double (*pspan)[pg->ct->l] = calloc(esl, sizeof(double[pg->ct->l]));
+    
+    if(lmax < 0){ret = MSYM_INVALID_ORBITALS; return ret;} //if we goto err here, code will get ugly due to scope
+    
+    for(int k = 0;k < pg->ct->l;k++){
+        for(int l = 0; l < lmax;l++){
+            for(int s = 0; s < pg->sopsl;s++){
+                lspan[k][l] += pg->ct->irrep[k].v[pg->sops[s].cla]*symmetryOperationYCharacter(&pg->sops[s],l);
+            }
+        }
+    }
+    
+    
+    for(int l = 0; l < lmax;l++){
+        printf("spherical harmonics span %d\n",l);
+        for(int k = 0;k < pg->ct->l;k++) {
+            int ssvl = (int)round(lspan[k][l]/pg->order);
+            if(ssvl) printf(" + %d%s",ssvl,pg->ct->irrep[k].name);
+        }
+        printf("\n");
+    }
+    
+    for(int k = 0;k < pg->ct->l;k++){
+        iss[ssl].type = MASS_WEIGHTED_COORDINATES;
+        iss[ssl].irrep = k;
+        for(int i = 0;i < esl;i++){
+            for(int s = 0; s < pg->sopsl;s++){
+                int uma = 0;
+                for(int j = 0; j < perm[i][s].c_length;j++) uma += perm[i][s].c[j].l == 1;
+                pspan[i][k] += uma*pg->ct->irrep[k].v[pg->sops[s].cla];
+            }
+            
+            int ssvl = round(pg->ct->irrep[k].d*pspan[i][k]/pg->order);
+            iss[ssl].subspacel += (ssvl > 0);
+            ispan[i][k] += ssvl;
+            aspan[k] += ssvl;
+        }
+        
+        if(iss[ssl].subspacel){
+            iss[ssl].subspace = calloc(iss[ssl].subspacel, sizeof(msym_subspace_t));
+            ssl++;
+        }
+        
+        printf("permutation span %s = %d\n",pg->ct->irrep[k].name,aspan[k]);
+        for(int i = 0; i < esl;i++) printf("\tspan[%d] %s = %d\n",i,pg->ct->irrep[k].name,ispan[i][k]);
+        
+    }
+    
+    return ret;
+}
+
 msym_error_t generateOrbitalSubspaces(msym_point_group_t *pg, int esl, msym_equivalence_set_t *es, msym_permutation_t **perm, int basisl, msym_orbital_t basis[basisl], msym_thresholds_t *thresholds, int *subspacel, msym_subspace_t **subspace, int **pspan){
     msym_error_t ret = MSYM_SUCCESS;
+    
+    testSpan(pg,esl,es,perm,basisl,basis,thresholds,subspacel,subspace,pspan);
+    exit(1);
+    
     int lmax = -1, nmax = -1, eslmax = -1;
     for(int i = 0;i < basisl;i++){
         lmax = basis[i].l > lmax ? basis[i].l : lmax;
