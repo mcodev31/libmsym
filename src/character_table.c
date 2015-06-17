@@ -10,9 +10,27 @@
 
 #include <stdlib.h>
 #include <math.h>
+#include <string.h>
 
 #include "character_table.h"
 #include "point_group.h"
+#include "linalg.h"
+
+
+void decomposeRepresentation(CharacterTable *ct, double rspan[ct->l], double dspan[ct->l]){
+    int order = 0;
+    memset(dspan,0, sizeof(double[ct->l]));
+    for(int k = 0;k < ct->l;k++){
+        order += ct->classc[k];
+        for(int j = 0; j < ct->l;j++) dspan[k] += ct->classc[j]*rspan[j]*ct->irrep[k].v[j];
+    }
+    for(int k = 0;k < ct->l;k++) dspan[k] /= order;
+}
+
+void directProduct(int l, IrreducibleRepresentation *irrep1, IrreducibleRepresentation *irrep2, double pspan[l]){
+    for(int i = 0;i < l;i++) pspan[i] = irrep1->v[i]*irrep2->v[i];
+}
+
 
 msym_error_t characterTableUnknown(int n, CharacterTable *ct){
     msymSetErrorDetails("Character table unknown");

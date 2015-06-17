@@ -188,47 +188,116 @@ err:
     return ret;
 }
 
-
 msym_error_t testSpan(msym_point_group_t *pg, int esl, msym_equivalence_set_t *es, msym_permutation_t **perm, int basisl, msym_orbital_t basis[basisl], msym_thresholds_t *thresholds, int *subspacel, msym_subspace_t **subspace, int **ospan){
     msym_error_t ret = MSYM_SUCCESS;
-    msym_subspace_t *iss = calloc(pg->ct->l, sizeof(msym_subspace_t));
     
-    int (*ispan)[pg->ct->l] = calloc(esl,sizeof(int[pg->ct->l]));
-    int (*aspan) = calloc(pg->ct->l, sizeof(int));
-    
-    int ssl = 0;
-    
-    int lmax = -1, nmax = -1, eslmax = -1;
+    int lmax = -1;
     for(int i = 0;i < basisl;i++){
         lmax = basis[i].l > lmax ? basis[i].l : lmax;
-        nmax = basis[i].n > nmax ? basis[i].n : nmax;
     }
+    double (*bspan)[pg->ct->l] = calloc(lmax+1, sizeof(double[pg->ct->l])); // span of individual basis functions
+    double (*pspan)[pg->ct->l] = calloc(esl, sizeof(double[pg->ct->l]));    // span of permutation operators
+    double (*lspan)[pg->ct->l] = calloc(esl, sizeof(double[pg->ct->l]));    // total span of basis function on each ES
+    double *rspan = calloc(pg->ct->l, sizeof(double));                      // decoposed total span of symmetrized basis
+    double *mspan = calloc(pg->ct->l, sizeof(double));                      // memory for calculations
     
-    lmax = 11;
-    
-    double (*lspan)[lmax] = calloc(pg->ct->l, sizeof(double[lmax]));
-    double (*pspan)[pg->ct->l] = calloc(esl, sizeof(double[pg->ct->l]));
+    int (*les)[lmax+1] = calloc(esl, sizeof(int[lmax+1]));                  // number of l-type basis functions in each ES
     
     if(lmax < 0){ret = MSYM_INVALID_ORBITALS; return ret;} //if we goto err here, code will get ugly due to scope
     
-    for(int k = 0;k < pg->ct->l;k++){
-        for(int l = 0; l < lmax;l++){
-            for(int s = 0; s < pg->sopsl;s++){
-                lspan[k][l] += pg->ct->irrep[k].v[pg->sops[s].cla]*symmetryOperationYCharacter(&pg->sops[s],l);
+    /* determine number of l-type basis functions in each ES */
+    for(int i = 0;i < esl;i++){
+        msym_element_t *e = es[i].elements[0];
+        for(int j = 0;j < e->aol;j++){
+            les[i][e->ao[j]->l] += e->ao[j]->m == 0;
+        }
+    }
+    
+    /* calculate span of irreducible representations for basis functions and permutations */
+    for(int s = 0; s < pg->sopsl;s++){
+        for(int l = 0; l <= lmax;l++){
+            for(int k = 0;k < pg->ct->l;k++){
+                bspan[l][k] += pg->ct->irrep[k].v[pg->sops[s].cla]*symmetryOperationYCharacter(&pg->sops[s],l); //TODO: dynamic orbital/vibration
+            }
+        }
+        for(int i = 0;i < esl;i++){
+            int uma = 0;
+            for(int j = 0; j < perm[i][s].c_length;j++) uma += perm[i][s].c[j].l == 1; //this is why we loop over irreps twice
+            for(int k = 0;k < pg->ct->l;k++){
+                pspan[i][k] += uma*pg->ct->irrep[k].v[pg->sops[s].cla];
             }
         }
     }
     
-    
-    for(int l = 0; l < lmax;l++){
+    /* scale and calculate total basis function span on each ES */
+    for(int l = 0;l <= lmax;l++) vlscale(1.0/pg->order, pg->ct->l, bspan[l], bspan[l]);
+    for(int i = 0;i < esl;i++){
+        vlscale(1.0/pg->order, pg->ct->l, pspan[i], pspan[i]);
+        for(int l = 0; l <= lmax;l++){
+            //printf("lesl[%d][%d] = %d\n",i,l,lesl[i][l]);
+            if(les[i][l] == 0) continue;
+            vlscale((double) les[i][l], pg->ct->l, bspan[l], mspan);
+            vladd(pg->ct->l, mspan, lspan[i], lspan[i]);
+        }
+    }
+    /*
+    for(int l = 0; l <= lmax;l++){
         printf("spherical harmonics span %d\n",l);
         for(int k = 0;k < pg->ct->l;k++) {
-            int ssvl = (int)round(lspan[k][l]/pg->order);
+            int ssvl = (int)round(bspan[l][k]);
             if(ssvl) printf(" + %d%s",ssvl,pg->ct->irrep[k].name);
         }
         printf("\n");
     }
     
+    for(int i = 0; i < esl;i++){
+        printf("spherical harmonics total span %d\n",i);
+        for(int k = 0;k < pg->ct->l;k++) {
+            int ssvl = (int)round(lspan[i][k]);
+            if(ssvl) printf(" + %d%s",ssvl,pg->ct->irrep[k].name);
+        }
+        printf("\n");
+    }
+    
+    for(int i = 0; i < esl;i++){
+        printf("permutation  span %d\n",i);
+        for(int k = 0;k < pg->ct->l;k++) {
+            int ssvl = (int)round(pspan[i][k]);
+            if(ssvl) printf(" + %d%s",ssvl,pg->ct->irrep[k].name);
+        }
+        printf("\n");
+    }*/
+    
+    /* calculate direct product of irreducible representations spanned by basis functions and permutations on each ES */
+    for(int i = 0;i < esl;i++){
+        for(int k = 0;k < pg->ct->l;k++){
+            for(int j = 0;j < pg->ct->l && round(pspan[i][k]) > 0;j++){
+                if(round(lspan[i][j]) == 0) continue;
+                directProduct(pg->ct->l, &pg->ct->irrep[k], &pg->ct->irrep[j], mspan);
+                
+                //printf("%lf%s x %lf%s\n",pspan[i][k],pg->ct->irrep[k].name,lspan[i][j],pg->ct->irrep[j].name);
+                //for(int i = 0;i < pg->ct->l;i++) printf(" | %lf", mspan[i]);
+                //printf("\n");
+                vlscale(pspan[i][k]*lspan[i][j], pg->ct->l, mspan, mspan);
+                //for(int i = 0;i < pg->ct->l;i++) printf(" | %lf", mspan[i]);
+                //printf("\n\n");
+                
+                vladd(pg->ct->l, mspan, rspan, rspan);
+            }
+        }
+    }
+    /* decompose direct product into irreducible representations */
+    decomposeRepresentation(pg->ct, rspan, mspan);
+    
+    printf("decomposition of ");
+    
+    for(int i = 0;i < pg->ct->l;i++) printf(" + %lfx%d", rspan[i], i);
+    printf(" = ");
+    for(int i = 0;i < pg->ct->l;i++) printf(" + %d%s", (int) round(mspan[i]), pg->ct->irrep[i].name);
+    printf("\n");
+    
+    
+    /*
     for(int k = 0;k < pg->ct->l;k++){
         iss[ssl].type = MASS_WEIGHTED_COORDINATES;
         iss[ssl].irrep = k;
@@ -253,7 +322,7 @@ msym_error_t testSpan(msym_point_group_t *pg, int esl, msym_equivalence_set_t *e
         printf("permutation span %s = %d\n",pg->ct->irrep[k].name,aspan[k]);
         for(int i = 0; i < esl;i++) printf("\tspan[%d] %s = %d\n",i,pg->ct->irrep[k].name,ispan[i][k]);
         
-    }
+    }*/
     
     return ret;
 }

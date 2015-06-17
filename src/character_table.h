@@ -343,6 +343,9 @@ msym_error_t characterTableDnh(int n, CharacterTable *ct);
 msym_error_t characterTableTd(int n, CharacterTable *ct);
 msym_error_t characterTableIh(int n, CharacterTable *ct);
 
+void decomposeRepresentation(CharacterTable *ct, double rspan[ct->l], double dspan[ct->l]);
+void directProduct(int l, IrreducibleRepresentation *irrep1, IrreducibleRepresentation *irrep2, double pspan[l]);
+
 void printCharacterTable(CharacterTable *ct);
 
 
