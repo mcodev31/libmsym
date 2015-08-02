@@ -8,6 +8,7 @@
 //  Distributed under the MIT License ( See LICENSE file or copy at http://opensource.org/licenses/MIT )
 //
 
+#include <stdio.h>
 #include <stdarg.h>
 #include "msym_error.h"
 

@@ -176,6 +176,8 @@ double getCharacterCnv(int n, int k){
 msym_error_t setRepresentationName(msym_representation_t *rep);
 msym_error_t representationCharacter(int n, msym_symmetry_operation_t *sop, msym_representation_t *rep, double *c);
 msym_error_t getRepresentationsCn(int n, int rl, msym_representation_t rep[rl]);
+msym_error_t getRepresentationsDnh(int n, int rl, msym_representation_t rep[rl]);
+
 
 msym_error_t new_characterTableCn(int n, int l, msym_symmetry_operation_t sops[l], msym_character_table_t *ct){
     msym_error_t ret = MSYM_SUCCESS;

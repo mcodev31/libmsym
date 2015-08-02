@@ -66,6 +66,7 @@ void malign(double v[3], double axis[3], double m[3][3]);
 int ipow(int b, int e);
 int mgs(int l, double M[l][l], double O[l][l], int n, double t);
 void kron(int al, double A[al][al], int bl, double B[bl][bl], int cl, double C[cl][cl]);
+void kron2(int ar, int ac, double A[ar][ac], int br, int bc, double B[br][bc], double C[ar*br][ac*bc]);
 void mlFilterSmall(int l, double A[l][l]);
 void jacobi(double m[6], double e[3], double ev[3][3], double threshold);
 

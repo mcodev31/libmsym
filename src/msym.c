@@ -596,7 +596,6 @@ err:
 
 msym_error_t msymSymmetrizeOrbitals(msym_context ctx, int l, double c[l][l]){
     msym_error_t ret = MSYM_SUCCESS;
-
     msym_point_group_t *pg = NULL;
     msym_subspace_t *ss = NULL;
     msym_orbital_t *basis = NULL;

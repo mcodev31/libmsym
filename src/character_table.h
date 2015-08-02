@@ -349,6 +349,10 @@ void directProduct(int l, IrreducibleRepresentation *irrep1, IrreducibleRepresen
 void printCharacterTable(CharacterTable *ct);
 
 
+#include "symop.h"
+msym_error_t new_characterTableCn(int n, int l, msym_symmetry_operation_t sops[l], msym_character_table_t *ct);
+
+
 
 
 #endif /* defined(__MSYM__CHARACTER_TABLE_h) */

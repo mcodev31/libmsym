@@ -1,5 +1,5 @@
 LELEMENTS = msym msym_error context symmetry symmetrize linalg point_group character_table geometry orbital\
-		permutation symop equivalence_set elements
+		permutation symop equivalence_set elements vibration subspace
 
 SRC = example.c
 OBJDIR = ../obj

@@ -451,6 +451,18 @@ void kron(int al, double A[al][al], int bl, double B[bl][bl], int cl, double C[c
     }
 }
 
+void kron2(int ar, int ac, double A[ar][ac], int br, int bc, double B[br][bc], double C[ar*br][ac*bc]){
+    for(int ai = 0; ai < ar;ai++){
+        for(int aj = 0; aj < ac;aj++){
+            for(int bi = 0; bi < br;bi++){
+                for(int bj = 0; bj < bc;bj++){
+                    C[ai*br+bi][aj*bc+bj] = A[ai][aj]*B[bi][bj];
+                }
+            }
+        }
+    }
+}
+
 void vlprint(int l, double v[l]) {
     printf("[");
     for(int i = 0;i < l;i++){

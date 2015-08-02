@@ -149,6 +149,7 @@ extern "C" {
     msym_error_t msymSelectSubgroup(msym_context ctx, msym_subgroup_t *subgroup);
     msym_error_t msymGetSymmetryOperations(msym_context ctx, int *sopsl, msym_symmetry_operation_t **sops);
     msym_error_t msymGetEquivalenceSets(msym_context ctx, int *l, msym_equivalence_set_t **es);
+    msym_error_t msymGetOrbitalSubspaces(msym_context ctx, int l, double c[l][l]);
     
     msym_error_t msymFindEquivalenceSets(msym_context ctx);
     msym_error_t msymFindEquivalenceSetPermutations(msym_context ctx);
@@ -159,7 +160,6 @@ extern "C" {
     msym_error_t msymGenerateElements(msym_context ctx, int length, msym_element_t elements[length]);
     msym_error_t msymGenerateOrbitalSubspaces(msym_context ctx);
     msym_error_t msymGenerateDisplacementSubspaces(msym_context ctx);
-    msym_error_t msymGetOrbitalSubspaces(msym_context ctx, int l, double c[l][l]);
     msym_error_t msymAlignAxes(msym_context ctx);
     
     msym_error_t msymGetCenterOfMass(msym_context ctx, double v[3]);
