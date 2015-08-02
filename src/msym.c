@@ -27,7 +27,7 @@ msym_error_t msymFindSymmetry(msym_context ctx){
     int elementsl = 0, esl = 0;
     msym_element_t *elements = NULL;
     msym_thresholds_t *t = NULL;
-    msym_equivalence_set_t *es = NULL;
+    msym_equivalence_set_t *es = NULL, *des = NULL;;
     msym_point_group_t *pg = NULL;
     int sopsl = 0;
     msym_symmetry_operation_t *sops = NULL;
@@ -43,7 +43,7 @@ msym_error_t msymFindSymmetry(msym_context ctx){
     
     if(MSYM_SUCCESS != (ret = msymGetThresholds(ctx, &t))) goto err;
     
-    if(MSYM_SUCCESS != (ret = ctxGetEquivalenceSets(ctx, &esl, &es))){
+    if(MSYM_SUCCESS != (ret = ctxGetEquivalenceSets(ctx, &esl, &des))){
         if(MSYM_SUCCESS != (ret = msymFindEquivalenceSets(ctx))) goto err;
     }
     
@@ -93,6 +93,9 @@ msym_error_t msymFindSymmetry(msym_context ctx){
 err:
     free(ses);
     free(sops);
+    if(des == NULL) {
+        ctxDestroyEquivalcenceSets(ctx);
+    }
     return ret;
 }
 
