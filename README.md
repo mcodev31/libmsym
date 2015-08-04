@@ -15,6 +15,6 @@ This was initially developed as part of a masters, and is now a hobby project.
 There is no stable release yet, although the master branch will be kept as stable as possible.
 API is still subject to change (especially changes related to basis functions and irreducible representations).
 
-There are several additions/changes related to LCAO/SLAC generation, orbital symmetrization, and vibrational symmetry under development.
+There are several additions/changes related to LCAO/SALC generation, orbital symmetrization, and vibrational symmetry under development.
 
 
