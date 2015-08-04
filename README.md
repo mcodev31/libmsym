@@ -9,6 +9,12 @@ Detection, generation of permutation information and symmetrisation of above in 
 T point group protein with 15k+ elements detected and symmetrized in ~6s.
 300 symmetry adapted orbitals of minimal basis C-60 buckminster fullerene generated in 0.18s
 
-## Additional information
+## Development
 
-This was developed as a masters project. Thesis with descriptions of algorithms will be made available soon.
+This was initially developed as part of a masters, and is now a hobby project.
+There is no stable release yet, although the master branch will be kept as stable as possible.
+API is still subject to change (especially changes related to basis functions and irreducible representations).
+
+There are several additions/changes related to LCAO/SLAC generation, orbital symmetrization, and vibrational symmetry under development.
+
+
