@@ -77,7 +77,7 @@ void printSubspaceTree(CharacterTable *ct, msym_subspace_t *ss,int indent){
             for(int i = 0;i < ss->basisl;i++) {
                 char *namev[3] = {"x","y","z"};
                 if(ss->type == ATOMIC_ORBITAL){
-                    printf("  %s\t",ss->basis.o[i]->name);
+                    printf("  %s\t\t",ss->basis.o[i]->name);
                 } else if (ss->type == MASS_WEIGHTED_COORDINATES){
                     char *name = namev[(int)round(ss->basis.q[i].v[1]+2*ss->basis.q[i].v[2])];
                     printf("  %s%s\t",ss->basis.q[i].element->name,name);

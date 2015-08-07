@@ -39,7 +39,7 @@ const struct _periodic_table {
     { 16, "S", 32 },
     { 17, "Cl", 35 },
     { 18, "Ar", 40 },
-    { 19, "K", 30 },
+    { 19, "K", 39 },
     { 20, "Ca", 40 },
     { 21, "Sc", 45 },
     { 22, "Ti", 48 },
@@ -192,24 +192,17 @@ msym_error_t complementElementData(msym_element_t *element){
             goto err;
         }
     } else if(element->m > 0.0 && (strl <= 0 || element->n <= 0)){
-        int fi, fil = sizeof(periodic_table)/sizeof(periodic_table[0]);
+        int fim = 0, fil = sizeof(periodic_table)/sizeof(periodic_table[0]);
         double last = -1.0;
-        for(fi = 0; fi < fil;fi++){
+        for(int fi = 0; fi < fil;fi++){
             double diff = fabs(periodic_table[fi].massnr - element->m);
             if(diff < last || last < 0.0){
                 last = diff;
-            } else {
-                if(strl <= 0) snprintf(element->name, sizeof(element->name), "%s",periodic_table[fi].name);
-                if(element->n <= 0) element->n = periodic_table[fi].n;
-                break;
+                fim = fi;
             }
         }
-        
-        if(fi == fil){
-            msymSetErrorDetails("Cannot determine element from mass %lf",element->m); //This won't happen, but may want to have some other checking later
-            ret = MSYM_INVALID_ELEMENTS;
-            goto err;
-        }
+        if(strl <= 0) snprintf(element->name, sizeof(element->name), "%s",periodic_table[fim].name);
+        if(element->n <= 0) element->n = periodic_table[fim].n;
     }
     
 err:
