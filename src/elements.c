@@ -176,8 +176,25 @@ msym_error_t complementElementData(msym_element_t *element){
         }
     } else if(strl > 0 && (element->m <= 0.0 || element->n <= 0)){
         int fi, fil = sizeof(periodic_table)/sizeof(periodic_table[0]);
+        
         for(fi = 0; fi < fil;fi++){
-            if(0 == strncmp(periodic_table[fi].name, element->name, strnlen(periodic_table[fi].name, sizeof(element->name)))) {
+            int stre = 0;
+            for(int i = 0;i < sizeof(element->name) && i < sizeof(periodic_table[fi].name);i++){
+                char ec = element->name[i], ep = periodic_table[fi].name[i];
+                char cmp[2] = {
+                    ec >= 'A' && ec <= 'Z' ? ec | 0x60 : ec,
+                    ep >= 'A' && ep <= 'Z' ? ep | 0x60 : ep
+                };
+                if(cmp[0] != cmp[1]){
+                    stre = cmp[0] - cmp[1];
+                    break;
+                } else if (cmp[0] == '\0'){
+                    break;
+                }
+            }
+            
+            //if(0 == strncmp(periodic_table[fi].name, element->name, strnlen(periodic_table[fi].name, sizeof(element->name)))) {
+            if(0 == stre){
                 if(element->m <= 0.0) element->m = (double) periodic_table[fi].massnr;
                 if(element->n <= 0) element->n = periodic_table[fi].n;
                 break;

@@ -249,6 +249,8 @@ msym_error_t testSpan(msym_point_group_t *pg, int esl, msym_equivalence_set_t *e
     /* calculate span of irreducible representations for basis functions and permutations */
     for(int s = 0; s < pg->sopsl;s++){
         for(int l = 0; l <= lmax;l++){
+            printf("l=%d -> %lf ",l, symmetryOperationYCharacter(&pg->sops[s],l));
+            printSymmetryOperation(&pg->sops[s]);
             for(int k = 0;k < pg->ct->l;k++){
                 bspan[l][k] += pg->ct->irrep[k].v[pg->sops[s].cla]*symmetryOperationYCharacter(&pg->sops[s],l); //TODO: dynamic orbital/vibration
             }
@@ -275,7 +277,7 @@ msym_error_t testSpan(msym_point_group_t *pg, int esl, msym_equivalence_set_t *e
         
         double (*st)[d][d] = lts[l].t;
         
-        if(MSYM_SUCCESS != (ret = generateOrbitalTransforms(pg->sopsl, pg->sops, l, lts[l].t))) goto err; // generalize basis function concept
+        if(MSYM_SUCCESS != (ret = generateOrbitalTransforms(pg->sopsl, pg->sops, l, lts[l].t))) goto err; //TODO: generalize basis function concept
         
         memset(st[pg->sopsl], 0, sizeof(double[d][d]));
         
@@ -293,6 +295,7 @@ msym_error_t testSpan(msym_point_group_t *pg, int esl, msym_equivalence_set_t *e
             nirl = mgs(d, lproj, st[pg->sopsl], oirl, thresholds->orthogonalization/basisl);
             
             if(nirl - oirl != vspan){
+                printf("bspan[%d][%d] = %lf\n",l,k,bspan[l][k]);
                 ret = MSYM_SUBSPACE_ERROR;
                 msymSetErrorDetails("Ortogonal subspace of dimension (%d) inconsistent with span (%d) in %s",nirl - oirl,vspan,pg->ct->irrep[k].name);
                 goto err;
@@ -421,7 +424,7 @@ msym_error_t testSpan(msym_point_group_t *pg, int esl, msym_equivalence_set_t *e
             
             if(nirl - oirl != vspan){
                 ret = MSYM_SUBSPACE_ERROR;
-                msymSetErrorDetails("Ortogonal subspace of dimension (%d) inconsistent with span (%d) in %s",nirl - oirl,vspan,pg->ct->irrep[k].name);
+                msymSetErrorDetails("Ortogonal ES subspace of dimension (%d) inconsistent with span (%d) in %s",nirl - oirl,vspan,pg->ct->irrep[k].name);
                 goto err;
                 
             }
@@ -436,8 +439,15 @@ msym_error_t testSpan(msym_point_group_t *pg, int esl, msym_equivalence_set_t *e
                     int lvspan = pg->ct->irrep[lk].d*((int) round(bspan[l][lk])), dd = d*ld;
                     if(lvspan == 0) continue;
                     kron2(vspan, d, &porth[oirl], lvspan, ld, &lst[pg->sopsl][li], mbasis);
-                    li += bspan[l][lk];
+                    li += (int) round(bspan[l][lk]);
                     printf("%d-dimensional %s part of permutaion and %d-dimensional %s part of l=%d will produce lcao:\n",vspan,pg->ct->irrep[k].name,lvspan,pg->ct->irrep[lk].name,l);
+                    
+                    printf("%d %lf %p %p %p\n",li, (&lst[pg->sopsl][li])[0][0],&lst[pg->sopsl][li],&(lst[pg->sopsl][li]),lst[pg->sopsl]);
+                    printTransform(ld,ld,lst[pg->sopsl]);
+                    printTransform(vspan, d, &porth[oirl]);
+                    printTransform(lvspan, ld, &(lst[pg->sopsl][li]));
+                    printTransform(vspan*lvspan, dd, mbasis);
+                    
                     directProduct(pg->ct->l, &pg->ct->irrep[k], &pg->ct->irrep[lk], rspan);
                     vlscale(pspan[i][k]*bspan[l][lk], pg->ct->l, rspan, rspan);
                     decomposeRepresentation(pg->ct, rspan, mspan);
@@ -524,12 +534,47 @@ msym_error_t testSpan(msym_point_group_t *pg, int esl, msym_equivalence_set_t *e
                             //memcpy(mdec, &sbasis[si], sizeof(double[vspan*lvspan][dd]));
                             //memset(&sbasis[si], 0, sizeof(double[vspan*lvspan][dd]));
                             //TODO: placeholder
-                            double cs_char[2][6] =
-                                {[0] = {1,0,0,1,0,0},
+                            
+                            
+                            
+                            double c3v_char[2][6] =
+                                {
+                                    [0] = {1,0,0, 1,0,0},
                                     [1] = {1,0,0,-1,0,0}
                                 };
                             
+                            double d4h_char[2][16] =
+                            {
+                                
+                                [0] = {1,0,0,0,0,0,0,0, 1,0,0,0,0,0,0,0},
+                                [1] = {1,0,0,0,0,0,0,0,-1,0,0,0,0,0,0,0}
+                            };
+                            
                             char *cs_name[2] = {"A'","A''"};
+                            
+                            double (*cs_char)[pg->sopsl] = NULL;
+                            
+                            if(pg->type == POINT_GROUP_Cnv && pg->n == 3){
+                                cs_char = c3v_char;
+                                for(int s = 0;s < pg->sopsl;s++){
+                                    printf("%lf, %lf", cs_char[0][s], cs_char[1][s]);
+                                    printSymmetryOperation(&pg->sops[s]);
+                                }
+                            } else if(pg->type == POINT_GROUP_Dnh && pg->n == 4){
+                                cs_char = d4h_char;
+                                for(int s = 0;s < pg->sopsl;s++){
+                                    printf("%lf, %lf", cs_char[0][s], cs_char[1][s]);
+                                    printSymmetryOperation(&pg->sops[s]);
+                                }
+                            } else {
+                                printf("%s need subgroup characters for operations\n", pg->name);
+                                for(int s = 0;s < pg->sopsl;s++){
+                                    printf("%d ", pg->sops[s].cla);
+                                    printSymmetryOperation(&pg->sops[s]);
+                                }
+                                exit(1);
+                                
+                            }
                             
                             for(int dim = 0, doirl = 0, dnirl = 0;dim < pg->ct->irrep[sk].d;dim++, doirl = dnirl){
                                 memset(dproj, 0, sizeof(double[dd][dd]));
@@ -816,7 +861,7 @@ msym_error_t generateOrbitalSubspaces(msym_point_group_t *pg, int esl, msym_equi
                 if(nirrepl - lirrepl != ispan[k]*pg->ct->irrep[k].d){
                     //printTransform(d, d, mlproj[k]);
                     ret = MSYM_SUBSPACE_ERROR;
-                    msymSetErrorDetails("Ortogonal subspace of dimension (%d) inconsistent with span (%d) in %s",nirrepl - lirrepl,ispan[k]*pg->ct->irrep[k].d,pg->ct->irrep[k].name);
+                    msymSetErrorDetails("Ortogonal ES subspace of dimension (%d) inconsistent with span (%d) in %s",nirrepl - lirrepl,ispan[k]*pg->ct->irrep[k].d,pg->ct->irrep[k].name);
                     goto err;
                     
                 }

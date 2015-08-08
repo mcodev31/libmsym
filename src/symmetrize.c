@@ -136,6 +136,79 @@ err:
     return ret;
 }
 
+msym_error_t symmetrizeOrbitals2(msym_point_group_t *pg, int ssl, msym_subspace_t *ss, int *span, int basisl, msym_orbital_t basis[basisl], msym_thresholds_t *thresholds, double orb[basisl][basisl],double symorb[basisl][basisl]){
+    msym_error_t ret = MSYM_SUCCESS;
+    double (*proj)[pg->ct->l][basisl] = malloc(sizeof(double[basisl][pg->ct->l][basisl]));
+    double *mem = malloc(sizeof(double[basisl]));
+    double (*comp)[pg->ct->l] = malloc(sizeof(double[basisl][pg->ct->l]));
+    int *icomp = calloc(basisl,sizeof(int));
+    int (*ispan) = calloc(pg->ct->l,sizeof(int));
+    memset(proj,0,sizeof(double[basisl][pg->ct->l][basisl]));
+    
+    printf("SUBSPACES\n");
+    msym_subspace_t tss = {.subspacel = ssl, .subspace = ss, .d = 0, .basisl = 0, .space = NULL};
+    printSubspace(pg->ct, &tss);
+    
+    for(int o = 0;o < basisl;o++){
+        double mcomp = -1.0;
+        for(int k = 0;k < pg->ct->l;k++){
+            for(int s = 0;s < ssl;s++){
+                if(ss[s].irrep == k){
+                    if(MSYM_SUCCESS != (ret = addProjectionOntoSubspace(basisl, orb[o], &ss[s], basis, mem, proj[o][k]))) goto err;
+                }
+            }
+            comp[o][k] = vlabs(basisl, proj[o][k]);
+            //printf("orbital %d compinent in %s = %lf\n",o,pg->ct->irrep[k].name,comp[o][k]);
+            if(comp[o][k] > mcomp){
+                icomp[o] = k;
+                mcomp = comp[o][k];
+            }
+        }
+        ispan[icomp[o]]++;
+        printf("o = %d: ", o);
+        printTransform(1,pg->ct->l,comp[o]);
+    }
+    
+    
+    
+    for(int o = 0;o < basisl;o++){
+        //ispan[icomp[o]]++;
+        //printf("orbital %d (%lf) has largest component (%lf) in %s\n",o,vlabs(basisl,orb[o]),vlabs(basisl,proj[o][icomp[o]]),pg->ct->irrep[icomp[o]].name);
+        //scale back to full length, this is a more reasonable option, but will look at that later
+        //vlnorm2(basisl, proj[o][icomp[o]], symorb[o]);
+        //vlscale(vlabs(basisl, orb[o]), basisl, symorb[o], symorb[o]);
+        
+        //just throw away
+        vlcopy(basisl, proj[o][icomp[o]], symorb[o]);
+    }
+    
+    //printf("Orbital span (vectors) = ");
+    for(int k = 0;k < pg->ct->l;k++){
+        if(ispan[k] != span[k]){
+            msymSetErrorDetails("Projected orbitals do not span the expected irredicible representations. Expected %d%s, got %d",span[k],pg->ct->irrep[k].name,ispan[k]);
+            ret = MSYM_SYMMETRIZATION_ERROR;
+            goto err;
+        }
+        //printf(" + %d%s",ispan[k],pg->ct->irrep[k].name);
+    }
+    //printf("\n");
+    
+    
+    free(ispan);
+    free(icomp);
+    free(comp);
+    free(mem);
+    free(proj);
+    return ret;
+err:
+    free(ispan);
+    free(icomp);
+    free(comp);
+    free(mem);
+    free(proj);
+    return ret;
+}
+
 /* TODO: lots of room for optimization in this code, pressed for time 
  * This code can no longer handle tree structured subpaces, they should be removed.
  * Way too complicated (and pointless) to do recursive multidimensional averaging
@@ -160,6 +233,11 @@ msym_error_t symmetrizeOrbitals(msym_point_group_t *pg, int ssl, msym_subspace_t
     double (*dmem)[md+1] = calloc(md,sizeof(double[md+1]));
     double *dmpf = (double *) dmem;
 
+    
+    /*printf("SUBSPACES\n");
+    msym_subspace_t tss = {.subspacel = ssl, .subspace = ss, .d = 0, .basisl = 0, .space = NULL};
+    printSubspace(pg->ct, &tss);*/
+    
     /* not really needed anymore, we have can do this in the next loop */
     for(int o = 0;o < basisl;o++){
         double mcomp = -1.0;
@@ -178,6 +256,8 @@ msym_error_t symmetrizeOrbitals(msym_point_group_t *pg, int ssl, msym_subspace_t
         }
         
         ispan[icomp[o]]++;
+        printf("o = %d: ", o);
+        printTransform(1,pg->ct->l,comp[o]);
     }
     
     for(int k = 0;k < pg->ct->l;k++){
@@ -256,9 +336,6 @@ msym_error_t symmetrizeOrbitals(msym_point_group_t *pg, int ssl, msym_subspace_t
     
     //should validate pf, only 1 orb of each
     
-    msym_subspace_t tss = {.subspacel = ssl, .subspace = ss, .d = 0, .basisl = 0, .space = NULL};
-    //printSubspace(pg->ct, &tss);
-    
     for(int o = 0;o < basisl;o++){
         int dim = pg->ct->irrep[icomp[o]].d, md2 = md*md;
         if(pf[o][0] == -1 || dim <= 1) continue;
@@ -266,7 +343,7 @@ msym_error_t symmetrizeOrbitals(msym_point_group_t *pg, int ssl, msym_subspace_t
         for(int i = 0;i < dim;i++){
             printf("%d,",pf[o][i]);
         }
-        printf(" require averaging and orthogonalization\n");
+        printf(" require averaging and orthogonalization WARNING need to choose same component in all\n");
         for(int s = 0;s < ssl;s++){
             
             double avg = 0;
