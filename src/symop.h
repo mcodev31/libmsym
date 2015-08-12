@@ -20,7 +20,7 @@
 void symopPow(msym_symmetry_operation_t *A, int pow, msym_symmetry_operation_t *O);
 void applySymmetryOperation(msym_symmetry_operation_t *sop,double iv[3], double ov[3]);
 void symmetryOperationMatrix(msym_symmetry_operation_t *sop, double m[3][3]);
-double symmetryOperationCharacter(msym_symmetry_operation_t *sop, int d, int l);
+double symmetryOperationCharacter(msym_symmetry_operation_t *sop, msym_basis_function_t *f);
 void copySymmetryOperation(msym_symmetry_operation_t *dst, msym_symmetry_operation_t *src);
 msym_symmetry_operation_t *findSymmetryOperation(msym_symmetry_operation_t*, msym_symmetry_operation_t*, int, msym_thresholds_t *thresholds);
 void invertSymmetryOperation(msym_symmetry_operation_t *sop, msym_symmetry_operation_t *isop);

@@ -28,6 +28,7 @@ typedef struct {
     int sopsl;
     double transform[3][3];
     CharacterTable *ct;
+    msym_character_table_2_t *ct2;
     char name[6];
 } msym_point_group_t;
 

@@ -198,6 +198,297 @@ err:
     return ret;
 }
 
+
+
+
+msym_error_t testSpan2(msym_point_group_t *pg, int esl, msym_equivalence_set_t *es, msym_permutation_t **perm, int basisl, msym_basis_function_t basis[basisl], msym_element_t *elements, msym_equivalence_set_t **esmap, msym_thresholds_t *thresholds, int *subspacel, msym_subspace_2_t **subspace){
+    msym_error_t ret = MSYM_SUCCESS;
+    
+    int lmax = -1, nmax = 0;
+    msym_basis_type_2_t ftype = basis[0].type;
+    for(int i = 0;i < basisl;i++){
+        if(basis[i].type != ftype) {nmax = -1; break;}
+        lmax = basis[i].f.sh.l > lmax ? basis[i].f.sh.l : lmax;
+        nmax = basis[i].f.sh.n > nmax ? basis[i].f.sh.n : nmax;
+    }
+    
+    if(lmax < 0 || nmax < 1){
+        if(nmax == -1) msymSetErrorDetails("Basis functions are not of the same type");
+        else msymSetErrorDetails("Invalid sperical harmonics quantum numbers");
+        ret = MSYM_INVALID_ORBITALS;
+        return ret;
+    } else if (ftype != SPHERICAL_HARMONIC){
+        msymSetErrorDetails("Basis function type not supported");
+        ret = MSYM_INVALID_ORBITALS;
+        return ret;
+    }
+    
+    int projm = (2*lmax+1)*pg->order;
+    
+    double (*bspan)[pg->ct2->d] = calloc(lmax+1, sizeof(double[pg->ct2->d]));     // span of individual basis functions
+    double (*pspan)[pg->ct2->d] = calloc(esl, sizeof(double[pg->ct2->d]));        // span of permutation operators
+    double (*lspan)[pg->ct->l] = calloc(esl, sizeof(double[pg->ct->l]));        // total span of basis function on each ES
+    double *rspan = calloc(pg->ct->l, sizeof(double));                          // total direct product symmetrized basis
+    double *dspan = calloc(pg->ct->l, sizeof(double));                          // decoposed total span of symmetrized basis
+    double *mspan = calloc(pg->ct->l, sizeof(double));                          // span decomposition memory
+    double (*mproj)[projm] = calloc(projm, sizeof(double[projm]));              // projection operator memory
+    double (*mscal)[projm] = calloc(projm, sizeof(double[projm]));              // projection scaling memory
+    
+    
+    struct _ltransforms {int d; void *t;} *lts = calloc(lmax+1,sizeof(struct _ltransforms)); // transformation matrices for basis functions
+    
+    int (*les)[lmax+1] = calloc(esl, sizeof(int[lmax+1]));                      // number of l-type basis functions in each ES
+    
+    msym_basis_function_t dbf = {.type = ftype};
+    double (*ctable)[pg->ct2->d] = pg->ct2->table;
+    
+    /* determine number of l-type basis functions in each ES */
+    for(int o = 0;o < basisl;o++){
+        les[esmap[basis[o].element - elements] - es][basis[o].f.sh.l] += basis[o].f.sh.m == 0;
+    }
+    
+    
+    int (*lesold)[lmax+1] = calloc(esl, sizeof(int[lmax+1]));
+    for(int i = 0;i < esl;i++){
+        msym_element_t *e = es[i].elements[0];
+        for(int j = 0;j < e->aol;j++){
+            lesold[i][e->ao[j]->l] += e->ao[j]->m == 0;
+        }
+    }
+
+    
+    /* calculate span of irreducible representations for basis functions and permutations */
+    for(int s = 0; s < pg->sopsl;s++){
+        for(int l = 0; l <= lmax;l++){
+            dbf.f.sh.l = l; //TODO: function type based
+            double c = symmetryOperationCharacter(&pg->sops[s], &dbf);
+            printSymmetryOperation(&pg->sops[s]);
+            for(int k = 0;k < pg->ct2->d;k++){
+                bspan[l][k] += c*ctable[k][pg->sops[s].cla];
+            }
+        }
+        for(int i = 0;i < esl;i++){
+            int uma = 0;
+            for(int j = 0; j < perm[i][s].c_length;j++) uma += perm[i][s].c[j].l == 1; //this is why we loop over irreps twice
+            for(int k = 0;k < pg->ct2->d;k++){
+                pspan[i][k] += uma*ctable[k][pg->sops[s].cla];
+            }
+        }
+    }
+    
+    /* scale basis span, calculate basis function transforms and symmetry species vectors */
+    for(int l = 0;l <= lmax;l++){
+        int d = 2*l+1;
+        double (*lproj)[d] = mproj;
+        double (*lscal)[d] = mscal;
+        
+        vlscale(1.0/pg->order, pg->ct2->d, bspan[l], bspan[l]);
+        
+        lts[l].d = d;
+        lts[l].t = malloc(sizeof(double[pg->order+1][d][d]));
+        
+        double (*st)[d][d] = lts[l].t;
+        
+        if(MSYM_SUCCESS != (ret = generateOrbitalTransforms(pg->order, pg->sops, l, lts[l].t))) goto err; //TODO: generalize basis function concept
+        
+        memset(st[pg->order], 0, sizeof(double[d][d]));
+        
+        for(int k = 0, oirl = 0, nirl = 0;k < pg->ct2->d;k++, oirl = nirl){
+            
+            int vspan = pg->ct2->s[k].d*((int) round(bspan[l][k]));
+            if(vspan == 0) continue;
+            
+            memset(lproj, 0, sizeof(double[d][d]));
+            for(int s = 0;s < pg->order;s++){
+                mlscale(ctable[k][pg->sops[s].cla], d, st[s], lscal);
+                mladd(d, lscal, lproj, lproj);
+            }
+            
+            mlscale(((double) pg->ct2->s[k].d)/pg->order, d, lproj, lproj);
+            nirl = mgs(d, lproj, st[pg->order], oirl, thresholds->orthogonalization/basisl);
+            
+            if(nirl - oirl != vspan){
+                printf("bspan[%d][%d] = %lf\n",l,k,bspan[l][k]);
+                ret = MSYM_SUBSPACE_ERROR;
+                msymSetErrorDetails("Ortogonal subspace of dimension (%d) inconsistent with span (%d) in %s",nirl - oirl,vspan,pg->ct2->s[k].name);
+                goto err;
+                
+            }
+        }
+        
+        for(int i = 0; i < d;i++) vlnorm(d, st[pg->order][i]);
+        
+        ///////
+        for(int i = 0;i < pg->ct2->d;i++) printf(" + %d%s", (int) round(bspan[l][i]), pg->ct2->s[i].name);
+        printf("\n");
+        printTransform(d, d, st[pg->order]);
+        ///////
+        
+    }
+    
+    /* scale permutation span and calculate total basis function span on each ES */
+    for(int i = 0;i < esl;i++){
+        vlscale(1.0/pg->order, pg->ct->l, pspan[i], pspan[i]);
+        for(int l = 0; l <= lmax;l++){
+            //printf("lesl[%d][%d] = %d\n",i,l,lesl[i][l]);
+            if(les[i][l] == 0) continue;
+            les[i][l] /= es[i].length;
+            vlscale((double) les[i][l], pg->ct->l, bspan[l], mspan);
+            vladd(pg->ct->l, mspan, lspan[i], lspan[i]);
+        }
+    }
+    
+    for(int l = 0; l <= lmax;l++){
+        printf("spherical harmonics span %d\n",l);
+        for(int k = 0;k < pg->ct->l;k++) {
+            int ssvl = (int)round(bspan[l][k]);
+            if(ssvl) printf(" + %d%s",ssvl,pg->ct->irrep[k].name);
+        }
+        printf("\n");
+    }
+    
+    for(int i = 0; i < esl;i++){
+        printf("spherical harmonics total span %d\n",i);
+        for(int k = 0;k < pg->ct->l;k++) {
+            int ssvl = (int)round(lspan[i][k]);
+            if(ssvl) printf(" + %d%s",ssvl,pg->ct->irrep[k].name);
+        }
+        printf("\n");
+    }
+    
+    for(int i = 0; i < esl;i++){
+        printf("permutation  span %d\n",i);
+        for(int k = 0;k < pg->ct->l;k++) {
+            int ssvl = (int)round(pspan[i][k]);
+            if(ssvl) printf(" + %d%s",ssvl,pg->ct->irrep[k].name);
+        }
+        printf("\n");
+    }
+    
+    for(int i = 0;i < esl;i++){
+        for(int l = 0; l <= lmax;l++) {
+            if(les[i][l] != lesold[i][l]){
+                printf("les calc error %d != %d\n",les[i][l], lesold[i][l]);
+                exit(1);
+            }
+        }
+    }
+    
+    /* calculate direct product of irreducible representations spanned by basis functions and permutations on each ES (don't really need to do this) */
+    for(int i = 0;i < esl;i++){
+        for(int k = 0;k < pg->ct2->d;k++){
+            for(int j = 0;j < pg->ct2->d && round(pspan[i][k]) > 0;j++){
+                if(round(lspan[i][j]) == 0) continue;
+                printf("need direct product calc");
+                exit(1);
+                directProduct(pg->ct2->d, &pg->ct->irrep[k], &pg->ct->irrep[j], mspan);
+                
+                //printf("%lf%s x %lf%s\n",pspan[i][k],pg->ct->irrep[k].name,lspan[i][j],pg->ct->irrep[j].name);
+                //for(int i = 0;i < pg->ct->l;i++) printf(" | %lf", mspan[i]);
+                //printf("\n");
+                vlscale(pspan[i][k]*lspan[i][j], pg->ct->l, mspan, mspan);
+                //for(int i = 0;i < pg->ct->l;i++) printf(" | %lf", mspan[i]);
+                //printf("\n\n");
+                
+                vladd(pg->ct->l, mspan, rspan, rspan);
+            }
+        }
+    }
+    /* decompose direct product into irreducible representations */
+    decomposeRepresentation(pg->ct, rspan, dspan);
+    
+    printf("decomposed into\n");
+    for(int prk = 0;prk < pg->ct->l;prk++) printf(" + %d%s", (int) round(dspan[prk]), pg->ct->irrep[prk].name);
+    printf("\n");
+    int ssl = 0;
+
+
+err:
+    return ret;
+}
+
+msym_error_t testSpanConvert(msym_point_group_t *pg, int esl, msym_equivalence_set_t *es, msym_permutation_t **perm, int basisl, msym_orbital_t basis[basisl], msym_thresholds_t *thresholds, int *subspacel, msym_subspace_t **subspace, int **ospan){
+    
+    msym_character_table_2_t ct;
+    ct.d = pg->ct->l;
+    double t[ct.d][ct.d];
+    msym_symmetry_species_2_t ssp[ct.d];
+    ct.s = ssp;
+    ct.table = t;
+    for(int i = 0;i < pg->ct->l;i++){
+        memcpy(t[i], pg->ct->irrep[i].v, sizeof(double[ct.d]));
+        ssp[i].d = pg->ct->irrep[i].d;
+        sprintf(ssp[i].name, "%s",pg->ct->irrep[i].name);
+    }
+    
+    pg->ct2 = &ct;
+    double (*ctable)[pg->ct2->d] = pg->ct2->table;
+    
+    for(int i = 0;i < pg->ct->l;i++){
+        for(int j = 0;j < pg->ct->l;j++){
+            printf("%lf ",ctable[i][j]);
+        }
+        printf("\n");
+    }
+    
+    msym_basis_function_t *bs = calloc(basisl, sizeof(msym_basis_function_t));
+    
+
+    
+    for(int i = 0;i < basisl;i++){
+        bs[i].type = SPHERICAL_HARMONIC;
+        sprintf(bs[i].name, "%s",basis[i].name);
+        bs[i].f.sh.n = basis[i].n;
+        bs[i].f.sh.l = basis[i].l;
+        bs[i].f.sh.m = basis[i].m;
+        for(int j = 0;j < esl;j++){
+            for(int k = 0; k < es[j].length;k++){
+                msym_element_t *e = es[j].elements[k];
+                for(int l = 0;l < e->aol;l++){
+                    if(e->ao[l] == &basis[i]){
+                        bs[i].element = e;
+                        printf("bs[%d] = es[%d].elements[%d]->ao[%d]\n",i,j,k,l);
+                        break;
+                    }
+                }
+            }
+        }
+    }
+    
+    msym_element_t *start = NULL;
+    
+    int nelement = 0;
+    
+    
+    for(int i = 0;i < esl;i++){
+        for(int j = 0;j < es[i].length;j++){
+            if(start == NULL || es[i].elements[j] < start) start = es[i].elements[j];
+        }
+        nelement += es[i].length;
+    }
+    
+    msym_equivalence_set_t **esmap = calloc(nelement, sizeof(msym_equivalence_set_t *));
+    
+    for(int i = 0;i < esl;i++){
+        for(int j = 0;j < es[i].length;j++){
+            if(start == NULL || es[i].elements[j] < start) start = es[i].elements[j];
+        }
+    }
+    
+    for(int i = 0;i < esl;i++){
+        for(int j = 0;j < es[i].length;j++){
+            esmap[es[i].elements[j] - start] = &es[i];
+        }
+    }
+
+    
+    msym_subspace_2_t *ss = NULL;
+    
+    testSpan2(pg, esl, es, perm, basisl, bs, start, esmap, thresholds, subspacel, &ss);
+    
+    return MSYM_INVALID_CHARACTER_TABLE;
+}
+
 msym_error_t testSpan(msym_point_group_t *pg, int esl, msym_equivalence_set_t *es, msym_permutation_t **perm, int basisl, msym_orbital_t basis[basisl], msym_thresholds_t *thresholds, int *subspacel, msym_subspace_t **subspace, int **ospan){
     msym_error_t ret = MSYM_SUCCESS;
     
@@ -759,7 +1050,7 @@ err:
 msym_error_t generateOrbitalSubspaces(msym_point_group_t *pg, int esl, msym_equivalence_set_t *es, msym_permutation_t **perm, int basisl, msym_orbital_t basis[basisl], msym_thresholds_t *thresholds, int *subspacel, msym_subspace_t **subspace, int **pspan){
     msym_error_t ret = MSYM_SUCCESS;
     
-    return testSpan(pg,esl,es,perm,basisl,basis,thresholds,subspacel,subspace,pspan);
+    return testSpanConvert(pg,esl,es,perm,basisl,basis,thresholds,subspacel,subspace,pspan);
     
     //exit(1);
     

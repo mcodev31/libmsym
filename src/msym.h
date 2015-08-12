@@ -17,6 +17,7 @@ extern "C" {
 
 #include "msym_error.h"
 
+    
     typedef struct _msym_context * msym_context;
 
     typedef enum _msym_geometry {
@@ -135,6 +136,52 @@ extern "C" {
         double err;                             // Maximum error when detecting this equivalence set
         int length;                             // Number of elements
     } msym_equivalence_set_t ;
+    
+    typedef enum _msym_basis_type_2 {
+        SPHERICAL_HARMONIC,
+        CARTESIAN
+    } msym_basis_type_2_t;
+    
+    typedef struct _msym_spherical_harmonic {
+        int n;                                  // Principal
+        int l;                                  // Azimuthal
+        int m;                                  // Liniear combination of magnetic quantum number (e.g. 2pz = 0, 2px = 1, 2py = -1)
+    } msym_spherical_harmonic_t;
+    
+    typedef struct _msym_basis_function {
+        msym_basis_type_2_t type;
+        msym_element_t *element;
+        union {
+            msym_spherical_harmonic_t sh;       // Atomic orbital basis
+            msym_displacement_t cc;             // Cartesian coordinates (x,y,z) NYI
+        } f;
+        char name[8];
+    
+    } msym_basis_function_t;
+    
+    typedef struct _msym_salc {
+        double *pf; //partner functions
+        int fl; // number of basis functions
+        msym_basis_function_t **f;
+    } msym_salc_t;
+    
+    typedef struct _msym_subspace_2 {
+        int s, l; //symmetry species, irreps
+        msym_salc_t *salc;
+    } msym_subspace_2_t;
+    
+    
+    typedef struct _msym_symmetry_species {
+        int d;
+        char name[8];
+    } msym_symmetry_species_2_t;
+    
+    typedef struct _msym_character_table_2 {
+        int d;
+        msym_symmetry_species_2_t *s;
+        void *table;  //double[d][d]
+    } msym_character_table_2_t;
+    
     
     msym_context msymCreateContext();
     msym_error_t msymReleaseContext(msym_context ctx);

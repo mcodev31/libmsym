@@ -88,6 +88,21 @@ void symopPow(msym_symmetry_operation_t *A, int pow, msym_symmetry_operation_t *
 
 #define PHI 1.618033988749894848204586834
 
+double symmetryOperationCharacter(msym_symmetry_operation_t *sop, msym_basis_function_t *f){
+    double c = 0.0;
+    switch (f->type) {
+        case SPHERICAL_HARMONIC:
+            c = symmetryOperationYCharacter(sop,f->f.sh.l);
+            break;
+        case CARTESIAN :
+            c = symmetryOperationCartesianCharacter(sop);
+            break;
+        default:
+            break;
+    }
+    return c;
+}
+
 double symmetryOperationCartesianCharacter(msym_symmetry_operation_t *sop){
     double x = 0.0;
     switch (sop->type) {
@@ -120,23 +135,6 @@ double symmetryOperationYCharacter(msym_symmetry_operation_t *sop, int l){
 
 }
 
-double symmetryOperationCharacter(msym_symmetry_operation_t *sop, int dim, int eig){
-    double x = 0.0;
-    switch (sop->type) {
-        case IDENTITY          : x = dim; break;
-        case INVERSION         : x = -dim; break;
-        case REFLECTION        : x = dim - 2;
-        case PROPER_ROTATION   : {
-        }
-        case IMPROPER_ROTATION : {
-            x = 0.0;
-            break;
-        }
-        default:
-            break;
-    }
-    return x;
-}
 
 double symmetryOperationCharacter2(msym_symmetry_operation_t *sop, int dim, int eig){
     double x = 0.0;
