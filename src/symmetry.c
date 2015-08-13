@@ -1058,10 +1058,13 @@ msym_error_t reduceSymmetry(int sopsl, msym_symmetry_operation_t sops[sopsl], ms
             rsops[3].type = REFLECTION;
             rsops[4].type = PROPER_ROTATION;
             rsops[4].order = 2;
+            rsops[4].power = 1;
             rsops[5].type = PROPER_ROTATION;
             rsops[5].order = 2;
+            rsops[5].power = 1;
             rsops[6].type = PROPER_ROTATION;
             rsops[6].order = 2;
+            rsops[6].power = 1;
             
             vcopy(v, rsops[1].v);
             vcopy(cinf[1]->v, rsops[2].v);
@@ -1076,6 +1079,7 @@ msym_error_t reduceSymmetry(int sopsl, msym_symmetry_operation_t sops[sopsl], ms
             rsops[1].type = REFLECTION;
             rsops[2].type = PROPER_ROTATION;
             rsops[2].order = 2;
+            rsops[2].power = 1;
             
             vcopy(cross, rsops[1].v);
             vcopy(cross, rsops[2].v);
@@ -1096,6 +1100,7 @@ msym_error_t reduceSymmetry(int sopsl, msym_symmetry_operation_t sops[sopsl], ms
             rsops[1].type = REFLECTION;
             rsops[2].type = PROPER_ROTATION;
             rsops[2].order = 2;
+            rsops[2].power = 1;
             
             vcopy(cross, rsops[0].v);
             vcopy(v[index], rsops[1].v);
