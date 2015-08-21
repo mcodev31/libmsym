@@ -151,6 +151,10 @@ int example(const char* in_file){
 
     free(coefficients); coefficients = NULL;
     
+    /* Aligning axes prior to orbital symmetrization will
+     * change the orientation of orbitals with l >= 1 */
+    if(MSYM_SUCCESS != (ret = msymAlignAxes(ctx))) goto err;
+    
     /* Symmetrize the molecule.
      * You can do this before orbital symmetrization as well,
      * but the permutations are already built, so you don't need to */
@@ -162,13 +166,11 @@ int example(const char* in_file){
     if(MSYM_SUCCESS != (ret = msymGetElements(ctx, &mlength, &melements))) goto err;
     if(mlength != length){ printf("Not possible!\n"); goto err;}
     
-    /* Aligning axes prior to orbital symmetrization will
-     * change the orientation of orbitals with l >= 1 */
-    if(MSYM_SUCCESS != (ret = msymAlignAxes(ctx))) goto err;
+    
     
     printf("New element coordinates:\n%d\n\n",mlength);
     for(int i = 0;i < mlength;i++){
-        printf("%s %lf %lf %lf\n",
+        printf("%s %12.9lf %12.9lf %12.9lf\n",
                melements[i].name,
                melements[i].v[0],
                melements[i].v[1],
