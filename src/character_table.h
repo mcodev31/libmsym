@@ -12,7 +12,8 @@
 #define __MSYM__CHARACTER_TABLE_h
 
 #include <stdio.h>
-#include "msym_error.h"
+
+#include "msym.h"
 
 
 enum IrreducibleRepresentationEnum { A1, A2, Ag, Au, A1g, A2g, A3g, A1u, A2u, A3u, B1, B2, Bg, Bu, B1g, B2g, B3g, B1u, B2u, B3u, E, E1, E2, Eg, Eu, E1g, E2g, E1u, E2u, T, T1, T2,  T1g, T1u, T2g, T2u, Gg, Gu, Hg, Hu};
@@ -344,7 +345,11 @@ msym_error_t characterTableTd(int n, CharacterTable *ct);
 msym_error_t characterTableIh(int n, CharacterTable *ct);
 
 void decomposeRepresentation(CharacterTable *ct, double rspan[ct->l], double dspan[ct->l]);
+void decomposeRepresentation2(msym_character_table_2_t *ct, double rspan[ct->d], double dspan[ct->d]);
+
 void directProduct(int l, IrreducibleRepresentation *irrep1, IrreducibleRepresentation *irrep2, double pspan[l]);
+void directProduct2(int l, double irrep1[l], double irrep2[l], double pspan[l]);
+
 
 void printCharacterTable(CharacterTable *ct);
 

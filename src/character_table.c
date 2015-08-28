@@ -27,10 +27,25 @@ void decomposeRepresentation(CharacterTable *ct, double rspan[ct->l], double dsp
     for(int k = 0;k < ct->l;k++) dspan[k] /= order;
 }
 
+void decomposeRepresentation2(msym_character_table_2_t *ct, double rspan[ct->d], double dspan[ct->d]){
+    int order = 0;
+    double (*ctable)[ct->d] = ct->table;
+    memset(dspan,0, sizeof(double[ct->d]));
+    
+    for(int k = 0;k < ct->d;k++){
+        order += ct->classc[k];
+        for(int j = 0; j < ct->d;j++) dspan[k] += ct->classc[j]*rspan[j]*ctable[k][j];
+    }
+    for(int k = 0;k < ct->d;k++) dspan[k] /= order;
+}
+
 void directProduct(int l, IrreducibleRepresentation *irrep1, IrreducibleRepresentation *irrep2, double pspan[l]){
     for(int i = 0;i < l;i++) pspan[i] = irrep1->v[i]*irrep2->v[i];
 }
 
+void directProduct2(int l, double irrep1[l], double irrep2[l], double pspan[l]){
+    for(int i = 0;i < l;i++) pspan[i] = irrep1[i]*irrep2[i];
+}
 
 msym_error_t characterTableUnknown(int n, CharacterTable *ct){
     msymSetErrorDetails("Character table unknown");
@@ -722,4 +737,20 @@ void printCharacterTable(CharacterTable *ct){
         printf("\n");
     
     }
+}
+
+void convertNewCharacterTable(msym_point_group_t *pg){
+    msym_character_table_2_t *ct = malloc(sizeof(msym_character_table_2_t));
+    ct->d = pg->ct->l;
+    double (*t)[ct->d] = malloc(sizeof(double[ct->d][ct->d]));
+    msym_symmetry_species_2_t *ssp = malloc(sizeof(msym_symmetry_species_2_t[ct->d]));
+    ct->s = ssp;
+    ct->table = t;
+    ct->classc = pg->ct->classc;
+    for(int i = 0;i < pg->ct->l;i++){
+        memcpy(t[i], pg->ct->irrep[i].v, sizeof(double[ct->d]));
+        ssp[i].d = pg->ct->irrep[i].d;
+        sprintf(ssp[i].name, "%s",pg->ct->irrep[i].name);
+    }
+    pg->ct2 = ct;
 }

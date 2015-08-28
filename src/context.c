@@ -37,7 +37,9 @@ struct _msym_context {
     msym_element_t **pelements;
     msym_orbital_t *orbitals;
     msym_orbital_t **porbitals;
+    msym_basis_function_t *basis;
     msym_equivalence_set_t *es;
+    msym_equivalence_set_t **eesmap;
     msym_permutation_t **es_perm;
     msym_subspace_t *oss;
     msym_subspace_t *dss;
@@ -45,6 +47,7 @@ struct _msym_context {
     int *dss_span;
     int el;
     int ol;
+    int basisl;
     int esl;
     int ossl;
     int dssl;
@@ -60,6 +63,7 @@ struct _msym_context {
         msym_element_t *elements;
         msym_orbital_t *orbitals;
         msym_orbital_t **porbitals;
+        msym_basis_function_t *basis;
         msym_symmetry_operation_t *sops;
         msym_subgroup_t *sg;
         msym_equivalence_set_t *es;
@@ -266,6 +270,59 @@ err:
     return ret;
 }
 
+msym_error_t msymGetBasisFunctions(msym_context ctx, int *length, msym_basis_function_t **basis){
+    msym_error_t ret = MSYM_SUCCESS;
+    if(ctx == NULL) {ret = MSYM_INVALID_CONTEXT;goto err;}
+    if(ctx->basis == NULL) {ret = MSYM_INVALID_ORBITALS;goto err;}
+    if(ctx->ext.basis == NULL) ctx->ext.basis = malloc(sizeof(msym_basis_function_t[ctx->basisl]));
+    memcpy(ctx->ext.basis,ctx->basis,sizeof(msym_basis_function_t[ctx->basisl]));
+    for(int i = 0;i < ctx->basisl;i++) ctx->ext.basis[i].element = ctx->basis[i].element - ctx->elements + ctx->ext.elements;
+    
+    *length = ctx->basisl;
+    *basis = ctx->ext.basis;
+err:
+    return ret;
+}
+
+msym_error_t msymSetBasisFunctions(msym_context ctx, int length, msym_basis_function_t *basis){
+    msym_error_t ret = MSYM_SUCCESS;
+    if(ctx == NULL) {ret = MSYM_INVALID_CONTEXT;goto err;}
+    if(ctx->elements == NULL) {ret = MSYM_INVALID_ELEMENTS;goto err;}
+    ctxDestroyBasisFunctions(ctx);
+    ctx->basis = malloc(sizeof(msym_basis_function_t[length]));
+    memcpy(ctx->basis, basis, sizeof(msym_basis_function_t[length]));
+    for(int i = 0;i < length;i++){
+        msym_basis_function_t *bf = &ctx->basis[i];
+        if(bf->element >= ctx->ext.elements && ctx->basis[i].element < ctx->ext.elements + ctx->el){
+            bf->element = bf->element - ctx->ext.elements + ctx->elements;
+        } else {
+            ret = MSYM_INVALID_ORBITALS;
+            goto err;
+        }
+        
+        if(bf->type != SPHERICAL_HARMONIC){
+            ret = MSYM_INVALID_ORBITALS;
+            goto err;
+        }
+        
+        msym_spherical_harmonic_t *sh = &bf->f.sh;
+        
+        if(sh->n <= 0){
+            if(MSYM_SUCCESS != (ret = basisFunctionFromName(bf->name,bf))) goto err;
+        } else {
+            if(MSYM_SUCCESS != (ret = basisFunctionFromQuantumNumbers(sh->n, sh->l, sh->m, bf))) goto err;
+        }
+    }
+    
+    ctx->basisl = length;
+    
+    return ret;
+
+err:
+    free(ctx->basis);
+    ctx->basis = NULL;
+    return ret;
+}
 
 msym_error_t msymGetPointGroup(msym_context ctx, int l, char buf[l]){
     msym_error_t ret = MSYM_SUCCESS;
@@ -517,6 +574,16 @@ err:
     return ret;
 }
 
+msym_error_t ctxGetBasisFunctions(msym_context ctx, int *l, msym_basis_function_t **basis){
+    msym_error_t ret = MSYM_SUCCESS;
+    if(ctx == NULL) {ret = MSYM_INVALID_CONTEXT; goto err;}
+    if(ctx->basis == NULL) {ret = MSYM_INVALID_ORBITALS; goto err;}
+    *basis = (msym_basis_function_t *) ctx->basis;
+    *l = ctx->basisl;
+err:
+    return ret;
+}
+
 msym_error_t ctxSetCenterOfMass(msym_context ctx, double cm[3]){
     msym_error_t ret = MSYM_SUCCESS;
     if(ctx == NULL) {ret = MSYM_INVALID_CONTEXT; goto err;}
@@ -545,6 +612,19 @@ err:
 msym_error_t ctxSetEquivalenceSets(msym_context ctx, int esl, msym_equivalence_set_t *es){
     msym_error_t ret = MSYM_SUCCESS;
     if(MSYM_SUCCESS != (ret = ctxDestroyEquivalcenceSets(ctx))) goto err;
+    if(!ctx->eesmap) ctx->eesmap = calloc(ctx->el, sizeof(msym_equivalence_set_t *));
+    for(int i = 0;i < esl;i++){
+        for(int j = 0;j < es[i].length;j++){
+            ctx->eesmap[es[i].elements[j] - ctx->elements] = &es[i];
+        }
+    }
+    for(int i = 0; i < ctx->el;i++){
+        if(!ctx->eesmap[i]){
+            ret = MSYM_INVALID_EQUIVALENCE_SET;
+            msymSetErrorDetails("Element %d does not map to any equivalence set",i);
+            goto err;
+        }
+    }
     ctx->es = es;
     ctx->esl = esl;
 err:
@@ -557,6 +637,15 @@ msym_error_t ctxGetEquivalenceSets(msym_context ctx, int *esl, msym_equivalence_
     if(ctx->es == NULL) {ret = MSYM_INVALID_EQUIVALENCE_SET;goto err;}
     *es = ctx->es;
     *esl = ctx->esl;
+err:
+    return ret;
+}
+
+msym_error_t ctxGetElementEquivalenceSetMap(msym_context ctx, msym_equivalence_set_t ***eesmap){
+    msym_error_t ret = MSYM_SUCCESS;
+    if(ctx == NULL) {ret = MSYM_INVALID_CONTEXT; goto err;}
+    if(ctx->eesmap == NULL) {ret = MSYM_INVALID_EQUIVALENCE_SET;goto err;}
+    *eesmap = ctx->eesmap;
 err:
     return ret;
 }
@@ -642,17 +731,21 @@ msym_error_t ctxDestroyElements(msym_context ctx){
     ctxDestroyEquivalcenceSets(ctx);
     ctxDestroyOrbitalSubspaces(ctx);
     ctxDestroyDisplacementSubspaces(ctx);
+    ctxDestroyBasisFunctions(ctx);
     free(ctx->elements);
     free(ctx->pelements);
     free(ctx->orbitals);
     free(ctx->porbitals);
+    free(ctx->eesmap);
     free(ctx->ext.elements);
     free(ctx->ext.orbitals);
     free(ctx->ext.porbitals);
+    
     ctx->elements = NULL;
     ctx->pelements = NULL;
     ctx->orbitals = NULL;
     ctx->porbitals = NULL;
+    ctx->eesmap = NULL;
     ctx->ext.elements = NULL;
     ctx->ext.orbitals = NULL;
     ctx->ext.porbitals = NULL;
@@ -670,6 +763,7 @@ msym_error_t ctxDestroyEquivalcenceSets(msym_context ctx){
     msym_error_t ret = MSYM_SUCCESS;
     if(ctx == NULL) {ret = MSYM_INVALID_CONTEXT; goto err;}
     ctxDestroyEquivalcenceSetPermutations(ctx);
+    if(ctx->eesmap) memset(ctx->eesmap, ctx->el, sizeof(msym_equivalence_set_t *));
     free(ctx->es);
     free(ctx->ext.es);
     ctx->ext.es = NULL;
@@ -719,6 +813,18 @@ msym_error_t ctxDestroyPointGroup(msym_context ctx){
     ctx->sg = NULL;
     ctx->ext.sops = NULL;
     ctx->ext.sg = NULL;
+err:
+    return ret;
+}
+
+msym_error_t ctxDestroyBasisFunctions(msym_context ctx){
+    msym_error_t ret = MSYM_SUCCESS;
+    if(ctx == NULL) {ret = MSYM_INVALID_CONTEXT; goto err;}
+    free(ctx->basis);
+    free(ctx->ext.basis);
+    ctx->basis = NULL;
+    ctx->ext.basis = NULL;
+    ctx->basisl = 0;
 err:
     return ret;
 }

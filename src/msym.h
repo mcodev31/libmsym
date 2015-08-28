@@ -178,6 +178,7 @@ extern "C" {
     
     typedef struct _msym_character_table_2 {
         int d;
+        int *classc;
         msym_symmetry_species_2_t *s;
         void *table;  //double[d][d]
     } msym_character_table_2_t;
@@ -188,8 +189,10 @@ extern "C" {
     
     msym_error_t msymSetThresholds(msym_context ctx, msym_thresholds_t *thresholds);
     msym_error_t msymGetThresholds(msym_context ctx, msym_thresholds_t **thresholds);
-    msym_error_t msymSetElements(msym_context ctx, int length, msym_element_t elements[length]);
+    msym_error_t msymSetElements(msym_context ctx, int length, msym_element_t *elements);
     msym_error_t msymGetElements(msym_context ctx, int *length, msym_element_t **elements);
+    msym_error_t msymSetBasisFunctions(msym_context ctx, int length, msym_basis_function_t *basis);
+    msym_error_t msymGetBasisFunctions(msym_context ctx, int *length, msym_basis_function_t **basis);
     msym_error_t msymSetPointGroup(msym_context ctx, char *name);
     msym_error_t msymGetPointGroup(msym_context ctx, int l, char buf[l]);
     msym_error_t msymGetSubgroups(msym_context ctx, int *l, msym_subgroup_t **subgroups);
@@ -206,6 +209,7 @@ extern "C" {
     msym_error_t msymSymmetrizeOrbitals(msym_context ctx, int l, double c[l][l]);
     msym_error_t msymGenerateElements(msym_context ctx, int length, msym_element_t elements[length]);
     msym_error_t msymGenerateOrbitalSubspaces(msym_context ctx);
+    msym_error_t msymGenerateBasisFunctionSubspaces(msym_context ctx);
     msym_error_t msymGenerateDisplacementSubspaces(msym_context ctx);
     msym_error_t msymAlignAxes(msym_context ctx);
     

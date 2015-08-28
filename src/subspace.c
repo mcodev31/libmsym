@@ -59,6 +59,9 @@ void freeSubspace(msym_subspace_t *ss){
     free(ss->subspace);
 }
 
+
+
+
 void printSubspace(CharacterTable *ct, msym_subspace_t *ss){
     printSubspaceTree(ct,ss,0);
 }

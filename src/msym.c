@@ -480,6 +480,60 @@ err:
     return ret;
 }
 
+msym_error_t msymGenerateBasisFunctionSubspaces(msym_context ctx){
+    msym_error_t ret = MSYM_SUCCESS;
+    
+    msym_point_group_t *pg = NULL;
+    msym_basis_function_t *basis = NULL;
+    msym_equivalence_set_t *es = NULL;
+    msym_equivalence_set_t **eesmap = NULL;
+    msym_permutation_t **perm = NULL;
+    msym_thresholds_t *t = NULL;
+    msym_subspace_2_t *ss = NULL;
+    msym_element_t *elements = NULL;
+    int *span = NULL;
+    
+    clock_t start = clock();
+    int basisl = 0, esl = 0, perml = 0, sopsl = 0, ssl = 0, elementsl = 0;
+    
+    if(MSYM_SUCCESS != (ret = msymGetThresholds(ctx, &t))) goto err;
+    if(MSYM_SUCCESS != (ret = ctxGetElements(ctx, &elementsl, &elements))) goto err;
+    if(MSYM_SUCCESS != (ret = ctxGetPointGroup(ctx, &pg))) goto err;
+    if(pg->ct == NULL){
+        if(MSYM_SUCCESS != (ret = findCharacterTable(pg))) goto err;
+    }
+    if(MSYM_SUCCESS != (ret = ctxGetEquivalenceSets(ctx, &esl, &es))) goto err;
+    if(MSYM_SUCCESS != (ret = ctxGetElementEquivalenceSetMap(ctx, &eesmap))) goto err;
+    if(MSYM_SUCCESS != (ret = ctxGetBasisFunctions(ctx, &basisl, &basis))) goto err;
+    if(MSYM_SUCCESS != (ret = ctxGetEquivalenceSetPermutations(ctx, &perml, &sopsl, &perm))) goto err;
+    if(sopsl != pg->sopsl || perml != esl) {ret = MSYM_INVALID_PERMUTATION; goto err;}
+    
+    printf("have %d basis functions\n",basisl);
+    
+    //if(MSYM_SUCCESS != (ret = generateOrbitalSubspaces(pg, esl, es, perm, basisl, basis, t, &ssl, &ss, &span))) goto err;
+    printf("asdasdasd\n");
+    convertNewCharacterTable(pg);
+    if(MSYM_SUCCESS != (ret = testSpan2(pg, esl, es, perm, basisl, basis, elements, eesmap, t, &ssl, &ss, &span))) goto err;
+    printf("asdasdasd2\n");
+    
+    
+    clock_t end = clock();
+    double time = (double)(end - start) / CLOCKS_PER_SEC;
+    printf("time: %lf seconds to generate %d root orbital subspaces from %d basis functions\n",time,ssl,basisl);
+    
+    //for(int i = 0;i < ssl;i++) printSubspace(pg->ct, &ss[i]);
+    
+    //if(MSYM_SUCCESS != (ret = ctxSetOrbitalSubspaces(ctx, ssl, ss, span))) goto err;
+    
+    return ret;
+err:
+    printf("free subspace mem leak\n");
+    //exit(1);
+    free(ss);
+    free(span);
+    return ret;
+}
+
 msym_error_t msymGenerateDisplacementSubspaces(msym_context ctx){
     msym_error_t ret = MSYM_SUCCESS;
     
