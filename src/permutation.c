@@ -291,6 +291,7 @@ msym_error_t setPermutationCycles(msym_permutation_t *perm){
         perm->c[c].s = pcycle[c];
     }
     
+    
 err:
     free(icycle);
     free(pcycle);
@@ -309,7 +310,7 @@ void permutationMatrix(msym_permutation_t *perm, double m[perm->p_length][perm->
 }
 
 void printPermutation(msym_permutation_t *perm){
-    /*int l = perm->p_length;
+    int l = perm->p_length;
     printf("(");
     for(int j = 0; j < l; j++){
         printf(j == l -1 ? "%d" : "%d\t",j);
@@ -318,7 +319,7 @@ void printPermutation(msym_permutation_t *perm){
     for(int j = 0; j < l; j++){
         printf(j == l -1 ? "%d" : "%d\t",perm->p[j]);
     }
-    printf(")\n");*/
+    printf(")\n");
     
     for(msym_permutation_cycle_t* c = perm->c; c < (perm->c + perm->c_length);c++){
         printf("(");

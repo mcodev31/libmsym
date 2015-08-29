@@ -300,7 +300,7 @@ msym_error_t msymSetBasisFunctions(msym_context ctx, int length, msym_basis_func
             goto err;
         }
         
-        if(bf->type != SPHERICAL_HARMONIC){
+        if(bf->type != REAL_SPHERICAL_HARMONIC){
             ret = MSYM_INVALID_ORBITALS;
             goto err;
         }

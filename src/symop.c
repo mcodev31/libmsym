@@ -91,7 +91,7 @@ void symopPow(msym_symmetry_operation_t *A, int pow, msym_symmetry_operation_t *
 double symmetryOperationCharacter(msym_symmetry_operation_t *sop, msym_basis_function_t *f){
     double c = 0.0;
     switch (f->type) {
-        case SPHERICAL_HARMONIC:
+        case REAL_SPHERICAL_HARMONIC:
             c = symmetryOperationYCharacter(sop,f->f.sh.l);
             break;
         case CARTESIAN :

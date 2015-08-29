@@ -288,6 +288,7 @@ msym_error_t createPointGroup(msym_thresholds_t *thresholds,int n, msym_point_gr
     if(MSYM_SUCCESS != (ret = setPointGroupOrder(&pg))) goto err;
     if(MSYM_SUCCESS != (ret = setPointGroupName(sizeof(pg.name)/sizeof(char),n,type,pg.name))) goto err;
     if(MSYM_SUCCESS != (ret = symmetrizePointGroup(&pg, rpg, thresholds))) goto err;
+    
     if(((*rpg)->type == POINT_GROUP_Cnv && (*rpg)->n == 0) || ((*rpg)->type == POINT_GROUP_Dnh && (*rpg)->n == 0)){
         (*rpg)->perm = NULL;
     } else {
@@ -332,7 +333,6 @@ err:
 
 msym_error_t findPointGroup(int sopsl, msym_symmetry_operation_t *sops, msym_thresholds_t *thresholds, msym_point_group_t **pg){
     msym_error_t ret = MSYM_SUCCESS;
-    msymSetErrorDetails("");
     int inversion = 0, sigma = 0, nC[6] = {0,0,0,0,0,0}, linear = 0;
     msym_symmetry_operation_t *primary = NULL;
     msym_symmetry_operation_t *s = NULL;
@@ -760,7 +760,11 @@ msym_error_t symmetrizePointGroup(msym_point_group_t *ipg, msym_point_group_t **
         
     for(int i = 0; i < pg->sopsl;i++){
         mvmul(pg->sops[i].v,T,pg->sops[i].v);
+        if(pg->sops[i].type == PROPER_ROTATION){
+            if(pg->primary == NULL || pg->sops[i].order > pg->primary->order) pg->primary = &(pg->sops[i]);
+        }
     }
+    
     return ret;
 err:
     free(pg->sops);

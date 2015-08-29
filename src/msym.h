@@ -104,6 +104,7 @@ extern "C" {
     } msym_orbital_t;
     
     typedef struct _msym_element {
+        void *id;                               // custom identifier
         msym_orbital_t **ao;                    // Pointers into block allocated list of atomic orbitals
         double m;                               // Mass
         double v[3];                            // Position
@@ -138,7 +139,7 @@ extern "C" {
     } msym_equivalence_set_t ;
     
     typedef enum _msym_basis_type_2 {
-        SPHERICAL_HARMONIC,
+        REAL_SPHERICAL_HARMONIC,
         CARTESIAN
     } msym_basis_type_2_t;
     
@@ -149,6 +150,7 @@ extern "C" {
     } msym_spherical_harmonic_t;
     
     typedef struct _msym_basis_function {
+        void *id;                               // custom identifier
         msym_basis_type_2_t type;
         msym_element_t *element;
         union {
@@ -160,13 +162,14 @@ extern "C" {
     } msym_basis_function_t;
     
     typedef struct _msym_salc {
-        double *pf; //partner functions
-        int fl; // number of basis functions
+        double *pf;         // partner functions
+        int fl;             // number of basis functions
+        int d;              // dimension of space (same as msym_character_table_t.s[msym_subspace_t.s].d)
         msym_basis_function_t **f;
     } msym_salc_t;
     
     typedef struct _msym_subspace_2 {
-        int s, l; //symmetry species, irreps
+        int s, salcl; //symmetry species, irreps
         msym_salc_t *salc;
     } msym_subspace_2_t;
     
