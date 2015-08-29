@@ -459,6 +459,8 @@ msym_error_t testSpan2(msym_point_group_t *pg, int esl, msym_equivalence_set_t *
     /* decompose direct product into irreducible representations */
     decomposeRepresentation2(pg->ct2, rspan, dspan);
     
+    for(int prk = 0;prk < pg->ct->l;prk++) printf(" + %d%s", (int) round(dspan[prk]), pg->ct->irrep[prk].name);
+    
     for(int k = 0;k < pg->ct2->d;k++){
         ispan[k] = (int)round(dspan[k]);
         ss[k].s = k;
@@ -504,7 +506,7 @@ msym_error_t testSpan2(msym_point_group_t *pg, int esl, msym_equivalence_set_t *
                     int lvspan = pg->ct2->s[lk].d*((int) round(bspan[l][lk])), dd = d*ld;
                     if(lvspan == 0) continue;
                     kron2(vspan, d, &porth[oirl], lvspan, ld, &lst[pg->sopsl][li], mbasis);
-                    li += (int) round(bspan[l][lk]);
+                    li += lvspan;
                     
                     directProduct2(pg->ct2->d, ctable[k], ctable[lk], rspan);
                     vlscale(pspan[i][k]*bspan[l][lk], pg->ct2->d, rspan, rspan);
@@ -574,8 +576,22 @@ msym_error_t testSpan2(msym_point_group_t *pg, int esl, msym_equivalence_set_t *
                                 [0] = {1,0,0,0,0,0,0,0, 1,0,0,0,0,0,0,0},
                                 [1] = {1,0,0,0,0,0,0,0,-1,0,0,0,0,0,0,0}
                             };
+                            double td_chare[2][24] =
+                            {
+                                
+                                [0] = {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, 1,0,0,0,0,0},
+                                [1] = {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,0},
+                            };
+
+                            double td_chart[3][24] =
+                            {
+                                
+                                [0] = {1,1,-1,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+                                [1] = {1,-1,-1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+                                [2] = {1,-1,1,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}
+                            };
                             
-                            char *cs_name[2] = {"A'","A''"};
+                            char *cs_name[3] = {"A'","A''","B3"};
                             
                             double (*cs_char)[pg->sopsl] = NULL;
                             
@@ -591,6 +607,18 @@ msym_error_t testSpan2(msym_point_group_t *pg, int esl, msym_equivalence_set_t *
                                     printf("%lf, %lf", cs_char[0][s], cs_char[1][s]);
                                     printSymmetryOperation(&pg->sops[s]);
                                 }
+                            } else if(pg->type == POINT_GROUP_Td && pg->ct2->s[sk].d == 3){
+                                cs_char = td_chart;
+                                for(int s = 0;s < pg->sopsl;s++){
+                                    printf("%lf, %lf, %lf", cs_char[0][s], cs_char[1][s], cs_char[2][s]);
+                                    printSymmetryOperation(&pg->sops[s]);
+                                }
+                            } else if(pg->type == POINT_GROUP_Td && pg->ct2->s[sk].d == 2){
+                                    cs_char = td_chare;
+                                    for(int s = 0;s < pg->sopsl;s++){
+                                        printf("%lf, %lf", cs_char[0][s], cs_char[1][s]);
+                                        printSymmetryOperation(&pg->sops[s]);
+                                    }
                             } else {
                                 printf("%s need subgroup characters for operations\n", pg->name);
                                 for(int s = 0;s < pg->sopsl;s++){
@@ -612,14 +640,14 @@ msym_error_t testSpan2(msym_point_group_t *pg, int esl, msym_equivalence_set_t *
                                 }
                                 mlscale(1.0/2.0, dd, dproj, dproj);
                                 
-                                printf("constructed Cs projection operator %s\n",cs_name[dim]);
+                                printf("constructed subgroup projection operator %s\n",cs_name[dim]);
                                 printTransform(dd, dd, dproj);
                                 
                                 mmtlmul(dd,dd,dproj,svspan,&sbasis[si],dscal);
                                 
                                 memset(dproj, 0, sizeof(double[dd][dd]));
                                 mltranspose(dd, svspan, dscal, dproj);
-                                dnirl = mgs(dd, dproj, mdec, doirl, thresholds->orthogonalization/basisl);
+                                dnirl = mgs(dd, dproj, sdec, doirl, thresholds->orthogonalization/basisl);
                                 if(dnirl - doirl != round(mspan[sk])){
                                     ret = MSYM_SUBSPACE_ERROR;
                                     msymSetErrorDetails("Multi-dimensional subspace decomposition of dimension (%d) inconsistent with representaion (%d) in %s",dnirl - doirl,round(mspan[sk]),cs_name[dim]);
@@ -631,9 +659,10 @@ msym_error_t testSpan2(msym_point_group_t *pg, int esl, msym_equivalence_set_t *
                             //do apply symmetry here
                             
                             
-                            memcpy(&sbasis[si], mdec, sizeof(double[svspan][dd]));
+                            memcpy(&sbasis[si], sdec, sizeof(double[svspan][dd]));
                             int mdim = round(mspan[sk]);
-                            int found[3] = {0,0,0}, ifound = 0; //found[mdim]
+                            int found[3][3], ifound = 0; //found[mdim]
+                            memset(found,0,sizeof(int[3][3]));
                             //TODO: placeholder
                             double tmp1[2][3][60], mtmp[60][60], mtmp2[60][60];
                             //tmp1[mdim][mdim]
@@ -641,17 +670,20 @@ msym_error_t testSpan2(msym_point_group_t *pg, int esl, msym_equivalence_set_t *
                             
                             double (*g)[mdim][mdim] = tmp1;
                             double (*mt)[mdim] = mtmp;
-                            
+                            printf("mdim = %d\n",mdim);
                             for(int s = 0;s < pg->sopsl && ifound < mdim;s++){
                                 
                                 permutationMatrix(&perm[i][s], mperm);
                                 kron(d, mperm, ld, lst[s], dd, dscal);
                                 for(int dim = 0;dim < mdim;dim++){
-                                    //for(int bla -> irrep.d) more dimensions;
-                                    if(found[dim]) continue;
-                                    mmtlmul(dd, dd, dscal, mdim, &sdec[1*mdim], mt);
-                                    mmlmul(1,dd,&sdec[dim], mdim, mt, &g[1][dim]);
-                                    if(vlabs(mdim, g[1][dim]) > thresholds->zero) found[dim] = 1;
+                                    for(int sg = 1;sg < pg->ct2->s[sk].d;sg++){
+                                        if(found[sg][dim]) continue;
+                                        mmtlmul(dd, dd, dscal, mdim, &sdec[sg*mdim], mt);
+                                        mmlmul(1,dd,&sdec[dim], mdim, mt, &g[sg][dim]);
+                                        printf("v = sdec[%d]'*Sops[%d]*sdec[%d-%d] = ",dim,s,mdim,2*mdim-1);
+                                        printTransform(1, mdim, &g[sg][dim]);
+                                        if(vlabs(mdim, g[sg][dim]) > thresholds->zero) found[sg][dim] = 1;
+                                    }
                                 }
                             }
                             
@@ -662,7 +694,7 @@ msym_error_t testSpan2(msym_point_group_t *pg, int esl, msym_equivalence_set_t *
                             for(int cdim = 0;cdim < mdim;cdim++){
                                 vlnorm2(dd, sdec[cdim], sbasis[si+pg->ct2->s[sk].d*cdim]);
                             }
-                            for(int dim = 1; dim < pg->ct2->s[sk].d && dim < 2;dim++){
+                            for(int dim = 1; dim < pg->ct2->s[sk].d;dim++){
                                 mmlmul(mdim, mdim, g[dim], dd, &sdec[dim*mdim], dproj);
                                 
                                 for(int cdim = 0;cdim < mdim;cdim++){
@@ -687,7 +719,7 @@ msym_error_t testSpan2(msym_point_group_t *pg, int esl, msym_equivalence_set_t *
                                 for(int dim = 0; dim < pg->ct2->s[sk].d;dim++){
                                     vlnorm2(dd, sbasis[si+dim+ir], pf[dim]);
                                 }
-                                printTransform(pg->ct2->s[sk].d, dd, pf);
+                                //printTransform(pg->ct2->s[sk].d, dd, pf);
                                 salc->pf = (double*) pf;
                                 salc->fl = 0;
                                 salc->f = malloc(sizeof(msym_basis_function_t *[dd]));
@@ -1055,14 +1087,18 @@ msym_error_t testSpan(msym_point_group_t *pg, int esl, msym_equivalence_set_t *e
                     int lvspan = pg->ct->irrep[lk].d*((int) round(bspan[l][lk])), dd = d*ld;
                     if(lvspan == 0) continue;
                     kron2(vspan, d, &porth[oirl], lvspan, ld, &lst[pg->sopsl][li], mbasis);
-                    li += (int) round(bspan[l][lk]);
+                    
                     printf("%d-dimensional %s part of permutaion and %d-dimensional %s part of l=%d will produce lcao:\n",vspan,pg->ct->irrep[k].name,lvspan,pg->ct->irrep[lk].name,l);
                     
-                    printf("%d %lf %p %p %p\n",li, (&lst[pg->sopsl][li])[0][0],&lst[pg->sopsl][li],&(lst[pg->sopsl][li]),lst[pg->sopsl]);
+                    printf("%d %lf %p %p %p\n",li, lst[pg->sopsl][li][0],&lst[pg->sopsl][li],&(lst[pg->sopsl][li]),lst[pg->sopsl]);
+                    
+                    printf("p[%d][%d] kron lst[%d][%d] = mbasis[%d][%d]\n",vspan,d,lvspan,ld,vspan*lvspan, dd);
+                    
                     printTransform(ld,ld,lst[pg->sopsl]);
                     printTransform(vspan, d, &porth[oirl]);
-                    printTransform(lvspan, ld, &(lst[pg->sopsl][li]));
+                    printTransform(lvspan, ld, &lst[pg->sopsl][li]);
                     printTransform(vspan*lvspan, dd, mbasis);
+                    li += lvspan;//(int) round(bspan[l][lk]);
                     
                     directProduct(pg->ct->l, &pg->ct->irrep[k], &pg->ct->irrep[lk], rspan);
                     vlscale(pspan[i][k]*bspan[l][lk], pg->ct->l, rspan, rspan);
@@ -1166,7 +1202,22 @@ msym_error_t testSpan(msym_point_group_t *pg, int esl, msym_equivalence_set_t *e
                                 [1] = {1,0,0,0,0,0,0,0,-1,0,0,0,0,0,0,0}
                             };
                             
-                            char *cs_name[2] = {"A'","A''"};
+                            double td_chare[2][24] =
+                            {
+                                
+                                [0] = {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, 1,0,0,0,0,0},
+                                [1] = {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,0},
+                            };
+                            
+                            double td_chart[3][24] =
+                            {
+                                
+                                [0] = {1,1,-1,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+                                [1] = {1,-1,-1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+                                [2] = {1,-1,1,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}
+                            };
+                            
+                            char *cs_name[3] = {"A'","A''","B3"};
                             
                             double (*cs_char)[pg->sopsl] = NULL;
                             
@@ -1178,6 +1229,19 @@ msym_error_t testSpan(msym_point_group_t *pg, int esl, msym_equivalence_set_t *e
                                 }
                             } else if(pg->type == POINT_GROUP_Dnh && pg->n == 4){
                                 cs_char = d4h_char;
+                                for(int s = 0;s < pg->sopsl;s++){
+                                    printf("%lf, %lf", cs_char[0][s], cs_char[1][s]);
+                                    printSymmetryOperation(&pg->sops[s]);
+                                }
+                                
+                            } else if(pg->type == POINT_GROUP_Td && pg->ct->irrep[sk].d == 3){
+                                cs_char = td_chart;
+                                for(int s = 0;s < pg->sopsl;s++){
+                                    printf("%lf, %lf, %lf", cs_char[0][s], cs_char[1][s], cs_char[2][s]);
+                                    printSymmetryOperation(&pg->sops[s]);
+                                }
+                            } else if(pg->type == POINT_GROUP_Td && pg->ct->irrep[sk].d == 2){
+                                cs_char = td_chare;
                                 for(int s = 0;s < pg->sopsl;s++){
                                     printf("%lf, %lf", cs_char[0][s], cs_char[1][s]);
                                     printSymmetryOperation(&pg->sops[s]);
@@ -1208,16 +1272,20 @@ msym_error_t testSpan(msym_point_group_t *pg, int esl, msym_equivalence_set_t *e
                                 
                                 //mmtlmul(dd,dd,dproj,svspan,mdec,dscal);
                                 mmtlmul(dd,dd,dproj,svspan,&sbasis[si],dscal);
-                                
+                                printTransform(svspan, dd, &sbasis[si]);
+                                printf("ok1\n");
                                 memset(dproj, 0, sizeof(double[dd][dd]));
                                 mltranspose(dd, svspan, dscal, dproj);
+                                printf("ok2\n");
                                 dnirl = mgs(dd, dproj, mdec, doirl, thresholds->orthogonalization/basisl);
+                                printf("ok4\n");
                                 if(dnirl - doirl != round(mspan[sk])){
+                                    printf("Multi-dimensional subspace decomposition of dimension (%d) inconsistent with representaion (%d) in %s from %s\n",dnirl - doirl,(int)round(mspan[sk]),cs_name[dim],pg->ct->irrep[sk].name);
                                     ret = MSYM_SUBSPACE_ERROR;
-                                    msymSetErrorDetails("Multi-dimensional subspace decomposition of dimension (%d) inconsistent with representaion (%d) in %s",dnirl - doirl,round(mspan[sk]),cs_name[dim]);
+                                    msymSetErrorDetails("Multi-dimensional subspace decomposition of dimension (%d) inconsistent with representaion (%d) in %s",dnirl - doirl,(int) round(mspan[sk]),cs_name[dim]);
                                     goto err;
                                 }
-                                
+                                printf("ok3\n");
                                 for(int oi = doirl; oi < dnirl;oi++) vlnorm(dd, sdec[oi]);
                             }
                             //do apply symmetry here
@@ -1225,27 +1293,30 @@ msym_error_t testSpan(msym_point_group_t *pg, int esl, msym_equivalence_set_t *e
                             
                             memcpy(&sbasis[si], mdec, sizeof(double[svspan][dd]));
                             int mdim = round(mspan[sk]);
-                            int found[3] = {0,0,0}, ifound = 0; //found[mdim]
+                            int found[3][3], ifound = 0; //found[mdim]
+                            memset(found, 0, sizeof(int[3][3]));
                             //TODO: placeholder
-                            double tmp1[2][3][60], mtmp[60][60], mtmp2[60][60];
+                            double tmp1[3][3][60], mtmp[60][60], mtmp2[60][60];
                             //tmp1[mdim][mdim]
                             //mtmp2[dd][mdim]
                             
                             double (*g)[mdim][mdim] = tmp1;
                             double (*mt)[mdim] = mtmp;
-                            
+                            printf("asdads\n");
                             for(int s = 0;s < pg->sopsl && ifound < mdim;s++){
                                 
                                 permutationMatrix(&perm[i][s], mperm);
                                 kron(d, mperm, ld, lst[s], dd, dscal);
                                 for(int dim = 0;dim < mdim;dim++){
-                                    //for(int bla -> irrep.d) more dimensions;
-                                    if(found[dim]) continue;
-                                    mmtlmul(dd, dd, dscal, mdim, &sdec[1*mdim], mt);
-                                    mmlmul(1,dd,&sdec[dim], mdim, mt, &g[1][dim]);
-                                    printf("v = sdec[%d]'*Sops[%d]*sdec[%d-%d] = ",dim,s,mdim,2*mdim-1);
-                                    printTransform(1, mdim, &g[1][dim]);
-                                    if(vlabs(mdim, g[1][dim]) > thresholds->zero) found[dim] = 1;
+                                    for(int sg = 1;sg < pg->ct->irrep[sk].d;sg++){
+                                        if(found[sg][dim]) continue;
+                                    
+                                        mmtlmul(dd, dd, dscal, mdim, &sdec[sg*mdim], mt);
+                                        mmlmul(1,dd,&sdec[dim], mdim, mt, &g[sg][dim]);
+                                        printf("v = sdec[%d]'*Sops[%d]*sdec[%d-%d] = ",dim,s,mdim,2*mdim-1);
+                                        printTransform(1, mdim, &g[sg][dim]);
+                                        if(vlabs(mdim, g[sg][dim]) > thresholds->zero) found[sg][dim] = 1;
+                                    }
                                 }
                             }
                             
@@ -1256,7 +1327,7 @@ msym_error_t testSpan(msym_point_group_t *pg, int esl, msym_equivalence_set_t *e
                             for(int cdim = 0;cdim < mdim;cdim++){
                                 vlnorm2(dd, sdec[cdim], sbasis[si+pg->ct->irrep[sk].d*cdim]);
                             }
-                            for(int dim = 1; dim < pg->ct->irrep[sk].d && dim < 2;dim++){
+                            for(int dim = 1; dim < pg->ct->irrep[sk].d;dim++){
                                 mmlmul(mdim, mdim, g[dim], dd, &sdec[dim*mdim], dproj);
                                 
                                 for(int cdim = 0;cdim < mdim;cdim++){
@@ -1375,8 +1446,8 @@ err:
 msym_error_t generateOrbitalSubspaces(msym_point_group_t *pg, int esl, msym_equivalence_set_t *es, msym_permutation_t **perm, int basisl, msym_orbital_t basis[basisl], msym_thresholds_t *thresholds, int *subspacel, msym_subspace_t **subspace, int **pspan){
     msym_error_t ret = MSYM_SUCCESS;
     
-    //return testSpan(pg,esl,es,perm,basisl,basis,thresholds,subspacel,subspace,pspan);
-    return testSpanConvert(pg,esl,es,perm,basisl,basis,thresholds,subspacel,subspace,pspan);
+    return testSpan(pg,esl,es,perm,basisl,basis,thresholds,subspacel,subspace,pspan);
+    //return testSpanConvert(pg,esl,es,perm,basisl,basis,thresholds,subspacel,subspace,pspan);
     
     //exit(1);
     
