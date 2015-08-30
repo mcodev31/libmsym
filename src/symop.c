@@ -25,6 +25,7 @@ void symopPow(msym_symmetry_operation_t *A, int pow, msym_symmetry_operation_t *
     double origo[3] = {0.0,0.0,0.0};
     int apow, gcd;
     O->power = 1;
+    O->orientation = A->orientation;
     switch (A->type){
         case IDENTITY :
             O->type = IDENTITY;
@@ -217,10 +218,18 @@ double symmetryOperationCharacter2(msym_symmetry_operation_t *sop, int dim, int 
 }
 
 void symmetryOperationName(msym_symmetry_operation_t* sop, int l, char buf[l]){
+    char *rn = "";
+    char *cn = "";
+    switch(sop->orientation){
+        case HORIZONTAL : rn = "h"; break;
+        case VERTICAL   : rn = "v"; cn = "'"; break;
+        case DIHEDRAL   : rn = "d"; cn = "''"; break;
+        default: break;
+    }
     switch (sop->type) {
-        case PROPER_ROTATION   : snprintf(buf, l, "C%d^%d",sop->order,sop->power); break;
+        case PROPER_ROTATION   : snprintf(buf, l, "C%d%s^%d",sop->order,cn,sop->power); break;
         case IMPROPER_ROTATION : snprintf(buf, l, "S%d^%d",sop->order,sop->power); break;
-        case REFLECTION        : snprintf(buf, l, "R"); break;
+        case REFLECTION        : snprintf(buf, l, "R%s",rn); break;
         case INVERSION         : snprintf(buf, l, "i"); break;
         case IDENTITY          : snprintf(buf, l, "E"); break;
         default                : snprintf(buf, l, "?"); break;
@@ -330,6 +339,7 @@ void copySymmetryOperation(msym_symmetry_operation_t *dst, msym_symmetry_operati
     dst->order = src->order;
     dst->power = src->power;
     dst->cla = src->cla;
+    dst->orientation = src->orientation;
     vcopy(src->v, dst->v);
 }
 

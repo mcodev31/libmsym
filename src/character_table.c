@@ -566,7 +566,8 @@ msym_error_t representationCharacter(int n, msym_symmetry_operation_t *sop, msym
     double x = 0;
     
     printSymmetryOperation(sop);
-    if(sop->v[2] == 1.0){
+    if(sop->orientation == HORIZONTAL){
+    //if(sop->v[2] == 1.0){
         switch(rep->d)
         {
             case 1: {
@@ -611,8 +612,8 @@ msym_error_t representationCharacter(int n, msym_symmetry_operation_t *sop, msym
                 switch (sop->type) {
                     case IDENTITY           : x = 1; break;
                     case INVERSION          : x = rep->eig.i; break;
-                    case REFLECTION         : x = rep->eig.p == 1 ? rep->eig.h*rep->eig.v : rep->eig.h*rep->eig.v*sop->power; break;
-                    case PROPER_ROTATION    : x = rep->eig.p == 1 ? rep->eig.v : rep->eig.v*sop->power; break;
+                    case REFLECTION         : x = rep->eig.p == 1 || sop->orientation == VERTICAL ? rep->eig.h*rep->eig.v : -rep->eig.h*rep->eig.v; break;
+                    case PROPER_ROTATION    : x = rep->eig.p == 1 || sop->orientation == VERTICAL ? rep->eig.v : -rep->eig.v; break;
                     case IMPROPER_ROTATION  :
                     default :
                         ret = MSYM_INVALID_CHARACTER_TABLE;

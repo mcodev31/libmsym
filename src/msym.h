@@ -31,13 +31,6 @@ extern "C" {
         ASSYMETRIC
     } msym_geometry_t;
     
-    typedef enum _msym_symmetry_operation_type {
-        IDENTITY = 0,
-        PROPER_ROTATION = 1,
-        IMPROPER_ROTATION = 2,
-        REFLECTION = 3,
-        INVERSION = 4
-    } msym_symmetry_operation_type_t;
     
     typedef enum _msym_basis_type {
         ATOMIC_ORBITAL,
@@ -46,9 +39,21 @@ extern "C" {
     
     
     typedef struct _msym_symmetry_operation {
-        msym_symmetry_operation_type_t type;
+        enum _msym_symmetry_operation_type {
+            IDENTITY = 0,
+            PROPER_ROTATION = 1,
+            IMPROPER_ROTATION = 2,
+            REFLECTION = 3,
+            INVERSION = 4
+        } type;
         int order;                              // Order of proper/improper rotation
         int power;                              // Power (e.g. C2^2 = I)
+        enum _msym_symmetry_operation_orientation {
+            NONE = -10,
+            HORIZONTAL = -11,
+            VERTICAL = -12,
+            DIHEDRAL = -13
+        } orientation;
         double v[3];                            // Proper/improper rotation vector or reflection plane normal
         int cla;                                // Class of symmetry operation (point group dependant)
     } msym_symmetry_operation_t;
@@ -62,7 +67,7 @@ extern "C" {
         POINT_GROUP_Dn,
         POINT_GROUP_Dnh,
         POINT_GROUP_Dnd,
-        POINT_GROUP_S2n,
+        POINT_GROUP_Sn,
         POINT_GROUP_T,
         POINT_GROUP_Td,
         POINT_GROUP_Th,
