@@ -480,7 +480,7 @@ err:
     return ret;
 }
 
-msym_error_t msymGenerateBasisFunctionSubspaces(msym_context ctx){
+msym_error_t msymGenerateSALCSubspaces(msym_context ctx){
     msym_error_t ret = MSYM_SUCCESS;
     
     msym_point_group_t *pg = NULL;
@@ -491,10 +491,11 @@ msym_error_t msymGenerateBasisFunctionSubspaces(msym_context ctx){
     msym_thresholds_t *t = NULL;
     msym_subspace_2_t *ss = NULL;
     msym_element_t *elements = NULL;
+    msym_subgroup_t *sg = NULL;
     int *span = NULL;
     
     clock_t start = clock();
-    int basisl = 0, esl = 0, perml = 0, sopsl = 0, ssl = 0, elementsl = 0;
+    int basisl = 0, esl = 0, perml = 0, sopsl = 0, ssl = 0, elementsl = 0, sgl = 0;
     
     if(MSYM_SUCCESS != (ret = msymGetThresholds(ctx, &t))) goto err;
     if(MSYM_SUCCESS != (ret = ctxGetElements(ctx, &elementsl, &elements))) goto err;
@@ -508,18 +509,28 @@ msym_error_t msymGenerateBasisFunctionSubspaces(msym_context ctx){
     if(MSYM_SUCCESS != (ret = ctxGetEquivalenceSetPermutations(ctx, &perml, &sopsl, &perm))) goto err;
     if(sopsl != pg->sopsl || perml != esl) {ret = MSYM_INVALID_PERMUTATION; goto err;}
     
-    printf("have %d basis functions\n",basisl);
-    
-    //if(MSYM_SUCCESS != (ret = generateOrbitalSubspaces(pg, esl, es, perm, basisl, basis, t, &ssl, &ss, &span))) goto err;
-    printf("asdasdasd\n");
     convertNewCharacterTable(pg);
-    if(MSYM_SUCCESS != (ret = testSpan2(pg, esl, es, perm, basisl, basis, elements, eesmap, t, &ssl, &ss, &span))) goto err;
-    printf("asdasdasd2\n");
+    
+    if(MSYM_SUCCESS != (ret = ctxGetSubgroups(ctx, &sgl, &sg))){
+        int sgmax = numberOfSubgroups(pg);
+        if(MSYM_SUCCESS != (ret = findPermutationSubgroups(pg->order, pg->perm, sgmax, pg->sops, &sgl, &sg))) goto err;
+        
+        for(int i = 0;i < sgl;i++){
+            if(MSYM_SUCCESS != (ret = findSubgroup(&sg[i], t))) goto err;
+        }
+        if(sgl > 0){
+            ctxSetSubgroups(ctx, sgl, sg);
+        }
+    }
+    
+    if(MSYM_SUCCESS != (ret = testSpan2(pg, sgl, sg, esl, es, perm, basisl, basis, elements, eesmap, t, &ssl, &ss, &span))) goto err;
+    
+    if(MSYM_SUCCESS != (ret = ctxSetSALCSubspaces(ctx,ssl,ss,span))) goto err;
     
     
     clock_t end = clock();
     double time = (double)(end - start) / CLOCKS_PER_SEC;
-    printf("time: %lf seconds to generate %d root orbital subspaces from %d basis functions\n",time,ssl,basisl);
+    printf("time: %lf seconds to generate %d root basis function subspaces from %d basis functions\n",time,ssl,basisl);
     
     //for(int i = 0;i < ssl;i++) printSubspace(pg->ct, &ss[i]);
     

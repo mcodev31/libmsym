@@ -212,7 +212,7 @@ extern "C" {
     msym_error_t msymSymmetrizeOrbitals(msym_context ctx, int l, double c[l][l]);
     msym_error_t msymGenerateElements(msym_context ctx, int length, msym_element_t elements[length]);
     msym_error_t msymGenerateOrbitalSubspaces(msym_context ctx);
-    msym_error_t msymGenerateBasisFunctionSubspaces(msym_context ctx);
+    msym_error_t msymGenerateSALCSubspaces(msym_context ctx);
     msym_error_t msymGenerateDisplacementSubspaces(msym_context ctx);
     msym_error_t msymAlignAxes(msym_context ctx);
     

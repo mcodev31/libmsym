@@ -36,6 +36,7 @@ const struct _errordesc {
     { MSYM_INVALID_GEOMETRY, "Invalid geometry" },
     { MSYM_INVALID_CHARACTER_TABLE, "Invalid character table" },
     { MSYM_INVALID_SUBSPACE, "Invalid subspace" },
+    { MSYM_INVALID_SUBGROUPS, "Invalid subgroups" },
     { MSYM_INVALID_AXES, "Invalid axes" },
     { MSYM_SYMMETRY_ERROR, "Error determining symmetry operations" },
     { MSYM_PERMUTATION_ERROR, "Error determining permutation" },

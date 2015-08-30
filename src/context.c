@@ -43,14 +43,17 @@ struct _msym_context {
     msym_permutation_t **es_perm;
     msym_subspace_t *oss;
     msym_subspace_t *dss;
+    msym_subspace_2_t *salc_ss;
     int *oss_span;
     int *dss_span;
+    int *salc_span;
     int el;
     int ol;
     int basisl;
     int esl;
     int ossl;
     int dssl;
+    int salc_ssl;
     int es_perml;
     int sgl;
     msym_point_group_t *pg;
@@ -351,7 +354,6 @@ msym_error_t msymGetSubgroups(msym_context ctx, int *sgl, msym_subgroup_t **sg){
         for(int i = 0;i < ctx->sgl;i++){
             if(MSYM_SUCCESS != (ret = findSubgroup(&ctx->sg[i], ctx->thresholds))) goto err;
         }
-        
     }
     
     if(ctx->ext.sg == NULL){
@@ -540,10 +542,30 @@ err:
     return ret;
 }
 
+msym_error_t ctxGetSubgroups(msym_context ctx, int *sgl, msym_subgroup_t **sg){
+    msym_error_t ret = MSYM_SUCCESS;
+    if(ctx == NULL) {ret = MSYM_INVALID_CONTEXT;goto err;}
+    if(ctx->sg == NULL) {ret = MSYM_INVALID_SUBGROUPS;goto err;}
+    *sg = ctx->sg;
+    *sgl = ctx->sgl;
+err:
+    return ret;
+}
+
+msym_error_t ctxSetSubgroups(msym_context ctx, int sgl, msym_subgroup_t *sg){
+    msym_error_t ret = MSYM_SUCCESS;
+    if(ctx == NULL) {ret = MSYM_INVALID_CONTEXT;goto err;}
+    ctxDestroySubgroups(ctx);
+    ctx->sg = sg;
+    ctx->sgl = sgl;
+err:
+    return ret;
+}
+
 msym_error_t ctxGetInternalSubgroup(msym_context ctx, msym_subgroup_t *ext, msym_subgroup_t **sg){
     msym_error_t ret = MSYM_SUCCESS;
     if(ctx == NULL) {ret = MSYM_INVALID_CONTEXT;goto err;}
-    if(ctx->ext.sg == NULL) {ret = MSYM_INVALID_POINT_GROUP;goto err;}
+    if(ctx->ext.sg == NULL) {ret = MSYM_INVALID_SUBGROUPS;goto err;}
     if(ext < ctx->ext.sg || ext >= ctx->ext.sg+ctx->sgl){
         msymSetErrorDetails("Subgroup pointer (%p) outside memory block (%p -> %p)", ext, ctx->ext.sg, ctx->ext.sg + ctx->sgl);
         ret = MSYM_INVALID_POINT_GROUP;
@@ -692,6 +714,27 @@ err:
     return ret;
 }
 
+msym_error_t ctxGetSALCSubspaces(msym_context ctx, int *ssl, msym_subspace_2_t **ss, int **span){
+    msym_error_t ret = MSYM_SUCCESS;
+    if(ctx == NULL) {ret = MSYM_INVALID_CONTEXT; goto err;}
+    if(ctx->salc_ss == NULL) {ret = MSYM_INVALID_SUBSPACE; goto err;}
+    *ssl = ctx->salc_ssl;
+    *ss = ctx->salc_ss;
+    *span = ctx->salc_span;
+err:
+    return ret;
+}
+
+msym_error_t ctxSetSALCSubspaces(msym_context ctx, int ssl, msym_subspace_2_t *ss, int *span){
+    msym_error_t ret = MSYM_SUCCESS;
+    if(MSYM_SUCCESS != (ret = ctxDestroySALCSubspaces(ctx))) goto err;
+    ctx->salc_ssl = ssl;
+    ctx->salc_ss = ss;
+    ctx->salc_span = span;
+err:
+    return ret;
+}
+
 msym_error_t ctxGetDisplacementSubspaces(msym_context ctx, int *ssl, msym_subspace_t **ss, int **span){
     msym_error_t ret = MSYM_SUCCESS;
     if(ctx == NULL) {ret = MSYM_INVALID_CONTEXT; goto err;}
@@ -731,6 +774,7 @@ msym_error_t ctxDestroyElements(msym_context ctx){
     ctxDestroyEquivalcenceSets(ctx);
     ctxDestroyOrbitalSubspaces(ctx);
     ctxDestroyDisplacementSubspaces(ctx);
+    ctxDestroySALCSubspaces(ctx);
     ctxDestroyBasisFunctions(ctx);
     free(ctx->elements);
     free(ctx->pelements);
@@ -793,6 +837,7 @@ msym_error_t ctxDestroyPointGroup(msym_context ctx){
     if(ctx == NULL) {ret = MSYM_INVALID_CONTEXT; goto err;}
     if(ctx->pg == NULL) goto err;
     ctxDestroyEquivalcenceSets(ctx);
+    ctxDestroySubgroups(ctx);
     for(int i = 0;i < ctx->pg->sopsl && ctx->pg->perm != NULL;i++){
         freePermutationData(&ctx->pg->perm[i]);
     }
@@ -813,6 +858,17 @@ msym_error_t ctxDestroyPointGroup(msym_context ctx){
     ctx->sg = NULL;
     ctx->ext.sops = NULL;
     ctx->ext.sg = NULL;
+err:
+    return ret;
+}
+
+msym_error_t ctxDestroySubgroups(msym_context ctx){
+    msym_error_t ret = MSYM_SUCCESS;
+    free(ctx->sg);
+    free(ctx->ext.sg);
+    ctx->sg = NULL;
+    ctx->ext.sg = NULL;
+    ctx->sgl = 0;
 err:
     return ret;
 }
@@ -855,6 +911,25 @@ msym_error_t ctxDestroyDisplacementSubspaces(msym_context ctx){
     ctx->dss_span = NULL;
     ctx->dss = NULL;
     ctx->dssl = 0;
+err:
+    return ret;
+}
+
+msym_error_t ctxDestroySALCSubspaces(msym_context ctx){
+    msym_error_t ret = MSYM_SUCCESS;
+    if(ctx == NULL) {ret = MSYM_INVALID_CONTEXT; goto err;}
+    for(int i = 0;i < ctx->salc_ssl && ctx->salc_ss != NULL;i++){
+        for(int j = 0;j < ctx->salc_ss[i].salcl;j++){
+            free(ctx->salc_ss[i].salc[j].f);
+            free(ctx->salc_ss[i].salc[j].pf);
+        }
+        free(ctx->salc_ss[i].salc);
+    }
+    free(ctx->salc_ss);
+    free(ctx->salc_span);
+    ctx->salc_ss = NULL;
+    ctx->salc_span = NULL;
+    ctx->salc_ssl = 0;
 err:
     return ret;
 }

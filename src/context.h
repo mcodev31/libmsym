@@ -34,6 +34,8 @@ msym_error_t ctxGetOrbitals(msym_context ctx, int *l, msym_orbital_t **orbitals)
 msym_error_t ctxSetCenterOfMass(msym_context ctx, double cm[3]);
 msym_error_t ctxSetPointGroup(msym_context ctx, msym_point_group_t *pg);
 msym_error_t ctxGetPointGroup(msym_context ctx, msym_point_group_t **pg);
+msym_error_t ctxSetSubgroups(msym_context ctx, int sgl, msym_subgroup_t *sg);
+msym_error_t ctxGetSubgroups(msym_context ctx, int *sgl, msym_subgroup_t **sg);
 msym_error_t ctxSetEquivalenceSets(msym_context ctx, int esl, msym_equivalence_set_t *es);
 msym_error_t ctxGetEquivalenceSets(msym_context ctx, int *esl, msym_equivalence_set_t **es);
 msym_error_t ctxGetElementEquivalenceSetMap(msym_context ctx, msym_equivalence_set_t ***eesmap);
@@ -42,6 +44,8 @@ msym_error_t ctxGetEquivalenceSetPermutations(msym_context ctx, int *r, int *c, 
 msym_error_t ctxGetBasisFunctions(msym_context ctx, int *l, msym_basis_function_t **basis);
 msym_error_t ctxGetOrbitalSubspaces(msym_context ctx, int *ssl, msym_subspace_t **ss, int **span);
 msym_error_t ctxSetOrbitalSubspaces(msym_context ctx, int ssl, msym_subspace_t *ss, int *span);
+msym_error_t ctxGetSALCSubspaces(msym_context ctx, int *ssl, msym_subspace_2_t **ss, int **span);
+msym_error_t ctxSetSALCSubspaces(msym_context ctx, int ssl, msym_subspace_2_t *ss, int *span);
 msym_error_t ctxGetDisplacementSubspaces(msym_context ctx, int *ssl, msym_subspace_t **ss, int **span);
 msym_error_t ctxSetDisplacementSubspaces(msym_context ctx, int ssl, msym_subspace_t *ss, int *span);
 msym_error_t ctxGetGeometry(msym_context ctx, msym_geometry_t *g, double eigval[3], double eigvec[3][3]);
@@ -50,9 +54,11 @@ msym_error_t ctxDestroyElements(msym_context ctx);
 msym_error_t ctxDestroyEquivalcenceSets(msym_context ctx);
 msym_error_t ctxDestroyEquivalcenceSetPermutations(msym_context ctx);
 msym_error_t ctxDestroyPointGroup(msym_context ctx);
+msym_error_t ctxDestroySubgroups(msym_context ctx);
 msym_error_t ctxDestroyBasisFunctions(msym_context ctx);
 msym_error_t ctxDestroyOrbitalSubspaces(msym_context ctx);
 msym_error_t ctxDestroyDisplacementSubspaces(msym_context ctx);
+msym_error_t ctxDestroySALCSubspaces(msym_context ctx);
 
 
 

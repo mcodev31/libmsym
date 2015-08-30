@@ -28,12 +28,13 @@ extern "C" {
         MSYM_INVALID_GEOMETRY = -9,
         MSYM_INVALID_CHARACTER_TABLE = -10,
         MSYM_INVALID_SUBSPACE = -11,
-        MSYM_INVALID_AXES = -12,
-        MSYM_SYMMETRY_ERROR = -13,
-        MSYM_PERMUTATION_ERROR = -14,
-        MSYM_POINT_GROUP_ERROR = -15,
-        MSYM_SYMMETRIZATION_ERROR = -16,
-        MSYM_SUBSPACE_ERROR = -17
+        MSYM_INVALID_SUBGROUPS = -12,
+        MSYM_INVALID_AXES = -13,
+        MSYM_SYMMETRY_ERROR = -14,
+        MSYM_PERMUTATION_ERROR = -15,
+        MSYM_POINT_GROUP_ERROR = -16,
+        MSYM_SYMMETRIZATION_ERROR = -17,
+        MSYM_SUBSPACE_ERROR = -18
     };
     
     typedef enum _msym_error msym_error_t;
