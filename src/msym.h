@@ -182,14 +182,14 @@ extern "C" {
     typedef struct _msym_symmetry_species {
         int d;
         char name[8];
-    } msym_symmetry_species_2_t;
+    } msym_symmetry_species_t;
     
-    typedef struct _msym_character_table_2 {
+    typedef struct _msym_character_table {
         int d;
         int *classc;
-        msym_symmetry_species_2_t *s;
+        msym_symmetry_species_t *s;
         void *table;  //double[d][d]
-    } msym_character_table_2_t;
+    } msym_character_table_t;
     
     
     msym_context msymCreateContext();

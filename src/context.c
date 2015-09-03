@@ -349,7 +349,7 @@ msym_error_t msymGetSubgroups(msym_context ctx, int *sgl, msym_subgroup_t **sg){
     }
     if(ctx->sg == NULL){
         int sgmax = numberOfSubgroups(ctx->pg);
-        if(MSYM_SUCCESS != (ret = findPermutationSubgroups(ctx->pg->sopsl, ctx->pg->perm, sgmax, ctx->pg->sops, &ctx->sgl, &ctx->sg))) goto err;
+        if(MSYM_SUCCESS != (ret = findPermutationSubgroups(ctx->pg->order, ctx->pg->perm, sgmax, ctx->pg->sops, &ctx->sgl, &ctx->sg))) goto err;
 
         for(int i = 0;i < ctx->sgl;i++){
             if(MSYM_SUCCESS != (ret = findSubgroup(&ctx->sg[i], ctx->thresholds))) goto err;
@@ -439,10 +439,10 @@ msym_error_t msymGetSymmetryOperations(msym_context ctx, int *sopsl, msym_symmet
     msym_symmetry_operation_t *rsops = NULL;
     if(ctx == NULL) {ret = MSYM_INVALID_CONTEXT;goto err;}
     if(ctx->pg == NULL || ctx->pg->sops == NULL) {ret = MSYM_INVALID_POINT_GROUP;goto err;}
-    if(ctx->ext.sops == NULL) ctx->ext.sops = malloc(sizeof(msym_symmetry_operation_t[ctx->pg->sopsl]));
-    memcpy(ctx->ext.sops,ctx->pg->sops,sizeof(msym_symmetry_operation_t[ctx->pg->sopsl]));
+    if(ctx->ext.sops == NULL) ctx->ext.sops = malloc(sizeof(msym_symmetry_operation_t[ctx->pg->order]));
+    memcpy(ctx->ext.sops,ctx->pg->sops,sizeof(msym_symmetry_operation_t[ctx->pg->order]));
     *sops = ctx->ext.sops;
-    *sopsl = ctx->pg->sopsl;
+    *sopsl = ctx->pg->order;
     return ret;
 err:
     free(rsops);
@@ -675,7 +675,7 @@ err:
 msym_error_t ctxSetEquivalenceSetPermutations(msym_context ctx, int r, int c, msym_permutation_t **perm){
     msym_error_t ret = MSYM_SUCCESS;
     if(MSYM_SUCCESS != (ret = ctxDestroyEquivalcenceSetPermutations(ctx))) goto err;
-    if(r != ctx->esl || ctx->pg == NULL || c != ctx->pg->sopsl){ret = MSYM_INVALID_PERMUTATION; goto err;}
+    if(r != ctx->esl || ctx->pg == NULL || c != ctx->pg->order){ret = MSYM_INVALID_PERMUTATION; goto err;}
     ctx->es_perm = perm;
     ctx->es_perml = c;
 err:
@@ -838,7 +838,7 @@ msym_error_t ctxDestroyPointGroup(msym_context ctx){
     if(ctx->pg == NULL) goto err;
     ctxDestroyEquivalcenceSets(ctx);
     ctxDestroySubgroups(ctx);
-    for(int i = 0;i < ctx->pg->sopsl && ctx->pg->perm != NULL;i++){
+    for(int i = 0;i < ctx->pg->order && ctx->pg->perm != NULL;i++){
         freePermutationData(&ctx->pg->perm[i]);
     }
     for(int i = 0;i < ctx->sgl && ctx->sg != NULL;i++){

@@ -52,7 +52,7 @@ msym_error_t symmetrizeMoleculeProject(msym_point_group_t *pg, int esl, msym_equ
             goto err;
         }
         memset(v, 0, sizeof(double[pg->order][3]));
-        for(int j = 0; j < pg->sopsl;j++){
+        for(int j = 0; j < pg->order;j++){
             for(int k = 0; k < es[i].length;k++){
                 int p = perm[i][j].p[k];
                 double sv[3];
@@ -83,7 +83,7 @@ msym_error_t symmetrizeMoleculeLinear(msym_point_group_t *pg, int esl, msym_equi
     double (*vinf)[3] = malloc(sizeof(double[pg->order][3]));
     msym_symmetry_operation_t *cinf = NULL;
     
-    for(int i = 0; i < pg->sopsl;i++){
+    for(int i = 0; i < pg->order;i++){
         if(pg->sops[i].type == PROPER_ROTATION && pg->sops[i].order == 0) {
             cinf = &pg->sops[i];
             break;
@@ -109,7 +109,7 @@ msym_error_t symmetrizeMoleculeLinear(msym_point_group_t *pg, int esl, msym_equi
             vproj(es[i].elements[k]->v, cinf->v, vinf[k]);
         }
         
-        for(int j = 0; j < pg->sopsl;j++){
+        for(int j = 0; j < pg->order;j++){
             for(int k = 0; k < es[i].length;k++){
                 int p = perm[i][j].p[k];
                 double sv[3];
@@ -486,7 +486,7 @@ msym_error_t symmetrizeTranslation(msym_point_group_t *pg, msym_equivalence_set_
     msym_error_t ret = MSYM_SUCCESS;
     double (*v)[3] = calloc(es->length,sizeof(double[3]));
     
-    for(int j = 0; j < pg->sopsl;j++){
+    for(int j = 0; j < pg->order;j++){
         int p = perm[j].p[pi];
         double stranslation[3];
         applySymmetryOperation(&pg->sops[j], translation, stranslation);

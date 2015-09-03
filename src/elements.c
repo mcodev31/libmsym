@@ -147,7 +147,8 @@ void printElement(msym_element_t *element){
 
 msym_error_t complementElementData(msym_element_t *element){
     msym_error_t ret = MSYM_SUCCESS;
-    size_t strl = strnlen(element->name, sizeof(element->name));
+    element->name[sizeof(element->name)-1] = '\0';
+    size_t strl = strlen(element->name);
     if(strl <= 0 && element->n <= 0 && element->m <= 0.0){
         msymSetErrorDetails("Element has no mass, name or nuclear charge");
         ret = MSYM_INVALID_ELEMENTS;

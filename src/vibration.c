@@ -45,7 +45,7 @@ msym_error_t generateDisplacementSubspaces(msym_point_group_t *pg, int esl, msym
         for(int i = 0;i < esl;i++){
             double dspan = 0;
             //memset(dspan,0,sizeof(double[pg->ct->l]));
-            for(int s = 0; s < pg->sopsl;s++){
+            for(int s = 0; s < pg->order;s++){
                 int uma = 0;
                 for(int j = 0; j < perm[i][s].c_length;j++) uma += perm[i][s].c[j].l == 1;
                 dspan += uma*pg->ct->irrep[k].v[pg->sops[s].cla]*symmetryOperationCartesianCharacter(&pg->sops[s]);
@@ -71,7 +71,7 @@ msym_error_t generateDisplacementSubspaces(msym_point_group_t *pg, int esl, msym
                   
     for(int i = 0;i < esl;i++){
         int d = 3*es[i].length;
-        for(int s = 0;s < pg->sopsl;s++){
+        for(int s = 0;s < pg->order;s++){
             double m[3][3];
             permutationMatrix(&perm[i][s], mperm);
             symmetryOperationMatrix(&pg->sops[s], m);

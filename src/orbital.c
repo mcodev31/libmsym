@@ -23,7 +23,7 @@
 #include "subspace.h"
 
 void printTransform(int r, int c, double M[r][c]);
-void printNewSubspace(msym_character_table_2_t *ct, int l, msym_subspace_2_t ss[l]);
+void printNewSubspace(msym_character_table_t *ct, int l, msym_subspace_2_t ss[l]);
 void tabPrintTransform(int r, int c, double M[r][c],int indent);
 void printSubspaceTree(CharacterTable *ct, msym_subspace_t *ss,int indent);
 void tabprintf(char *format, int indent, ...);
@@ -523,8 +523,8 @@ msym_error_t testSpan2(msym_point_group_t *pg, int sgl, msym_subgroup_t sg[sgl],
     double *mspan = calloc(pg->ct2->d, sizeof(double));                          // span decomposition memory
     double (*mproj)[projm] = calloc(projm, sizeof(double[projm]));              // projection operator memory
     double (*mscal)[projm] = calloc(projm, sizeof(double[projm]));              // projection scaling memory
-    double (*mperm)[pg->order] = calloc(pg->sopsl, sizeof(double[pg->order]));  // permutation memory
-    double (*morth)[pg->order] = calloc(pg->sopsl, sizeof(double[pg->order]));  // permutation orthoginalization memory
+    double (*mperm)[pg->order] = calloc(pg->order, sizeof(double[pg->order]));  // permutation memory
+    double (*morth)[pg->order] = calloc(pg->order, sizeof(double[pg->order]));  // permutation orthoginalization memory
     double (*mbasis)[projm] = calloc(basisl, sizeof(double[projm]));            // basis function coefficients
     double (*mdec)[projm] = calloc(basisl, sizeof(double[projm]));              // directo product decomposition memory
     double (*sgc)[pg->order] = calloc(5,sizeof(double[pg->order]));
@@ -573,7 +573,7 @@ msym_error_t testSpan2(msym_point_group_t *pg, int sgl, msym_subgroup_t sg[sgl],
     }
 printf("%d\n",__LINE__);
     /* calculate span of irreducible representations for basis functions and permutations */
-    for(int s = 0; s < pg->sopsl;s++){
+    for(int s = 0; s < pg->order;s++){
         for(int l = 0; l <= lmax;l++){
             dbf.f.sh.l = l; //TODO: function type based
             double c = symmetryOperationCharacter(&pg->sops[s], &dbf);
@@ -682,7 +682,7 @@ printf("%d\n",__LINE__);
             if(vspan == 0) continue;
             
             memset(pproj, 0, sizeof(double[d][d]));
-            for(int s = 0;s < pg->sopsl;s++){
+            for(int s = 0;s < pg->order;s++){
                 if(ctable[k][pg->sops[s].cla] == 0) continue;
                 permutationMatrix(&perm[i][s], mperm);
                 mlscale(ctable[k][pg->sops[s].cla], d, mperm, pscal);
@@ -707,7 +707,7 @@ printf("%d\n",__LINE__);
                 for(int lk = 0;lk < pg->ct2->d;lk++){
                     int lvspan = pg->ct2->s[lk].d*((int) round(bspan[l][lk])), dd = d*ld;
                     if(lvspan == 0) continue;
-                    kron2(vspan, d, &porth[oirl], lvspan, ld, &lst[pg->sopsl][li], mbasis);
+                    kron2(vspan, d, &porth[oirl], lvspan, ld, &lst[pg->order][li], mbasis);
                     li += lvspan;
                     
                     directProduct2(pg->ct2->d, ctable[k], ctable[lk], rspan);
@@ -725,7 +725,7 @@ printf("%d\n",__LINE__);
                             
                             memset(dproj, 0, sizeof(double[dd][dd]));
                             
-                            for(int s = 0;s < pg->sopsl;s++){
+                            for(int s = 0;s < pg->order;s++){
                                 if(ctable[dk][pg->sops[s].cla] == 0) continue;
                                 permutationMatrix(&perm[i][s], mperm);
                                 kron(d, mperm, ld, lst[s], dd, dscal);
@@ -838,7 +838,7 @@ printf("%d\n",__LINE__);
                             
                             for(int dim = 0, doirl = 0, dnirl = 0;dim < pg->ct2->s[sk].d;dim++, doirl = dnirl){
                                 memset(dproj, 0, sizeof(double[dd][dd]));
-                                for(int s = 0;s < pg->sopsl;s++){
+                                for(int s = 0;s < pg->order;s++){
                                     if(sgc[dim][s] == 0) continue;
                                     permutationMatrix(&perm[i][s], mperm);
                                     kron(d, mperm, ld, lst[s], dd, dscal);
@@ -877,7 +877,7 @@ printf("%d\n",__LINE__);
                             double (*g)[mdim][mdim] = tmp1;
                             double (*mt)[mdim] = mtmp;
                             printf("mdim = %d\n",mdim);
-                            for(int s = 0;s < pg->sopsl && ifound < mdim;s++){
+                            for(int s = 0;s < pg->order && ifound < mdim;s++){
                                 
                                 permutationMatrix(&perm[i][s], mperm);
                                 kron(d, mperm, ld, lst[s], dd, dscal);
@@ -980,10 +980,10 @@ err:
 
 msym_error_t testSpanConvert(msym_point_group_t *pg, int esl, msym_equivalence_set_t *es, msym_permutation_t **perm, int basisl, msym_orbital_t basis[basisl], msym_thresholds_t *thresholds, int *subspacel, msym_subspace_t **subspace, int **ospan){
     
-    msym_character_table_2_t ct;
+    msym_character_table_t ct;
     ct.d = pg->ct->l;
     double t[ct.d][ct.d];
-    msym_symmetry_species_2_t ssp[ct.d];
+    msym_symmetry_species_t ssp[ct.d];
     ct.s = ssp;
     ct.table = t;
     ct.classc = pg->ct->classc;
@@ -1069,7 +1069,7 @@ msym_error_t testSpanConvert(msym_point_group_t *pg, int esl, msym_equivalence_s
     
     
     int sgmax = numberOfSubgroups(pg);
-    if(MSYM_SUCCESS != findPermutationSubgroups(pg->sopsl, pg->perm, sgmax, pg->sops, &sgl, &sg)) {
+    if(MSYM_SUCCESS != findPermutationSubgroups(pg->order, pg->perm, sgmax, pg->sops, &sgl, &sg)) {
         printf("findPermutationSubgroups error\n");
         exit(1);
     }
@@ -1139,8 +1139,8 @@ msym_error_t testSpan(msym_point_group_t *pg, int esl, msym_equivalence_set_t *e
     double *mspan = calloc(pg->ct->l, sizeof(double));                          // span decomposition memory
     double (*mproj)[projm] = calloc(projm, sizeof(double[projm]));              // projection operator memory
     double (*mscal)[projm] = calloc(projm, sizeof(double[projm]));              // projection scaling memory
-    double (*mperm)[pg->order] = calloc(pg->sopsl, sizeof(double[pg->order]));  // permutation memory
-    double (*morth)[pg->order] = calloc(pg->sopsl, sizeof(double[pg->order]));  // permutation orthoginalization memory
+    double (*mperm)[pg->order] = calloc(pg->order, sizeof(double[pg->order]));  // permutation memory
+    double (*morth)[pg->order] = calloc(pg->order, sizeof(double[pg->order]));  // permutation orthoginalization memory
     double (*mbasis)[projm] = calloc(basisl, sizeof(double[projm]));            // basis function coefficients
     double (*mdec)[projm] = calloc(basisl, sizeof(double[projm]));              // directo product decomposition memory
     int *ispan = calloc(pg->ct->l, sizeof(int));                                // integer decoposed total span of symmetrized basis
@@ -1168,7 +1168,7 @@ msym_error_t testSpan(msym_point_group_t *pg, int esl, msym_equivalence_set_t *e
     }
     
     /* calculate span of irreducible representations for basis functions and permutations */
-    for(int s = 0; s < pg->sopsl;s++){
+    for(int s = 0; s < pg->order;s++){
         for(int l = 0; l <= lmax;l++){
             printf("l=%d -> %lf ",l, symmetryOperationYCharacter(&pg->sops[s],l));
             printSymmetryOperation(&pg->sops[s]);
@@ -1194,26 +1194,26 @@ msym_error_t testSpan(msym_point_group_t *pg, int esl, msym_equivalence_set_t *e
         vlscale(1.0/pg->order, pg->ct->l, bspan[l], bspan[l]);
         
         lts[l].d = d;
-        lts[l].t = malloc(sizeof(double[pg->sopsl+1][d][d]));
+        lts[l].t = malloc(sizeof(double[pg->order+1][d][d]));
         
         double (*st)[d][d] = lts[l].t;
         
-        if(MSYM_SUCCESS != (ret = generateOrbitalTransforms(pg->sopsl, pg->sops, l, lts[l].t))) goto err; //TODO: generalize basis function concept
+        if(MSYM_SUCCESS != (ret = generateOrbitalTransforms(pg->order, pg->sops, l, lts[l].t))) goto err; //TODO: generalize basis function concept
         
-        memset(st[pg->sopsl], 0, sizeof(double[d][d]));
+        memset(st[pg->order], 0, sizeof(double[d][d]));
         
         for(int k = 0, oirl = 0, nirl = 0;k < pg->ct->l;k++, oirl = nirl){
             int vspan = pg->ct->irrep[k].d*((int) round(bspan[l][k]));
             if(vspan == 0) continue;
             
             memset(lproj, 0, sizeof(double[d][d]));
-            for(int s = 0;s < pg->sopsl;s++){
+            for(int s = 0;s < pg->order;s++){
                 mlscale(pg->ct->irrep[k].v[pg->sops[s].cla], d, st[s], lscal);
                 mladd(d, lscal, lproj, lproj);
             }
             
             mlscale(((double) pg->ct->irrep[k].d)/pg->order, d, lproj, lproj);
-            nirl = mgs(d, lproj, st[pg->sopsl], oirl, thresholds->orthogonalization/basisl);
+            nirl = mgs(d, lproj, st[pg->order], oirl, thresholds->orthogonalization/basisl);
             
             if(nirl - oirl != vspan){
                 printf("bspan[%d][%d] = %lf\n",l,k,bspan[l][k]);
@@ -1224,12 +1224,12 @@ msym_error_t testSpan(msym_point_group_t *pg, int esl, msym_equivalence_set_t *e
             }
         }
         
-        for(int i = 0; i < d;i++) vlnorm(d, st[pg->sopsl][i]);
+        for(int i = 0; i < d;i++) vlnorm(d, st[pg->order][i]);
         
         ///////
         for(int i = 0;i < pg->ct->l;i++) printf(" + %d%s", (int) round(bspan[l][i]), pg->ct->irrep[i].name);
         printf("\n");
-        printTransform(d, d, st[pg->sopsl]);
+        printTransform(d, d, st[pg->order]);
         ///////
         
     }
@@ -1333,7 +1333,7 @@ msym_error_t testSpan(msym_point_group_t *pg, int esl, msym_equivalence_set_t *e
             if(vspan == 0) continue;
             
             memset(pproj, 0, sizeof(double[d][d]));
-            for(int s = 0;s < pg->sopsl;s++){
+            for(int s = 0;s < pg->order;s++){
                 if(pg->ct->irrep[k].v[pg->sops[s].cla] == 0) continue;
                 permutationMatrix(&perm[i][s], mperm);
                 mlscale(pg->ct->irrep[k].v[pg->sops[s].cla], d, mperm, pscal);
@@ -1359,17 +1359,17 @@ msym_error_t testSpan(msym_point_group_t *pg, int esl, msym_equivalence_set_t *e
                 for(int lk = 0;lk < pg->ct->l;lk++){
                     int lvspan = pg->ct->irrep[lk].d*((int) round(bspan[l][lk])), dd = d*ld;
                     if(lvspan == 0) continue;
-                    kron2(vspan, d, &porth[oirl], lvspan, ld, &lst[pg->sopsl][li], mbasis);
+                    kron2(vspan, d, &porth[oirl], lvspan, ld, &lst[pg->order][li], mbasis);
                     
                     printf("%d-dimensional %s part of permutaion and %d-dimensional %s part of l=%d will produce lcao:\n",vspan,pg->ct->irrep[k].name,lvspan,pg->ct->irrep[lk].name,l);
                     
-                    printf("%d %lf %p %p %p\n",li, lst[pg->sopsl][li][0],&lst[pg->sopsl][li],&(lst[pg->sopsl][li]),lst[pg->sopsl]);
+                    printf("%d %lf %p %p %p\n",li, lst[pg->order][li][0],&lst[pg->order][li],&(lst[pg->order][li]),lst[pg->order]);
                     
                     printf("p[%d][%d] kron lst[%d][%d] = mbasis[%d][%d]\n",vspan,d,lvspan,ld,vspan*lvspan, dd);
                     
-                    printTransform(ld,ld,lst[pg->sopsl]);
+                    printTransform(ld,ld,lst[pg->order]);
                     printTransform(vspan, d, &porth[oirl]);
-                    printTransform(lvspan, ld, &lst[pg->sopsl][li]);
+                    printTransform(lvspan, ld, &lst[pg->order][li]);
                     printTransform(vspan*lvspan, dd, mbasis);
                     li += lvspan;//(int) round(bspan[l][lk]);
                     
@@ -1391,7 +1391,7 @@ msym_error_t testSpan(msym_point_group_t *pg, int esl, msym_equivalence_set_t *e
                             
                             memset(dproj, 0, sizeof(double[dd][dd]));
                             
-                            for(int s = 0;s < pg->sopsl;s++){
+                            for(int s = 0;s < pg->order;s++){
                                 //if(pg->ct->irrep[dk].v[pg->sops[s].cla] == 0) continue;
                                 permutationMatrix(&perm[i][s], mperm);
                                 kron(d, mperm, ld, lst[s], dd, dscal);
@@ -1492,36 +1492,36 @@ msym_error_t testSpan(msym_point_group_t *pg, int esl, msym_equivalence_set_t *e
                             
                             char *cs_name[3] = {"A'","A''","B3"};
                             
-                            double (*cs_char)[pg->sopsl] = NULL;
+                            double (*cs_char)[pg->order] = NULL;
                             
                             if(pg->type == POINT_GROUP_Cnv && pg->n == 3){
                                 cs_char = c3v_char;
-                                for(int s = 0;s < pg->sopsl;s++){
+                                for(int s = 0;s < pg->order;s++){
                                     printf("%lf, %lf", cs_char[0][s], cs_char[1][s]);
                                     printSymmetryOperation(&pg->sops[s]);
                                 }
                             } else if(pg->type == POINT_GROUP_Dnh && pg->n == 4){
                                 cs_char = d4h_char;
-                                for(int s = 0;s < pg->sopsl;s++){
+                                for(int s = 0;s < pg->order;s++){
                                     printf("%lf, %lf", cs_char[0][s], cs_char[1][s]);
                                     printSymmetryOperation(&pg->sops[s]);
                                 }
                                 
                             } else if(pg->type == POINT_GROUP_Td && pg->ct->irrep[sk].d == 3){
                                 cs_char = td_chart;
-                                for(int s = 0;s < pg->sopsl;s++){
+                                for(int s = 0;s < pg->order;s++){
                                     printf("%lf, %lf, %lf", cs_char[0][s], cs_char[1][s], cs_char[2][s]);
                                     printSymmetryOperation(&pg->sops[s]);
                                 }
                             } else if(pg->type == POINT_GROUP_Td && pg->ct->irrep[sk].d == 2){
                                 cs_char = td_chare;
-                                for(int s = 0;s < pg->sopsl;s++){
+                                for(int s = 0;s < pg->order;s++){
                                     printf("%lf, %lf", cs_char[0][s], cs_char[1][s]);
                                     printSymmetryOperation(&pg->sops[s]);
                                 }
                             } else {
                                 printf("%s need subgroup characters for operations\n", pg->name);
-                                for(int s = 0;s < pg->sopsl;s++){
+                                for(int s = 0;s < pg->order;s++){
                                     printf("%d ", pg->sops[s].cla);
                                     printSymmetryOperation(&pg->sops[s]);
                                 }
@@ -1531,7 +1531,7 @@ msym_error_t testSpan(msym_point_group_t *pg, int esl, msym_equivalence_set_t *e
                             
                             for(int dim = 0, doirl = 0, dnirl = 0;dim < pg->ct->irrep[sk].d;dim++, doirl = dnirl){
                                 memset(dproj, 0, sizeof(double[dd][dd]));
-                                for(int s = 0;s < pg->sopsl;s++){
+                                for(int s = 0;s < pg->order;s++){
                                     if(cs_char[dim][s] == 0) continue;
                                     permutationMatrix(&perm[i][s], mperm);
                                     kron(d, mperm, ld, lst[s], dd, dscal);
@@ -1576,7 +1576,7 @@ msym_error_t testSpan(msym_point_group_t *pg, int esl, msym_equivalence_set_t *e
                             double (*g)[mdim][mdim] = tmp1;
                             double (*mt)[mdim] = mtmp;
                             printf("asdads\n");
-                            for(int s = 0;s < pg->sopsl && ifound < mdim;s++){
+                            for(int s = 0;s < pg->order && ifound < mdim;s++){
                                 
                                 permutationMatrix(&perm[i][s], mperm);
                                 kron(d, mperm, ld, lst[s], dd, dscal);
@@ -1758,8 +1758,8 @@ msym_error_t generateOrbitalSubspaces(msym_point_group_t *pg, int esl, msym_equi
     
     for(int l = 0; l <= lmax;l++){
         lts[l].d = 2*l+1;
-        lts[l].t = malloc(sizeof(double[pg->sopsl][lts[l].d][lts[l].d]));
-        if(MSYM_SUCCESS != (ret = generateOrbitalTransforms(pg->sopsl, pg->sops, l, lts[l].t))) goto err;
+        lts[l].t = malloc(sizeof(double[pg->order][lts[l].d][lts[l].d]));
+        if(MSYM_SUCCESS != (ret = generateOrbitalTransforms(pg->order, pg->sops, l, lts[l].t))) goto err;
     }
     
     for(int i = 0; i < esl;i++){
@@ -1790,7 +1790,7 @@ msym_error_t generateOrbitalSubspaces(msym_point_group_t *pg, int esl, msym_equi
             memset(mlproj,0,sizeof(double[pg->ct->l][d][d]));
             memset(ispan,0,sizeof(int[pg->ct->l]));
             
-            for(int s = 0;s < pg->sopsl;s++){
+            for(int s = 0;s < pg->order;s++){
                 double (*lt)[lts[l].d][lts[l].d] = lts[l].t;
                 permutationMatrix(&perm[i][s], mperm);
                 kron(perm[i][s].p_length,mperm,lts[l].d,lt[s],d,mkron);
@@ -1986,7 +1986,7 @@ void printOrbital(msym_orbital_t *orb){
     printf("Orbital(%d,%d,%d) : %s\n",orb->n, orb->l, orb->m, orb->name);
 }
 
-void printNewSubspace(msym_character_table_2_t *ct, int l, msym_subspace_2_t ss[l]){
+void printNewSubspace(msym_character_table_t *ct, int l, msym_subspace_2_t ss[l]){
     for(int k = 0;k < l;k++){
         printf("Subspace %d %s\n",k,ct->s[ss[k].s].name);
         for(int i = 0;i < ss[k].salcl;i++){

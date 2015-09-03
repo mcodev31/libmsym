@@ -16,6 +16,26 @@
 #include "point_group.h"
 #include "linalg.h"
 
+typedef struct _msym_representation {
+    enum {IRREDUCIBLE, REDUCIBLE} type;
+    int d;
+    struct {
+        int p, v, h, i, l;
+    } eig;
+    char name[8];
+} msym_representation_t;
+
+msym_error_t setRepresentationName(msym_representation_t *rep);
+msym_error_t representationCharacter(int n, msym_symmetry_operation_t *sop, msym_representation_t *rep, double *c);
+
+msym_error_t getRepresentationsCn(int n, int rl, msym_representation_t rep[rl]);
+msym_error_t getRepresentationsCnh(int n, int rl, msym_representation_t rep[rl]);
+msym_error_t getRepresentationsCnv(int n, int rl, msym_representation_t rep[rl]);
+msym_error_t getRepresentationsDn(int n, int rl, msym_representation_t rep[rl]);
+msym_error_t getRepresentationsDnh(int n, int rl, msym_representation_t rep[rl]);
+msym_error_t getRepresentationsDnd(int n, int rl, msym_representation_t rep[rl]);
+msym_error_t getRepresentationsUnknown(int n, int rl, msym_representation_t rep[rl]);
+
 
 void decomposeRepresentation(CharacterTable *ct, double rspan[ct->l], double dspan[ct->l]){
     int order = 0;
@@ -27,7 +47,7 @@ void decomposeRepresentation(CharacterTable *ct, double rspan[ct->l], double dsp
     for(int k = 0;k < ct->l;k++) dspan[k] /= order;
 }
 
-void decomposeRepresentation2(msym_character_table_2_t *ct, double rspan[ct->d], double dspan[ct->d]){
+void decomposeRepresentation2(msym_character_table_t *ct, double rspan[ct->d], double dspan[ct->d]){
     int order = 0;
     double (*ctable)[ct->d] = ct->table;
     memset(dspan,0, sizeof(double[ct->d]));
@@ -48,8 +68,10 @@ void directProduct2(int l, double irrep1[l], double irrep2[l], double pspan[l]){
 }
 
 msym_error_t characterTableUnknown(int n, CharacterTable *ct){
+    printf("WARNING UNKOWN\n");
     msymSetErrorDetails("Character table unknown");
-    return MSYM_INVALID_CHARACTER_TABLE;
+    //return MSYM_INVALID_CHARACTER_TABLE;
+    return MSYM_SUCCESS;
 }
 
 msym_error_t characterTableTd(int n, CharacterTable *ct){
@@ -188,27 +210,67 @@ double getCharacterCnv(int n, int k){
     return 0;
 }
 
-msym_error_t setRepresentationName(msym_representation_t *rep);
-msym_error_t representationCharacter(int n, msym_symmetry_operation_t *sop, msym_representation_t *rep, double *c);
-msym_error_t getRepresentationsCn(int n, int rl, msym_representation_t rep[rl]);
-msym_error_t getRepresentationsDnh(int n, int rl, msym_representation_t rep[rl]);
-
-
-msym_error_t new_characterTableCn(int n, int l, msym_symmetry_operation_t sops[l], msym_character_table_t *ct){
+msym_error_t generateCharacterTable(msym_point_group_type_t type, int n, int sopsl, msym_symmetry_operation_t sops[sopsl], msym_character_table_t **oct){
     msym_error_t ret = MSYM_SUCCESS;
-    int rl = ct->d = sops[l-1].cla + 1;
-    double (*table)[rl] = NULL;
+    msym_character_table_t *ct = calloc(1, sizeof(msym_character_table_t));
+    ct->d = sops[sopsl-1].cla + 1;
+    ct->table = calloc(ct->d, sizeof(double[ct->d]));
+    ct->classc = calloc(ct->d, sizeof(int));
+    ct->s = calloc(ct->d, sizeof(msym_symmetry_species_t));
+    msym_representation_t *rep = calloc(ct->d, sizeof(msym_representation_t));
+    double (*table)[ct->d] = (double (*)[ct->d]) ct->table;
     
-    ct->table = calloc(rl, sizeof(double[rl]));
-    ct->rep = calloc(rl, sizeof(msym_representation_t));
-    if(MSYM_SUCCESS != (ret = getRepresentationsDnh(n,rl,ct->rep))) goto err;
-    table = (double (*)[rl]) ct->table;
-    for(int i = 0;i < rl;i++){
+    const struct _fmap {
+        msym_point_group_type_t type;
+        msym_error_t (*f)(int, int, msym_representation_t *);
+    } fmap[18] = {
+        
+        [ 0] = {POINT_GROUP_Ci,  getRepresentationsUnknown},
+        [ 1] = {POINT_GROUP_Cs,  getRepresentationsUnknown},
+        [ 2] = {POINT_GROUP_Cn,  getRepresentationsCn},
+        [ 3] = {POINT_GROUP_Cnh, getRepresentationsCnh},
+        [ 4] = {POINT_GROUP_Cnv, getRepresentationsCnv},
+        [ 5] = {POINT_GROUP_Dn,  getRepresentationsDn},
+        [ 6] = {POINT_GROUP_Dnh, getRepresentationsDnh},
+        [ 7] = {POINT_GROUP_Dnd, getRepresentationsDnd},
+        [ 8] = {POINT_GROUP_Sn,  getRepresentationsUnknown},
+        [ 9] = {POINT_GROUP_T,   getRepresentationsUnknown},
+        [10] = {POINT_GROUP_Td,  getRepresentationsUnknown},
+        [11] = {POINT_GROUP_Th,  getRepresentationsUnknown},
+        [12] = {POINT_GROUP_O,   getRepresentationsUnknown},
+        [13] = {POINT_GROUP_Oh,  getRepresentationsUnknown},
+        [14] = {POINT_GROUP_I,   getRepresentationsUnknown},
+        [15] = {POINT_GROUP_Ih,  getRepresentationsUnknown},
+        [16] = {POINT_GROUP_K,   getRepresentationsUnknown},
+        [17] = {POINT_GROUP_Kh,  getRepresentationsUnknown}
+    };
+    
+    int fi, fil = sizeof(fmap)/sizeof(fmap[0]);
+    for(fi = 0; fi < fil;fi++){
+        if(fmap[fi].type == type) {
+            if(MSYM_SUCCESS != (ret = fmap[fi].f(n,ct->d,rep))) goto err;
+            break;
+        }
+    }
+    
+    if(fi == fil){
+        msymSetErrorDetails("Unknown point group when generating character table");
+        ret = MSYM_POINT_GROUP_ERROR;
+        goto err;
+    }
+    
+    for(int i = 0; i < sopsl;i++){
+        ct->classc[sops[i].cla]++;
+    }
+    
+    for(int i = 0;i < ct->d;i++){
+        snprintf(ct->s[i].name, sizeof(ct->s[i].name), "%s",rep[i].name);
+        ct->s[i].d = rep[i].d;
         int nc = -1;
-        for(int j = 0;j < l;j++){
+        for(int j = 0;j < sopsl;j++){
             if(nc < sops[j].cla){
                 nc = sops[j].cla;
-                if(MSYM_SUCCESS != (ret = representationCharacter(n,&sops[j],&ct->rep[i],&table[i][nc]))) goto err;
+                if(MSYM_SUCCESS != (ret = representationCharacter(n,&sops[j],&rep[i],&table[i][nc]))) goto err;
             }
         }
     }
@@ -216,8 +278,7 @@ msym_error_t new_characterTableCn(int n, int l, msym_symmetry_operation_t sops[l
     
     
     int nc = -1;
-    printf("D%dh\t\t",n);
-    for(int j = 0;j < l;j++){
+    for(int j = 0;j < sopsl;j++){
         //if(j == 0) printf("\t");
         if(nc < sops[j].cla){
             nc = sops[j].cla;
@@ -237,20 +298,30 @@ msym_error_t new_characterTableCn(int n, int l, msym_symmetry_operation_t sops[l
         }
     }
     printf("\n");
-    for(int i = 0;i < rl;i++){
+    for(int i = 0;i < ct->d;i++){
         
-        printf("%s\t",ct->rep[i].name);
-        for(int j = 0;j < rl;j++){
+        printf("%s\t",rep[i].name);
+        for(int j = 0;j < ct->d;j++){
             printf("% .3lf\t\t",table[i][j]);
         }
         printf("\n");
     }
+    *oct = ct;
     
+    free(rep);
     return ret;
 err:
     free(ct->table);
-    free(ct->rep);
+    free(ct->s);
+    free(ct->classc);
+    free(rep);
+    free(ct);
     return ret;
+}
+
+msym_error_t getRepresentationsUnknown(int n, int rl, msym_representation_t rep[rl]){
+    msymSetErrorDetails("Character table representation NYI");
+    return MSYM_INVALID_CHARACTER_TABLE;
 }
 
 msym_error_t getRepresentationsCn(int n, int rl, msym_representation_t rep[rl]){
@@ -741,10 +812,10 @@ void printCharacterTable(CharacterTable *ct){
 }
 
 void convertNewCharacterTable(msym_point_group_t *pg){
-    msym_character_table_2_t *ct = malloc(sizeof(msym_character_table_2_t));
+    msym_character_table_t *ct = malloc(sizeof(msym_character_table_t));
     ct->d = pg->ct->l;
     double (*t)[ct->d] = malloc(sizeof(double[ct->d][ct->d]));
-    msym_symmetry_species_2_t *ssp = malloc(sizeof(msym_symmetry_species_2_t[ct->d]));
+    msym_symmetry_species_t *ssp = malloc(sizeof(msym_symmetry_species_t[ct->d]));
     ct->s = ssp;
     ct->table = t;
     ct->classc = pg->ct->classc;

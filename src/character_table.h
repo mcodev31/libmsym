@@ -322,20 +322,6 @@ typedef struct {
     int l;
 } CharacterTable;
 
-typedef struct _msym_representation {
-    enum {IRREDUCIBLE, REDUCIBLE} type;
-    int d;
-    struct {
-        int p, v, h, i, l;
-    } eig;
-    char name[8];
-} msym_representation_t;
-
-typedef struct _msym_character_table {
-    int d;
-    msym_representation_t *rep;
-    double *table;
-} msym_character_table_t;
 
 msym_error_t characterTableUnknown(int n, CharacterTable *ct);
 msym_error_t characterTableCnv(int n, CharacterTable *ct);
@@ -345,7 +331,7 @@ msym_error_t characterTableTd(int n, CharacterTable *ct);
 msym_error_t characterTableIh(int n, CharacterTable *ct);
 
 void decomposeRepresentation(CharacterTable *ct, double rspan[ct->l], double dspan[ct->l]);
-void decomposeRepresentation2(msym_character_table_2_t *ct, double rspan[ct->d], double dspan[ct->d]);
+void decomposeRepresentation2(msym_character_table_t *ct, double rspan[ct->d], double dspan[ct->d]);
 
 void directProduct(int l, IrreducibleRepresentation *irrep1, IrreducibleRepresentation *irrep2, double pspan[l]);
 void directProduct2(int l, double irrep1[l], double irrep2[l], double pspan[l]);
@@ -355,8 +341,7 @@ void printCharacterTable(CharacterTable *ct);
 
 
 #include "symop.h"
-msym_error_t new_characterTableCn(int n, int l, msym_symmetry_operation_t sops[l], msym_character_table_t *ct);
-
+msym_error_t generateCharacterTable(msym_point_group_type_t type, int n, int sopsl, msym_symmetry_operation_t sops[sopsl], msym_character_table_t **ct);
 
 
 
