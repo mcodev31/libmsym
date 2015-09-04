@@ -25,6 +25,8 @@ typedef struct _msym_representation {
     char name[8];
 } msym_representation_t;
 
+msym_error_t verifyCharacterTable(msym_character_table_t *ct);
+
 msym_error_t setRepresentationName(msym_representation_t *rep);
 msym_error_t representationCharacter(int n, msym_symmetry_operation_t *sop, msym_representation_t *rep, double *c);
 
@@ -284,8 +286,8 @@ msym_error_t generateCharacterTable(msym_point_group_type_t type, int n, int sop
             nc = sops[j].cla;
             char buf[12];
             symmetryOperationName(&sops[j], 12, buf);
-            printf("%5s",buf);
-            if(sops[j].order == 2 && sops[j].type == PROPER_ROTATION && sops[j].v[2] != 1.0){
+            printf("%d%s",ct->classc[sops[j].cla],buf);
+            /*if(sops[j].order == 2 && sops[j].type == PROPER_ROTATION && sops[j].v[2] != 1.0){
                 if(sops[j].power == 1) printf("'");
                 else printf("''");
             }
@@ -293,7 +295,7 @@ msym_error_t generateCharacterTable(msym_point_group_type_t type, int n, int sop
                 if(sops[j].v[2] == 1.0) printf("h");
                 else if(sops[j].power == 1) printf("v");
                 else printf("d");
-            }
+            }*/
             printf("\t\t");
         }
     }
@@ -306,6 +308,9 @@ msym_error_t generateCharacterTable(msym_point_group_type_t type, int n, int sop
         }
         printf("\n");
     }
+    
+    if(MSYM_SUCCESS != (ret = verifyCharacterTable(ct))) goto err;
+    
     *oct = ct;
     
     free(rep);
@@ -316,6 +321,26 @@ err:
     free(ct->classc);
     free(rep);
     free(ct);
+    return ret;
+}
+
+
+#define CHARACTER_TABLE_VERIFICATION_THRESHOLD 1e-10
+msym_error_t verifyCharacterTable(msym_character_table_t *ct){
+    msym_error_t ret = MSYM_SUCCESS;
+    double (*table)[ct->d] = (double (*)[ct->d]) ct->table;
+    for(int i = 0;i < ct->d && ret == MSYM_SUCCESS;i++){
+        for(int j = i+1;j < ct->d;j++){
+            double r = 0.0;
+            for(int k = 0;k < ct->d;k++){
+                r += ct->classc[k]*table[i][k]*table[j][k];
+            }
+            if(r > CHARACTER_TABLE_VERIFICATION_THRESHOLD){
+                msymSetErrorDetails("Character table verification failed irrep %s(%d) and %s(%d) are not orthogonal, product %e > %e",ct->s[i].name,i,ct->s[j].name,j,r,CHARACTER_TABLE_VERIFICATION_THRESHOLD);
+                ret = MSYM_INVALID_CHARACTER_TABLE;
+            }
+        }
+    }
     return ret;
 }
 
@@ -513,26 +538,26 @@ msym_error_t getRepresentationsDnh(int n, int rl, msym_representation_t rep[rl])
     if(~n & 1){
         rep[r].type = IRREDUCIBLE;
         rep[r].d = 1;
-        rep[r].eig.l = rep[r].eig.v = rep[r].eig.h = rep[r].eig.i = 1;
-        rep[r].eig.p = -1;
+        rep[r].eig.l = rep[r].eig.v = rep[r].eig.i = 1;
+        rep[r].eig.p = rep[r].eig.h = -1;
         if(MSYM_SUCCESS != (ret = setRepresentationName(&rep[r]))) goto err;
         r++;
         rep[r].type = IRREDUCIBLE;
         rep[r].d = 1;
-        rep[r].eig.l = rep[r].eig.h = rep[r].eig.i = 1;
-        rep[r].eig.p = rep[r].eig.v = -1;
+        rep[r].eig.l = rep[r].eig.i = 1;
+        rep[r].eig.p = rep[r].eig.h = rep[r].eig.v = -1;
         if(MSYM_SUCCESS != (ret = setRepresentationName(&rep[r]))) goto err;
         r++;
         rep[r].type = IRREDUCIBLE;
         rep[r].d = 1;
-        rep[r].eig.l = rep[r].eig.v = 1;
-        rep[r].eig.p = rep[r].eig.h = rep[r].eig.i = -1;
+        rep[r].eig.l = rep[r].eig.h = rep[r].eig.v = 1;
+        rep[r].eig.p = rep[r].eig.i = -1;
         if(MSYM_SUCCESS != (ret = setRepresentationName(&rep[r]))) goto err;
         r++;
         rep[r].type = IRREDUCIBLE;
         rep[r].d = 1;
-        rep[r].eig.l = 1;
-        rep[r].eig.p = rep[r].eig.h = rep[r].eig.i = rep[r].eig.v = -1;
+        rep[r].eig.l = rep[r].eig.h = 1;
+        rep[r].eig.p = rep[r].eig.i = rep[r].eig.v = -1;
         if(MSYM_SUCCESS != (ret = setRepresentationName(&rep[r]))) goto err;
         r++;
     }
@@ -636,7 +661,7 @@ msym_error_t representationCharacter(int n, msym_symmetry_operation_t *sop, msym
     msym_error_t ret = MSYM_SUCCESS;
     double x = 0;
     
-    printSymmetryOperation(sop);
+    //printSymmetryOperation(sop);
     if(sop->orientation == HORIZONTAL){
     //if(sop->v[2] == 1.0){
         switch(rep->d)
