@@ -669,7 +669,7 @@ printf("%d\n",__LINE__);
     }
     
     printf("decomposed\n");
-    for(int prk = 0;prk < pg->ct->l;prk++) printf(" + %d%s", ispan[prk], pg->ct->irrep[prk].name);
+    for(int prk = 0;prk < pg->ct2->d;prk++) printf(" + %d%s", ispan[prk], pg->ct2->s[prk].name);
     printf("\n");
     
     for(int i = 0; i < esl; i++){

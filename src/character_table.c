@@ -280,6 +280,7 @@ msym_error_t generateCharacterTable(msym_point_group_type_t type, int n, int sop
     
     
     int nc = -1;
+    printf("\t\t");
     for(int j = 0;j < sopsl;j++){
         //if(j == 0) printf("\t");
         if(nc < sops[j].cla){
@@ -586,8 +587,6 @@ err:
 msym_error_t getRepresentationsDnd(int n, int rl, msym_representation_t rep[rl]){
     msym_error_t ret = MSYM_SUCCESS;
     int r = 0;
-    printf("\n\n\nprimary is a sn axis here e messed up!\n\n\n\n");
-    exit(1);
     rep[r].type = IRREDUCIBLE;
     rep[r].d = 1;
     rep[r].eig.p = rep[r].eig.l = rep[r].eig.v = rep[r].eig.h = rep[r].eig.i = 1;
@@ -602,15 +601,17 @@ msym_error_t getRepresentationsDnd(int n, int rl, msym_representation_t rep[rl])
     if(~n & 1){
         rep[r].type = IRREDUCIBLE;
         rep[r].d = 1;
-        rep[r].eig.l = rep[r].eig.v = rep[r].eig.i = 1;
-        rep[r].eig.h = rep[r].eig.p = -1;
+        rep[r].eig.l = rep[r].eig.v = rep[r].eig.i = rep[r].eig.p = 1;
+        rep[r].eig.h = -1;
         if(MSYM_SUCCESS != (ret = setRepresentationName(&rep[r]))) goto err;
+        snprintf(rep[r].name, sizeof(rep[r].name), "B1"); //primary axis is the Sn for naming
         r++;
         rep[r].type = IRREDUCIBLE;
         rep[r].d = 1;
-        rep[r].eig.l = rep[r].eig.i = 1 ;
-        rep[r].eig.h = rep[r].eig.p = rep[r].eig.v = -1;
+        rep[r].eig.l = rep[r].eig.i = rep[r].eig.p = 1 ;
+        rep[r].eig.h = rep[r].eig.v = -1;
         if(MSYM_SUCCESS != (ret = setRepresentationName(&rep[r]))) goto err;
+        snprintf(rep[r].name, sizeof(rep[r].name), "B2"); //primary axis is the Sn for naming
         r++;
         for(int i = 1;r < rl;i++, r++){
             rep[r].type = IRREDUCIBLE;
@@ -637,13 +638,14 @@ msym_error_t getRepresentationsDnd(int n, int rl, msym_representation_t rep[rl])
             rep[r].d = 2;
             rep[r].eig.l = i;
             rep[r].eig.p = rep[r].eig.v = rep[r].eig.i = 1;
-            rep[r].eig.h = -1;
+            rep[r].eig.h = 1 - ((i % 2) << 1);
             if(MSYM_SUCCESS != (ret = setRepresentationName(&rep[r]))) goto err;
             r++;
             rep[r].type = IRREDUCIBLE;
             rep[r].d = 2;
             rep[r].eig.l = i;
-            rep[r].eig.p = rep[r].eig.v = rep[r].eig.h = 1;
+            rep[r].eig.p = rep[r].eig.v;
+            rep[r].eig.h = -1 + ((i % 2) << 1);
             rep[r].eig.i = -1;
             if(MSYM_SUCCESS != (ret = setRepresentationName(&rep[r]))) goto err;;
         }

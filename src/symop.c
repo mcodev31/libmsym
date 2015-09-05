@@ -227,7 +227,10 @@ void symmetryOperationName(msym_symmetry_operation_t* sop, int l, char buf[l]){
         default: break;
     }
     switch (sop->type) {
-        case PROPER_ROTATION   : snprintf(buf, l, "C%d%s^%d",sop->order,cn,sop->power); break;
+        case PROPER_ROTATION   :
+            if(sop->order == 2) snprintf(buf, l, "C%d%s",sop->order,cn);
+            else snprintf(buf, l, "C%d%s^%d",sop->order,cn,sop->power);
+            break;
         case IMPROPER_ROTATION : snprintf(buf, l, "S%d^%d",sop->order,sop->power); break;
         case REFLECTION        : snprintf(buf, l, "R%s",rn); break;
         case INVERSION         : snprintf(buf, l, "i"); break;
