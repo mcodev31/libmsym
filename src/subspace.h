@@ -19,6 +19,7 @@ void printSubspace(CharacterTable *ct, msym_subspace_t *ss);
 void freeSubspace(msym_subspace_t *ss);
 int filterSubspace(msym_subspace_t *ss);
 void printTransform(int r, int c, double M[r][c]);
+void freeSALCSubspaces(int ssl, msym_subspace_2_t *ss);
 
 #endif /* defined(__MSYM__SUBSPACE_h) */
 

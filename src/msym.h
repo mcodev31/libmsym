@@ -171,7 +171,7 @@ extern "C" {
     } msym_basis_function_t;
     
     typedef struct _msym_salc {
-        double *pf;         // partner functions
+        void *pf;         // partner functions
         int fl;             // number of basis functions
         int d;              // dimension of space (same as msym_character_table_t.s[msym_subspace_t.s].d)
         msym_basis_function_t **f;
@@ -212,6 +212,8 @@ extern "C" {
     msym_error_t msymGetSymmetryOperations(msym_context ctx, int *sopsl, msym_symmetry_operation_t **sops);
     msym_error_t msymGetEquivalenceSets(msym_context ctx, int *l, msym_equivalence_set_t **es);
     msym_error_t msymGetOrbitalSubspaces(msym_context ctx, int l, double c[l][l]);
+    msym_error_t msymGetSALCSubspaces(msym_context ctx, int *l, msym_subspace_2_t **ss);
+    msym_error_t msymGetCharacterTable(msym_context ctx, msym_character_table_t **ct);
     
     msym_error_t msymFindEquivalenceSets(msym_context ctx);
     msym_error_t msymFindEquivalenceSetPermutations(msym_context ctx);

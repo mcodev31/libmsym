@@ -66,6 +66,7 @@ struct _msym_context {
         msym_element_t *elements;
         msym_orbital_t *orbitals;
         msym_orbital_t **porbitals;
+        msym_subspace_2_t *salc_ss;
         msym_basis_function_t *basis;
         msym_symmetry_operation_t *sops;
         msym_subgroup_t *sg;
@@ -381,7 +382,59 @@ err:
     
 }
 
+msym_error_t msymGetSALCSubspaces(msym_context ctx, int *l, msym_subspace_2_t **ss){
+    msym_error_t ret = MSYM_SUCCESS;
+    if(NULL == ctx) {ret = MSYM_INVALID_CONTEXT;goto err;}
+    if(NULL == ctx->salc_ss){
+        if(MSYM_SUCCESS != (ret = msymGenerateSALCSubspaces(ctx))) goto err;
+        if(NULL == ctx->salc_ss){ret = MSYM_INVALID_ORBITALS;goto err;}
+    }
+    
+    msym_basis_function_t *bfs;
+    int bfsl = 0;
+    if(MSYM_SUCCESS != (ret = msymGetBasisFunctions(ctx, &bfsl, &bfs))) goto err;
+    msym_subspace_2_t *salc_ss = ctx->ext.salc_ss = calloc(ctx->salc_ssl, sizeof(msym_subspace_2_t));
+    memcpy(ctx->ext.salc_ss, ctx->salc_ss, sizeof(msym_subspace_2_t[ctx->salc_ssl]));
+    for(int i = 0; i < ctx->salc_ssl;i++){
+        salc_ss[i].salcl = ctx->salc_ss[i].salcl;
+        salc_ss[i].s = ctx->salc_ss[i].s;
+        salc_ss[i].salc = malloc(sizeof(msym_salc_t[salc_ss[i].salcl]));
+        for(int j = 0; j < salc_ss[i].salcl;j++){
+            salc_ss[i].salc[j].d = ctx->salc_ss[i].salc[j].d;
+            salc_ss[i].salc[j].fl = ctx->salc_ss[i].salc[j].fl;
+            size_t pfsize = sizeof(double[salc_ss[i].salc[j].d][salc_ss[i].salc[j].fl]);
+            salc_ss[i].salc[j].pf = malloc(pfsize);
+            salc_ss[i].salc[j].f = malloc(sizeof(msym_basis_function_t *[salc_ss[i].salc[j].fl]));
+            memcpy(salc_ss[i].salc[j].pf, ctx->salc_ss[i].salc[j].pf, pfsize);
+            for(int k = 0;k < salc_ss[i].salc[j].fl;k++){
+                salc_ss[i].salc[j].f[k] = ctx->salc_ss[i].salc[j].f[k] - ctx->basis + ctx->ext.basis;
+            }
+        }
+    }
+    
+    *ss = ctx->ext.salc_ss;
+    *l = ctx->salc_ssl;
+    
+    
+    return ret;
+err:
+    freeSALCSubspaces(ctx->salc_ssl, ctx->ext.salc_ss);
+    ctx->ext.salc_ss = NULL;
+    return ret;
+}
 
+msym_error_t msymGetCharacterTable(msym_context ctx, msym_character_table_t **ct){
+    msym_error_t ret = MSYM_SUCCESS;
+    if(NULL == ctx) {ret = MSYM_INVALID_CONTEXT;goto err;}
+    if(NULL == ctx->pg){ret = MSYM_INVALID_POINT_GROUP;goto err;}
+    if(NULL == ctx->pg->ct2){ret = MSYM_INVALID_CHARACTER_TABLE;goto err;}
+    printf("WARNING returning internal pointer\n");
+    *ct = ctx->pg->ct2;
+    
+err:
+    return ret;
+    
+}
 
 msym_error_t msymGetCenterOfMass(msym_context ctx, double v[3]){
     msym_error_t ret = MSYM_SUCCESS;
@@ -876,6 +929,7 @@ err:
 msym_error_t ctxDestroyBasisFunctions(msym_context ctx){
     msym_error_t ret = MSYM_SUCCESS;
     if(ctx == NULL) {ret = MSYM_INVALID_CONTEXT; goto err;}
+    ctxDestroySALCSubspaces(ctx);
     free(ctx->basis);
     free(ctx->ext.basis);
     ctx->basis = NULL;
@@ -918,16 +972,11 @@ err:
 msym_error_t ctxDestroySALCSubspaces(msym_context ctx){
     msym_error_t ret = MSYM_SUCCESS;
     if(ctx == NULL) {ret = MSYM_INVALID_CONTEXT; goto err;}
-    for(int i = 0;i < ctx->salc_ssl && ctx->salc_ss != NULL;i++){
-        for(int j = 0;j < ctx->salc_ss[i].salcl;j++){
-            free(ctx->salc_ss[i].salc[j].f);
-            free(ctx->salc_ss[i].salc[j].pf);
-        }
-        free(ctx->salc_ss[i].salc);
-    }
-    free(ctx->salc_ss);
+    freeSALCSubspaces(ctx->salc_ssl, ctx->salc_ss);
+    freeSALCSubspaces(ctx->salc_ssl, ctx->ext.salc_ss);
     free(ctx->salc_span);
     ctx->salc_ss = NULL;
+    ctx->ext.salc_ss = NULL;
     ctx->salc_span = NULL;
     ctx->salc_ssl = 0;
 err:

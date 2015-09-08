@@ -59,7 +59,16 @@ void freeSubspace(msym_subspace_t *ss){
     free(ss->subspace);
 }
 
-
+void freeSALCSubspaces(int ssl, msym_subspace_2_t *ss){
+    for(int i = 0;i < ssl && NULL != ss;i++){
+        for(int j = 0;j < ss[i].salcl;j++){
+            free(ss[i].salc[j].f);
+            free(ss[i].salc[j].pf);
+        }
+        free(ss[i].salc);
+    }
+    free(ss);
+}
 
 
 void printSubspace(CharacterTable *ct, msym_subspace_t *ss){
