@@ -32,6 +32,9 @@ extern "C" {
     } msym_geometry_t;
     
     
+    
+    
+    
     typedef enum _msym_basis_type {
         ATOMIC_ORBITAL,
         MASS_WEIGHTED_COORDINATES
@@ -142,6 +145,7 @@ extern "C" {
         double err;                             // Maximum error when detecting this equivalence set
         int length;                             // Number of elements
     } msym_equivalence_set_t ;
+    
     
     typedef enum _msym_basis_type_2 {
         REAL_SPHERICAL_HARMONIC,

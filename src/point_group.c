@@ -82,6 +82,9 @@ msym_error_t generateSymmetryOperationsSn(int n, int l, msym_symmetry_operation_
 msym_error_t generateSymmetryOperationsCn(int n, int l, msym_symmetry_operation_t sops[l], int *pk, int *pcla);
 msym_error_t generateSymmetryOperationsCnv(int n, int l, msym_symmetry_operation_t sops[l], int *pk, int *pcla);
 msym_error_t generateSymmetryOperationsCnh(int n, int l, msym_symmetry_operation_t sops[l], int *pk, int *pcla);
+msym_error_t generateSymmetryOperationsT(int n, int l, msym_symmetry_operation_t sops[l], int *pk, int *pcla);
+msym_error_t generateSymmetryOperationsTd(int n, int l, msym_symmetry_operation_t sops[l], int *pk, int *pcla);
+
 msym_error_t generateSymmetryOperationsUnknown(int n, int l, msym_symmetry_operation_t sops[l], int *pk, int *pcla);
 
 
@@ -1599,6 +1602,9 @@ msym_error_t generateSymmetryOperations(msym_point_group_type_t type, int n, int
     msym_symmetry_operation_t *sops = calloc(order, sizeof(msym_symmetry_operation_t));
     sops[0].cla = 0;
     sops[0].type = IDENTITY;
+    sops[0].power = 1;
+    sops[0].order = 1;
+    sops[0].orientation = NONE;
     int cla = 1, gsopsl = 1;
     
     const struct _fmap {
@@ -1615,8 +1621,8 @@ msym_error_t generateSymmetryOperations(msym_point_group_type_t type, int n, int
         [ 6] = {POINT_GROUP_Dnh, generateSymmetryOperationsDnh},
         [ 7] = {POINT_GROUP_Dnd, generateSymmetryOperationsDnd},
         [ 8] = {POINT_GROUP_Sn,  generateSymmetryOperationsSn},
-        [ 9] = {POINT_GROUP_T,   generateSymmetryOperationsUnknown},
-        [10] = {POINT_GROUP_Td,  generateSymmetryOperationsUnknown},
+        [ 9] = {POINT_GROUP_T,   generateSymmetryOperationsT},
+        [10] = {POINT_GROUP_Td,  generateSymmetryOperationsTd},
         [11] = {POINT_GROUP_Th,  generateSymmetryOperationsUnknown},
         [12] = {POINT_GROUP_O,   generateSymmetryOperationsUnknown},
         [13] = {POINT_GROUP_Oh,  generateSymmetryOperationsUnknown},
@@ -1639,6 +1645,14 @@ msym_error_t generateSymmetryOperations(msym_point_group_type_t type, int n, int
         ret = MSYM_POINT_GROUP_ERROR;
         goto err;
     }
+    
+    if(gsopsl != order){
+        msymSetErrorDetails("Generated incorrect number of symmetry operations %d != %d",gsopsl,order);
+        ret = MSYM_INVALID_POINT_GROUP;
+        goto err;
+    }
+    
+    for(int i = 0;i < order;i++) printSymmetryOperation(&sops[i]);
     
     *osops = sops;
     return ret;
@@ -1901,6 +1915,97 @@ err:
     return ret;
 }
 
+msym_error_t generateSymmetryOperationsT(int n, int l, msym_symmetry_operation_t sops[l], int *pk, int *pcla){
+    msym_error_t ret = MSYM_SUCCESS;
+    int k = *pk, cla = *pcla;
+    double v2[3][3] = { {1.0,0.0,0.0}, {0.0,1.0,0.0}, {0.0,0.0,1.0} };
+    double v3[4][3] = { {1.0,1.0,1.0}, {-1.0,1.0,1.0}, {1.0,-1.0,1.0}, {-1.0,-1.0,1.0} };
+    
+    if(k + 11 > l){ret = MSYM_POINT_GROUP_ERROR; msymSetErrorDetails("Too many operations when generating T operations %d >= %d",k + 11,l); goto err;}
+    
+    for(int i = 0; i < 3; k++,i++){
+        vnorm2(v2[i],sops[k].v);
+        sops[k].type = PROPER_ROTATION;
+        sops[k].order = 2;
+        sops[k].power = 1;
+        sops[k].orientation = NONE;
+        sops[k].cla = cla;
+    }
+    
+    cla += 1;
+    
+    for(int i = 0; i < 8; k++,i++){
+        vnorm2(v3[i % 4],sops[k].v);
+        sops[k].type = PROPER_ROTATION;
+        sops[k].order = 3;
+        sops[k].power = 1 + (i/4);
+        sops[k].orientation = NONE;
+        sops[k].cla = cla;
+    }
+    
+    cla += 1;
+    
+    printf("\n------ T %d operations %d classes------\n",k-*pk, cla-*pcla);
+    
+    *pk = k; *pcla = cla;
+    
+    return ret;
+err:
+    return ret;
+
+}
+
+msym_error_t generateSymmetryOperationsTd(int n, int l, msym_symmetry_operation_t sops[l], int *pk, int *pcla){
+    msym_error_t ret = MSYM_SUCCESS;
+    int k = *pk, cla = *pcla;
+    double v2[3][3] = { {1.0,0.0,0.0}, {0.0,1.0,0.0}, {0.0,0.0,1.0} };
+    double vs[6][3] = {
+        { 1, 0, 1},
+        { 0, 1, 1},
+        {-1, 0, 1},
+        { 0,-1, 1},
+        { 1, 1, 0},
+        { 1,-1, 0}
+    };
+    
+    
+    
+    if(MSYM_SUCCESS != (ret = generateSymmetryOperationsT(n,l,sops, &k, &cla))) goto err;
+    if(k + 12 > l){ret = MSYM_POINT_GROUP_ERROR; msymSetErrorDetails("Too many operations when generating Td operations %d >= %d",k + 12, l); goto err;}
+    
+    msym_symmetry_operation_t sigma = {.type = REFLECTION, .order = 1, .power = 1, .cla = cla, .orientation = NONE};
+
+    for(int i = 0; i < 6; i++){
+        memcpy(&sops[k+i], &sigma, sizeof(msym_symmetry_operation_t));
+        vnorm2(vs[i],sops[k+i].v);
+    }
+    
+    k += 6;
+    cla += 1;
+    
+    msym_symmetry_operation_t s4 = {.type = IMPROPER_ROTATION, .order = 4, .power = 1, .cla = cla, .orientation = NONE};
+    
+    for(int i = 0; i < 3; i++){
+        memcpy(&sops[k+i], &s4, sizeof(msym_symmetry_operation_t));
+        memcpy(&sops[k+i+3], &s4, sizeof(msym_symmetry_operation_t));
+        vnorm2(v2[i],sops[k+i].v);
+        vnorm2(v2[i],sops[k+i+3].v);
+        sops[k+i+3].power = 3;
+    }
+    
+    k += 6;
+    cla += 1;
+    
+    printf("\n------ Td %d operations %d classes------\n",k-*pk, cla-*pcla);
+    
+    *pk = k; *pcla = cla;
+    
+    return ret;
+err:
+    return ret;
+
+}
+
 msym_error_t generateReflectionPlanes(int n, int l, msym_symmetry_operation_t sops[l], int *pk, int *pcla){
     msym_error_t ret = MSYM_SUCCESS;
     int k = *pk, cla = *pcla;
@@ -1955,162 +2060,6 @@ err:
     return ret;
 }
 
-void generatePointGroupDnh2(int n, int l, msym_symmetry_operation_t sops[l]){
-    double x[3] = {1.0,0.0,0.0}, y[3] = {0.0,1.0,0.0}, z[3] = {0.0,0.0,1.0};
-    int k = 0, cla = 0, order = n == 0 ? 4 : n << 2;
-    
-    msym_symmetry_operation_t cn = {.type = PROPER_ROTATION, .order = n, .power = 1};
-    msym_symmetry_operation_t sn = {.type = IMPROPER_ROTATION, .order = n, .power = 1};
-    msym_symmetry_operation_t c2 = {.type = PROPER_ROTATION, .order = 2, .power = -1};
-    msym_symmetry_operation_t sigma = {.type = REFLECTION, .orientation = VERTICAL, .power = 1};
-    vcopy(x,c2.v); vcopy(y,sigma.v); vcopy(z,cn.v); vcopy(z,sn.v);
-    
-    sops[k].type = IDENTITY;
-    sops[k++].cla = cla++;
-    
-    if(n > 0){
-        
-        /*int m = (n << (n & 1));
-        for(int i = 1;i <= m >> 1;i++){
-            int index = k + ((i-1) << 1);
-            symopPow(&s2n, i, &sops[index]);
-            sops[index].cla = cla + i - 1;
-            printf("i = %d m = %d index = %d ",i,m,index);
-            printSymmetryOperation(&sops[index]);
-        }
-        
-        for(int i = 1;i < m >> 1;i++){
-            int index = k + 1 + ((i-1) << 1);
-            symopPow(&s2n, m-i, &sops[index]);
-            sops[index].cla = cla + i - 1;
-            printf("i = %d m = %d index = %d ",i,m,index);
-            printSymmetryOperation(&sops[index]);
-
-        }
-        
-        k += m - 1;
-        cla += m >> 1;*/
-        
-        for(int s = n << 1;s % 2 == 0;s = s >> 1){
-            printf("-------- s = %d ---------\n",s);
-            sn.order = s >> 1;
-            int sm = (s >> ((~s >> 1) & 1));
-            for(int i = 1;i <= sm >> 1;i++){
-                int index = k + ((i-1) << 1);
-                symopPow(&sn, i, &sops[index]);
-                sops[index].cla = cla + i - 1;
-                printf("i = %d m = %d index = %d ",i,sm,index);
-                printSymmetryOperation(&sops[index]);
-            }
-
-            for(int i = 1;i < sm >> 1;i++){
-                int index = k + 1 + ((i-1) << 1);
-                symopPow(&sn, sm-i, &sops[index]);
-                sops[index].cla = cla + i - 1;
-                printf("i = %d m = %d index = %d ",i,sm,index);
-                printSymmetryOperation(&sops[index]);
-            }
-            
-            
-            k += sm - 1;
-            cla += sm >> 1;
-            
-        }
-    
-        
-        /*for(int s = n;s % 2 == 0;s /= 2){
-            s2n.order = (s >> 1);
-            for(int i = 1;i < (s >> 1);i += 2){
-                int index = k + ((i >> 1) << 1);
-                symopPow(&s2n, i, &sops[index]);
-                sops[index].cla = cla + (i >> 1) - 1;
-            }
-            
-            for(int i = 1;i < (s >> 1);i += 2){
-                int index = k + 1 + ((i >> 1) << 1);
-                printf("2index = %d\n",index);
-                symopPow(&s2n, s-i, &sops[index]);
-                sops[index].cla = cla + (i >> 1) - 1;
-            }
-            
-            k += (s >> 1) + ((s >> 2) % 2);
-            //k += (s >> 2) + ((s >> 2) % 2);
-            cla += (s >> 3) + ((s >> 2) % 2);
-            //cla += (s >> 3) + ((s >> 2) % 2);
-        }*/
-        
-        for(int i = 1;i <= (n >> 1) && (~n & 1);i += 2){
-            int index = k + ((i >> 1) << 1);
-            symopPow(&cn, i, &sops[index]);
-            sops[index].cla = cla + (i >> 1) - 1;
-        }
-        
-        for(int i = 1;i < (n >> 1) && (~n & 1);i += 2){
-            int index = k + 1 + ((i >> 1) << 1), m = (n << (n & 1));
-            printf("2index = %d\n",index);
-            symopPow(&cn, m-i, &sops[index]);
-            sops[index].cla = cla + (i >> 1) - 1;
-        }
-        
-        k += (~n & 1) ? (n >> 1) : 0;
-        cla += (~n & 1) ? n >> 2 : 0;
-        
-        for(int i = 0;i < n;i++){
-            int e = 1 & ~n, ie = ((i & e)), power = 1 - (ie << 1), index = k + (i >> e) + (ie ? (n >> 1) : 0);
-            enum _msym_symmetry_operation_orientation orientation[2] = {VERTICAL, DIHEDRAL};
-            
-            memcpy(&(sops[index]), &c2, sizeof(msym_symmetry_operation_t));
-            vrotate(i*M_PI/n, c2.v, z, sops[index].v);
-            //sops[index].power = power; // Used the finding of eigenvalues for character tables
-            sops[index].orientation = orientation[ie];
-            sops[index].cla = cla + ie;
-            index += n;
-            memcpy(&(sops[index]), &sigma, sizeof(msym_symmetry_operation_t));
-            vrotate(i*M_PI/n, sigma.v, z, sops[index].v);
-            //sops[index].power = power;
-            sops[index].orientation = orientation[ie];
-            sops[index].cla = cla + (1 << e) + ie;
-        }
-        
-        k += n << 1;
-        cla += 2 << (~n & 1); //2 or four added classes
-        
-        /*
-        for(int i = 1, clas = 0, sp =  n << (n % 2); i < sp;i += 2){
-            symopPow(&s2n, i, &sops[k]);
-            sops[k].cla = cla + ((i << 1)/sp ? n - (i+1)/2 : (i+1)/2 - 1) - clas;
-            clas += (sops[k].type != IMPROPER_ROTATION) && (i << 1) < sp;
-            k += sops[k].type == IMPROPER_ROTATION;
-        }
-        
-        cla += n/2 - ((n + 1) % 2);
-        
-        sops[k].type = REFLECTION; sops[k].order = 0; sops[k].power = 1;
-        vcopy(z,sops[k].v);
-        sops[k++].cla = cla++;*/
-        
-    } else {
-        sops[k].type = INVERSION;
-        sops[k].order = 0;
-        sops[k].power = 1;
-        sops[k++].cla = cla++;
-    }
-    
-    /*if((n+1) % 2){
-        sops[k].type = INVERSION;
-        sops[k].order = 0;
-        sops[k].power = 1;
-        sops[k++].cla = cla++;
-    }*/
-    
-    printf("%d sops %d order\n--------\n",k,order);
-    for(int i = 0;i < order;i++){
-
-        printSymmetryOperation(&sops[i]);
-    }
-    printf("--------\n");
-    
-}
 
 int classifySymmetryOperations(msym_point_group_t *pg){
     int c = 1;
@@ -2235,6 +2184,8 @@ int numberOfSubgroups(msym_point_group_t *pg){
 }
 
 msym_error_t findCharacterTable(msym_point_group_t *pg){
+    printf("WARNING skipping old ct");
+    return MSYM_SUCCESS;
     
     const struct _fmap {
         msym_point_group_type_t type;

@@ -310,7 +310,6 @@ msym_error_t findDecentSubgroup(msym_point_group_t *pg, int irrep, int sgl, msym
         }
         case POINT_GROUP_I :
         case POINT_GROUP_Ih :
-        case POINT_GROUP_O :
         {
             ret = MSYM_POINT_GROUP_ERROR;
             msymSetErrorDetails("Lowering of symmetry not implemented for point group %s symmetry species %s",pg->name, pg->ct2->s[irrep].name);
@@ -342,7 +341,7 @@ msym_error_t findDecentSubgroup(msym_point_group_t *pg, int irrep, int sgl, msym
                     int h = 0;
                     for(int j = 0;j < sg[i].sopsl;j++){
                         msym_symmetry_operation_t *sop = sg[i].sops[j];
-                        if(sop->type == PROPER_ROTATION && sop->order == 2 && vparallel(pg->primary->v, sop->v, thresholds->angle)){
+                        if(sop->type == PROPER_ROTATION && sop->order == 2 && sop->orientation == HORIZONTAL){
                             h = 1;
                             printf("skipping h C2 subgroup\n");
                             break;
@@ -368,7 +367,7 @@ msym_error_t findDecentSubgroup(msym_point_group_t *pg, int irrep, int sgl, msym
                     int h = 0;
                     for(int j = 0;j < sg[i].sopsl;j++){
                         msym_symmetry_operation_t *sop = sg[i].sops[j];
-                        if(sop->type == REFLECTION && vparallel(pg->primary->v, sop->v, thresholds->angle)){
+                        if(sop->type == REFLECTION && sop->orientation == HORIZONTAL){
                             h = 1;
                             printf("skipping h Cs subgroup\n");
                             break;
@@ -382,6 +381,12 @@ msym_error_t findDecentSubgroup(msym_point_group_t *pg, int irrep, int sgl, msym
             }
             break;
         }
+        
+        case POINT_GROUP_Oh :
+        case POINT_GROUP_O  :
+            ret = MSYM_POINT_GROUP_ERROR;
+            msymSetErrorDetails("Not implemented for octahedral symmetry of symmetry species %s, requires Dn orientation determination",pg->name, pg->ct2->s[irrep].name);
+            goto err;
         case POINT_GROUP_Th :
         case POINT_GROUP_T : {
             if(pg->ct2->s[irrep].d == 2){
@@ -391,7 +396,6 @@ msym_error_t findDecentSubgroup(msym_point_group_t *pg, int irrep, int sgl, msym
             }
             //fall through
         }
-        case POINT_GROUP_Oh :
         case POINT_GROUP_Td : {
             if(pg->ct2->s[irrep].d == 2){
                 for(int i = 0;i < sgl;i++){
@@ -437,12 +441,12 @@ msym_error_t getDecentSubgroupCharacters(msym_point_group_t *pg, msym_subgroup_t
     if(sg->type == POINT_GROUP_Dn && sg->n == 2){
         int index = 0;
         double d2c[3][3] = {
-            [0] = {1,-1,-1},
-            [1] = {-1,-1,1},
-            [2] = {-1,1,-1}
+            [0] = { 1, -1, -1},
+            [1] = {-1, -1,  1},
+            [2] = {-1,  1, -1}
         };
         memset(c, 0, sizeof(double[3][pg->order]));
-        for(int s = 0;s < pg->order;s++){
+        for(int s = 0;s < pg->order && !((index == 3) && e);s++){
             for(int i = 0;i < sg->sopsl;i++){
                 if(&pg->sops[s] != sg->sops[i]) continue;
                 if(index == 3 && e) break;
@@ -455,22 +459,23 @@ msym_error_t getDecentSubgroupCharacters(msym_point_group_t *pg, msym_subgroup_t
                     c[1][s] = d2c[1][index];
                     c[2][s] = d2c[2][index];
                     index++;
+                    if(index == 3 && e) break;
                 }
-                
             }
         }
     
-    } else if(sg->type == POINT_GROUP_Cs){
-        int sigma = 0;
+    } else if((sg->type == POINT_GROUP_Cs) || (sg->type == POINT_GROUP_Cn && sg->n == 2)){
+        int faxis = 0;
         memset(c, 0, sizeof(double[2][pg->order]));
-        for(int s = 0;s < pg->order;s++){
+        for(int s = 0;s < pg->order && !(e && faxis);s++){
             for(int i = 0;i < sg->sopsl;i++){
                 if(&pg->sops[s] != sg->sops[i]) continue;
                 if(pg->sops[s].type == IDENTITY){
                     e = 1;
                     c[0][s] = c[1][s] = 1;
-                    if(sigma) break;
+                    if(faxis) break;
                 } else {
+                    faxis = 1;
                     c[0][s] = 1;
                     c[1][s] = -1;
                     if(e) break;
@@ -528,7 +533,11 @@ msym_error_t testSpan2(msym_point_group_t *pg, int sgl, msym_subgroup_t sg[sgl],
     double (*mbasis)[projm] = calloc(basisl, sizeof(double[projm]));            // basis function coefficients
     double (*mdec)[projm] = calloc(basisl, sizeof(double[projm]));              // directo product decomposition memory
     double (*sgc)[pg->order] = calloc(5,sizeof(double[pg->order]));
-
+    
+    double *mdcomp = NULL;
+    double *mdproj = NULL;
+    int *mdfound = NULL;
+    
     int *ispan = calloc(pg->ct2->d, sizeof(int));                               // decoposed total span of symmetrized basis (int)
     int *isalc = calloc(pg->ct2->d, sizeof(int));                               // number of added salcs to irrep
     int *esnmax = calloc(esl, sizeof(int));                                     // max n in eqset
@@ -660,17 +669,26 @@ printf("%d\n",__LINE__);
     
     /* decompose direct product into irreducible representations */
     decomposeRepresentation2(pg->ct2, rspan, dspan);
-
+    int ddim_max = 0;
     for(int k = 0;k < pg->ct2->d;k++){
         ispan[k] = (int)round(dspan[k]);
+        ddim_max = ddim_max > ispan[k] ? ddim_max : ispan[k];
         ss[k].s = k;
         ss[k].salcl = ispan[k];
         ss[k].salc = calloc(ss[k].salcl, sizeof(msym_salc_t));
     }
     
+    printf("ddim_max = %d\n",ddim_max);
+    mdcomp = malloc(sizeof(double[5][ddim_max][ddim_max]));
+    mdproj = malloc(sizeof(double[projm][projm]));
+    mdfound = malloc(sizeof(int[5][ddim_max]));
+
+    
     printf("decomposed\n");
     for(int prk = 0;prk < pg->ct2->d;prk++) printf(" + %d%s", ispan[prk], pg->ct2->s[prk].name);
     printf("\n");
+    
+    
     
     for(int i = 0; i < esl; i++){
         int d = es[i].length;
@@ -761,7 +779,6 @@ printf("%d\n",__LINE__);
                             memset(dproj, 0, sizeof(double[dd][dd]));
                             memset(mdec, 0, sizeof(double[vspan*lvspan][dd]));
 
-                            //TODO: placeholder
                             msym_subgroup_t *rsg = NULL;
                             if(MSYM_SUCCESS != (ret = findDecentSubgroup(pg, sk, sgl, sg, thresholds, &rsg))) goto err;
                             printf("using subgroup %s\n",rsg->name);
@@ -769,69 +786,6 @@ printf("%d\n",__LINE__);
                             if(MSYM_SUCCESS != (ret = getDecentSubgroupCharacters(pg, rsg, sgc))) goto err;
                             
                             printTransform(5, pg->order, sgc);
-                            /*
-                            double c3v_char[2][6] =
-                            {
-                                [0] = {1,0,0, 1,0,0},
-                                [1] = {1,0,0,-1,0,0}
-                            };
-                            
-                            double d4h_char[2][16] =
-                            {
-                                
-                                [0] = {1,0,0,0,0,0,0,0, 1,0,0,0,0,0,0,0},
-                                [1] = {1,0,0,0,0,0,0,0,-1,0,0,0,0,0,0,0}
-                            };
-                            double td_chare[2][24] =
-                            {
-                                
-                                [0] = {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, 1,0,0,0,0,0},
-                                [1] = {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,0},
-                            };
-                            printTransform(5, pg->order, sgc);
-                            
-                            double td_chart[3][24] =
-                            {
-                                
-                                [0] = {1,1,-1,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-                                [1] = {1,-1,-1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-                                [2] = {1,-1,1,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}
-                            };
-                            
-                            if(pg->type == POINT_GROUP_Cnv && pg->n == 3){
-                                sgc = c3v_char;
-                                for(int s = 0;s < pg->sopsl;s++){
-                                    printf("%lf, %lf", sgc[0][s], sgc[1][s]);
-                                    printSymmetryOperation(&pg->sops[s]);
-                                }
-                            } else if(pg->type == POINT_GROUP_Dnh && pg->n == 4){
-                                sgc = d4h_char;
-                                for(int s = 0;s < pg->sopsl;s++){
-                                    printf("%lf, %lf", sgc[0][s], sgc[1][s]);
-                                    printSymmetryOperation(&pg->sops[s]);
-                                }
-                            } else if(pg->type == POINT_GROUP_Td && pg->ct2->s[sk].d == 3){
-                                sgc = td_chart;
-                                for(int s = 0;s < pg->sopsl;s++){
-                                    printf("%lf, %lf, %lf", sgc[0][s], sgc[1][s], sgc[2][s]);
-                                    printSymmetryOperation(&pg->sops[s]);
-                                }
-                            } else if(pg->type == POINT_GROUP_Td && pg->ct2->s[sk].d == 2){
-                                sgc = td_chare;
-                                for(int s = 0;s < pg->sopsl;s++){
-                                    printf("%lf, %lf", sgc[0][s], sgc[1][s]);
-                                    printSymmetryOperation(&pg->sops[s]);
-                                }
-                            } else {
-                                printf("%s need subgroup characters for operations\n", pg->name);
-                                for(int s = 0;s < pg->sopsl;s++){
-                                    printf("%d ", pg->sops[s].cla);
-                                    printSymmetryOperation(&pg->sops[s]);
-                                }
-                                exit(1);
-                                
-                            }*/
-
 
                             char *cs_name[3] = {"A'","A''","B3"};
                             
@@ -867,18 +821,16 @@ printf("%d\n",__LINE__);
                             }
                             //do apply symmetry here
                             memcpy(&sbasis[si], sdec, sizeof(double[svspan][dd]));
+                            
                             int mdim = round(mspan[sk]);
-                            int found[3][3], ifound = 0; //found[mdim]
-                            memset(found,0,sizeof(int[3][3]));
-                            //TODO: placeholder
-                            double tmp1[3][5][128], mtmp[128][128];
-                            //tmp1[mdim][mdim]
-                            //mtmp2[dd][mdim]
-                            double (*g)[mdim][mdim] = tmp1;
-                            double (*mt)[mdim] = mtmp;
+                            int (*found)[mdim] = (int (*)[mdim]) mdfound;
+                            double (*g)[mdim][mdim] = (double (*)[mdim][mdim]) mdcomp;
+                            double (*mt)[mdim] = (double (*)[mdim]) mdproj;
+                            
+                            memset(found,0,sizeof(int[pg->ct2->s[sk].d][mdim]));
                             printf("mdim = %d\n",mdim);
-                            for(int s = 0;s < pg->order && ifound < mdim;s++){
-                                
+                            for(int s = 0;s < pg->order ;s++){
+                                printf("loop %d\n",s);
                                 permutationMatrix(&perm[i][s], mperm);
                                 kron(d, mperm, ld, lst[s], dd, dscal);
                                 for(int dim = 0;dim < mdim;dim++){
@@ -917,10 +869,9 @@ printf("%d\n",__LINE__);
                             for(int n = l+1; n <= esnmax[i];n++){
                                 if(esbfmap[i][0][n][l][0] == NULL) continue;
                                 if(isalc[sk] >= ispan[sk]){
-                                    printf("too many salcs %d <= %d!\n",ispan[sk],isalc[sk]);
-                                
-                                    printNewSubspace(pg->ct2, pg->ct2->d, ss);
-                                    exit(1);
+                                    ret = MSYM_SUBSPACE_ERROR;
+                                    msymSetErrorDetails("Exceeded calculated number of SALCs %d >= %d",isalc[sk],ispan[sk]);
+                                    goto err;
                                 }
                                 printf("adding salc %d of %d %d\n",isalc[sk],ispan[sk],sk);
                                 msym_salc_t *salc = &ss[sk].salc[isalc[sk]];
@@ -972,15 +923,76 @@ printf("%d\n",__LINE__);
     *ossl = pg->ct2->d;
     *oss = ss;
 
+    
+    free(bspan);
+    free(pspan);
+    free(lspan);
+    free(rspan);
+    free(dspan);
+    free(mspan);
+    free(mproj);
+    free(mscal);
+    free(mperm);
+    free(morth);
+    free(mbasis);
+    free(mdec);
+    free(sgc);
+    free(mdcomp);
+    free(mdproj);
+    free(mdfound);
+    //free(ispan); used
+    free(isalc);
+    free(esnmax);
+    free(esbfmap);
+    for(int l = 0;l <= lmax;l++){
+        free(lts[l].t);
+    }
+    free(lts);
+    free(les);
+    //free(ss); used
+    
     return ret;
 
 err:
+    free(bspan);
+    free(pspan);
+    free(lspan);
+    free(rspan);
+    free(dspan);
+    free(mspan);
+    free(mproj);
+    free(mscal);
+    free(mperm);
+    free(morth);
+    free(mbasis);
+    free(mdec);
+    free(sgc);
+    free(mdcomp);
+    free(mdproj);
+    free(mdfound);
+    free(ispan);
+    free(isalc);
+    free(esnmax);
+    free(esbfmap);
+    for(int l = 0;l <= lmax;l++){
+        free(lts[l].t);
+    }
+    free(lts);
+    free(les);
+    for(int k = 0;k < pg->ct2->d;k++){
+        for(int i = 0;i < ss[k].salcl;i++){
+            free(ss[k].salc[i].f);
+            free(ss[k].salc[i].pf);
+        }
+        free(ss[k].salc);
+    }
+    free(ss);
     return ret;
 }
 
 msym_error_t testSpanConvert(msym_point_group_t *pg, int esl, msym_equivalence_set_t *es, msym_permutation_t **perm, int basisl, msym_orbital_t basis[basisl], msym_thresholds_t *thresholds, int *subspacel, msym_subspace_t **subspace, int **ospan){
     
-    msym_character_table_t ct;
+    /*msym_character_table_t ct;
     ct.d = pg->ct->l;
     double t[ct.d][ct.d];
     msym_symmetry_species_t ssp[ct.d];
@@ -1001,7 +1013,7 @@ msym_error_t testSpanConvert(msym_point_group_t *pg, int esl, msym_equivalence_s
             printf("%lf ",ctable[i][j]);
         }
         printf("\n");
-    }
+    }*/
     
     printf("permutations before call\n");
     for(int i = 0;i < esl;i++){

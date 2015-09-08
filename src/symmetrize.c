@@ -215,18 +215,18 @@ err:
  */
 msym_error_t symmetrizeOrbitals(msym_point_group_t *pg, int ssl, msym_subspace_t *ss, int *span, int basisl, msym_orbital_t basis[basisl], msym_thresholds_t *thresholds, double orb[basisl][basisl],double symorb[basisl][basisl]){
     msym_error_t ret = MSYM_SUCCESS;
-    double (*proj)[pg->ct->l][basisl] = malloc(sizeof(double[basisl][pg->ct->l][basisl]));
+    double (*proj)[pg->ct2->d][basisl] = malloc(sizeof(double[basisl][pg->ct2->d][basisl]));
     double (*dproj)[ssl] = calloc(basisl,sizeof(double[ssl]));
     
-    double (*comp)[pg->ct->l] = calloc(basisl,sizeof(double[pg->ct->l]));
+    double (*comp)[pg->ct2->d] = calloc(basisl,sizeof(double[pg->ct2->d]));
     int *icomp = calloc(basisl,sizeof(int));
-    int (*ispan) = calloc(pg->ct->l,sizeof(int));
-    memset(proj,0,sizeof(double[basisl][pg->ct->l][basisl]));
+    int (*ispan) = calloc(pg->ct2->d,sizeof(int));
+    memset(proj,0,sizeof(double[basisl][pg->ct2->d][basisl]));
     memset(symorb,0,sizeof(double[basisl][basisl]));
     
     int md = 0;
     //could deduce from pg type but can't be bothered
-    for(int k = 0;k < pg->ct->l;k++) md = (md > pg->ct->irrep[k].d ? md : pg->ct->irrep[k].d);
+    for(int k = 0;k < pg->ct2->d;k++) md = (md > pg->ct2->s[k].d ? md : pg->ct2->s[k].d);
     
     double (*mem)[basisl] = malloc(sizeof(double[md*md+1][basisl]));
     int (*pf)[md] = calloc(basisl+1,sizeof(int[md]));
@@ -241,7 +241,7 @@ msym_error_t symmetrizeOrbitals(msym_point_group_t *pg, int ssl, msym_subspace_t
     /* not really needed anymore, we have can do this in the next loop */
     for(int o = 0;o < basisl;o++){
         double mcomp = -1.0;
-        for(int k = 0;k < pg->ct->l;k++){
+        for(int k = 0;k < pg->ct2->d;k++){
             for(int s = 0;s < ssl;s++){
                 if(ss[s].irrep == k){
                     if(MSYM_SUCCESS != (ret = addProjectionOntoSubspace(basisl, orb[o], &ss[s], basis, mem[0], proj[o][k]))) goto err;
@@ -257,12 +257,12 @@ msym_error_t symmetrizeOrbitals(msym_point_group_t *pg, int ssl, msym_subspace_t
         
         ispan[icomp[o]]++;
         printf("o = %d: ", o);
-        printTransform(1,pg->ct->l,comp[o]);
+        printTransform(1,pg->ct2->d,comp[o]);
     }
     
-    for(int k = 0;k < pg->ct->l;k++){
+    for(int k = 0;k < pg->ct2->d;k++){
         if(ispan[k] != span[k]){
-            msymSetErrorDetails("Projected orbitals do not span the expected irredicible representations. Expected %d%s, got %d",span[k],pg->ct->irrep[k].name,ispan[k]);
+            msymSetErrorDetails("Projected orbitals do not span the expected irredicible representations. Expected %d%s, got %d",span[k],pg->ct2->s[k].name,ispan[k]);
             ret = MSYM_SYMMETRIZATION_ERROR;
             goto err;
         }
@@ -273,19 +273,19 @@ msym_error_t symmetrizeOrbitals(msym_point_group_t *pg, int ssl, msym_subspace_t
     for(int o = 0;o < basisl;o++){
         int ko = icomp[o];
         printf("basis %d components = ",o);
-        for(int k = 0;k < pg->ct->l;k++){
-            printf("%lf%s + ",comp[o][k],pg->ct->irrep[k].name);
+        for(int k = 0;k < pg->ct2->d;k++){
+            printf("%lf%s + ",comp[o][k],pg->ct2->s[k].name);
         }
         printf("\n");
         
-        if(pg->ct->irrep[ko].d > 1){
+        if(pg->ct2->s[ko].d > 1){
             for(int s = 0;s < ssl;s++){
                 memset(mem[1], 0, sizeof(double[basisl]));
                 if(MSYM_SUCCESS != (ret = addProjectionOntoSubspace(basisl, orb[o], &ss[s], basis, mem[0], mem[1]))) goto err;
                 dproj[o][s] = vlabs(basisl, mem[1]);
             }
             
-            printf("basis %s components = ",pg->ct->irrep[ko].name);
+            printf("basis %s components = ",pg->ct2->s[ko].name);
             for(int s = 0;s < ssl;s++){
                 printf("%lf + ",dproj[o][s]);
             }
@@ -294,7 +294,7 @@ msym_error_t symmetrizeOrbitals(msym_point_group_t *pg, int ssl, msym_subspace_t
     }
     
     for(int o = 0;o < basisl;o++){
-        int ko = icomp[o], dim = pg->ct->irrep[ko].d, found = 0;
+        int ko = icomp[o], dim = pg->ct2->s[ko].d, found = 0;
         memset(pf[o], -1, sizeof(int[md])); //2s complement
         
         
@@ -326,7 +326,7 @@ msym_error_t symmetrizeOrbitals(msym_point_group_t *pg, int ssl, msym_subspace_t
         
         pf[o][0] = o;
         
-        printf("basis %d (%s) partner functions = ",o,pg->ct->irrep[ko].name);
+        printf("basis %d (%s) partner functions = ",o,pg->ct2->s[ko].name);
         for(int i = 0;i < dim;i++){
             printf("%d,",pf[o][i]);
         }
@@ -337,7 +337,7 @@ msym_error_t symmetrizeOrbitals(msym_point_group_t *pg, int ssl, msym_subspace_t
     //should validate pf, only 1 orb of each
     
     for(int o = 0;o < basisl;o++){
-        int dim = pg->ct->irrep[icomp[o]].d, md2 = md*md;
+        int dim = pg->ct2->s[icomp[o]].d, md2 = md*md;
         if(pf[o][0] == -1 || dim <= 1) continue;
         printf("partner functions: ");
         for(int i = 0;i < dim;i++){
@@ -349,7 +349,7 @@ msym_error_t symmetrizeOrbitals(msym_point_group_t *pg, int ssl, msym_subspace_t
             double avg = 0;
             msym_subspace_t *oss = &ss[s];
             if(oss->irrep != icomp[o]) {
-                printf("skipping subspace %d (%s) only projecting into %s\n",s,pg->ct->irrep[oss->irrep].name,pg->ct->irrep[icomp[o]].name);
+                printf("skipping subspace %d (%s) only projecting into %s\n",s,pg->ct2->s[oss->irrep].name,pg->ct2->s[icomp[o]].name);
                 continue;
             }
             memset(pf[basisl], -1, sizeof(int[md]));
@@ -360,7 +360,7 @@ msym_error_t symmetrizeOrbitals(msym_point_group_t *pg, int ssl, msym_subspace_t
                 avg += dproj[pfo][s];
                 if(oss->d != dim){
                     printf("ERRORROO subspace dimension %d != %d\n",oss->d,dim);
-                    printSubspace(pg->ct, oss);
+                    //printSubspace(pg->ct, oss);
                     exit(1);
                 }
                 
@@ -457,7 +457,7 @@ msym_error_t symmetrizeOrbitals(msym_point_group_t *pg, int ssl, msym_subspace_t
     }
     
     for(int o = 0;o < basisl;o++){
-        int dim = pg->ct->irrep[icomp[o]].d;
+        int dim = pg->ct2->s[icomp[o]].d;
         if(dim != 1) continue;
         vlcopy(basisl, proj[o][icomp[o]], symorb[o]);
     }
