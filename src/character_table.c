@@ -45,7 +45,7 @@ msym_error_t getCharacterTableUnknown(int sopsl, msym_symmetry_operation_t sops[
 
 msym_error_t getPredefinedCharacterTable(int sopsl, msym_symmetry_operation_t sops[sopsl], int l, const msym_symmetry_operation_t tsops[l], const char *tname[l], const int tdim[l], const double (*table)[l], msym_character_table_t *ct);
 
-msym_error_t getRepresentationName(msym_point_group_type_t type, msym_representation_t *rep, int l, char name[l]);
+msym_error_t getRepresentationName(msym_point_group_type_t type, int n, msym_representation_t *rep, int l, char name[l]);
 
 
 void decomposeRepresentation(CharacterTable *ct, double rspan[ct->l], double dspan[ct->l]){
@@ -286,7 +286,7 @@ msym_error_t generateCharacterTable(msym_point_group_type_t type, int n, int sop
     
     for(int i = 0;i < ct->d && fmap[fi].c == REP;i++){
         //snprintf(ct->s[i].name, sizeof(ct->s[i].name), "%s",rep[i].name);
-        if(MSYM_SUCCESS != (ret = getRepresentationName(type, &rep[i], sizeof(ct->s[i].name), ct->s[i].name))) goto err;
+        if(MSYM_SUCCESS != (ret = getRepresentationName(type, n, &rep[i], sizeof(ct->s[i].name), ct->s[i].name))) goto err;
         ct->s[i].d = rep[i].d;
         int nc = -1;
         for(int j = 0;j < sopsl;j++){
@@ -620,14 +620,12 @@ msym_error_t getRepresentationsDnd(int n, int rl, msym_representation_t rep[rl])
         rep[r].eig.l = rep[r].eig.v = rep[r].eig.i = rep[r].eig.p = 1;
         rep[r].eig.h = -1;
         //if(MSYM_SUCCESS != (ret = setRepresentationName(&rep[r]))) goto err;
-        snprintf(rep[r].name, sizeof(rep[r].name), "B1"); //primary axis is the Sn for naming
         r++;
         rep[r].type = IRREDUCIBLE;
         rep[r].d = 1;
         rep[r].eig.l = rep[r].eig.i = rep[r].eig.p = 1 ;
         rep[r].eig.h = rep[r].eig.v = -1;
         //if(MSYM_SUCCESS != (ret = setRepresentationName(&rep[r]))) goto err;
-        snprintf(rep[r].name, sizeof(rep[r].name), "B2"); //primary axis is the Sn for naming
         r++;
         for(int i = 1;r < rl;i++, r++){
             rep[r].type = IRREDUCIBLE;
@@ -869,28 +867,52 @@ err:
 }
 
 
-msym_error_t getRepresentationName(msym_point_group_type_t type, msym_representation_t *rep, int l, char name[l]){
+msym_error_t getRepresentationName(msym_point_group_type_t type, int n, msym_representation_t *rep, int l, char name[l]){
     msym_error_t ret = MSYM_SUCCESS;
     if(rep->d < 1 || rep->d > 5 || abs(rep->eig.p) > 1 || abs(rep->eig.v) > 1 || abs(rep->eig.h) > 1 || abs(rep->eig.i) > 1) {
         ret = MSYM_INVALID_CHARACTER_TABLE;
-        msymSetErrorDetails("Invalid irreducible represenation");
+        msymSetErrorDetails("Invalid character table represenation");
         goto err;
     }
     
-    char types[] = {'A','B','E','T','G','H'}, *si[] = {"u","","g"}, *sv[] = {"2", "", "1"}, *sh[] = {"''", "", "'"};
-    char rtype = '?';
-    if(type == POINT_GROUP_Dnd){
-        rtype = rep->d == 1 ? types[(1 - rep->eig.h) >> 1] : types[rep->d];
-    } else {
-        rtype = rep->d == 1 ? types[(1 - rep->eig.p) >> 1] : types[rep->d];
+    int eindex[4] = {rep->eig.p, rep->eig.h,rep->eig.v,rep->eig.i};
+    switch (type) {
+        case POINT_GROUP_Cn :
+            eindex[1] = eindex[2] = eindex[3] = 0;
+            break;
+        case POINT_GROUP_Cnv :
+            eindex[1] = eindex[3] = 0;
+            break;
+        case POINT_GROUP_Cnh :
+            if(n & 1){eindex[3] = 0;}
+            else {eindex[1] = 0;}
+            eindex[2] = 0;
+            break;
+        case POINT_GROUP_Dn  :
+            eindex[1] = 0;
+            eindex[3] = 0;
+            break;
+        case POINT_GROUP_Dnd :
+            if(~n & 1){eindex[3] = 0; eindex[0] = rep->eig.h;}
+            eindex[1] = 0;
+            break;
+        case POINT_GROUP_Dnh :
+            if(n & 1){eindex[3] = 0;}
+            else {eindex[1] = 0;}
+            break;
+        default:
+            break;
     }
+    
+    char types[] = {'A','B','E','T','G','H'}, *si[] = {"u","","g"}, *sv[] = {"2", "", "1"}, *sh[] = {"''", "", "'"};
+    char rtype = rep->d == 1 ? types[(1 - eindex[0]) >> 1] : types[rep->d];
     if(rep->d == 1){
-        snprintf(name,sizeof(char[l]),"%c%s%s%s",rtype,sv[rep->eig.v+1],si[rep->eig.i+1],sh[rep->eig.h+1]);
+        snprintf(name,sizeof(char[l]),"%c%s%s%s",rtype,sv[eindex[2]+1],si[eindex[3]+1],sh[eindex[1]+1]);
     }
     else if (rep->eig.l >  0){
-        snprintf(name,sizeof(char[l]),"%s%c%d%s%s",rep->type == IRREDUCIBLE ? "" : "*",rtype,rep->eig.l,si[rep->eig.i+1],sh[rep->eig.h+1]);
+        snprintf(name,sizeof(char[l]),"%s%c%d%s%s",rep->type == IRREDUCIBLE ? "" : "*",rtype,rep->eig.l,si[eindex[3]+1],sh[eindex[1]+1]);
     } else {
-        snprintf(name,sizeof(char[l]),"%s%c%s%s",rep->type == IRREDUCIBLE ? "" : "*",rtype,si[rep->eig.i+1],sh[rep->eig.h+1]);
+        snprintf(name,sizeof(char[l]),"%s%c%s%s",rep->type == IRREDUCIBLE ? "" : "*",rtype,si[eindex[3]+1],sh[eindex[1]+1]);
     }
 err:
     return ret;
