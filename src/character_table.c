@@ -286,7 +286,7 @@ msym_error_t generateCharacterTable(msym_point_group_type_t type, int n, int sop
     
     for(int i = 0;i < ct->d && fmap[fi].c == REP;i++){
         //snprintf(ct->s[i].name, sizeof(ct->s[i].name), "%s",rep[i].name);
-        getRepresentationName(type, &rep[i], sizeof(ct->s[i].name), ct->s[i].name);
+        if(MSYM_SUCCESS != (ret = getRepresentationName(type, &rep[i], sizeof(ct->s[i].name), ct->s[i].name))) goto err;
         ct->s[i].d = rep[i].d;
         int nc = -1;
         for(int j = 0;j < sopsl;j++){
@@ -885,12 +885,12 @@ msym_error_t getRepresentationName(msym_point_group_type_t type, msym_representa
         rtype = rep->d == 1 ? types[(1 - rep->eig.p) >> 1] : types[rep->d];
     }
     if(rep->d == 1){
-        snprintf(rep->name,sizeof(rep->name),"%c%s%s%s",rtype,sv[rep->eig.v+1],si[rep->eig.i+1],sh[rep->eig.h+1]);
+        snprintf(name,sizeof(char[l]),"%c%s%s%s",rtype,sv[rep->eig.v+1],si[rep->eig.i+1],sh[rep->eig.h+1]);
     }
     else if (rep->eig.l >  0){
-        snprintf(rep->name,sizeof(rep->name),"%s%c%d%s%s",rep->type == IRREDUCIBLE ? "" : "*",rtype,rep->eig.l,si[rep->eig.i+1],sh[rep->eig.h+1]);
+        snprintf(name,sizeof(char[l]),"%s%c%d%s%s",rep->type == IRREDUCIBLE ? "" : "*",rtype,rep->eig.l,si[rep->eig.i+1],sh[rep->eig.h+1]);
     } else {
-        snprintf(rep->name,sizeof(rep->name),"%s%c%s%s",rep->type == IRREDUCIBLE ? "" : "*",rtype,si[rep->eig.i+1],sh[rep->eig.h+1]);
+        snprintf(name,sizeof(char[l]),"%s%c%s%s",rep->type == IRREDUCIBLE ? "" : "*",rtype,si[rep->eig.i+1],sh[rep->eig.h+1]);
     }
 err:
     return ret;
