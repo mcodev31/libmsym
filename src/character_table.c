@@ -223,11 +223,16 @@ double getCharacterCnv(int n, int k){
 
 msym_error_t generateCharacterTable(msym_point_group_type_t type, int n, int sopsl, msym_symmetry_operation_t sops[sopsl], msym_character_table_t **oct){
     msym_error_t ret = MSYM_SUCCESS;
-    msym_character_table_t *ct = calloc(1, sizeof(msym_character_table_t));
-    ct->d = sops[sopsl-1].cla + 1; //max cla
-    ct->table = calloc(ct->d, sizeof(double[ct->d]));
-    ct->classc = calloc(ct->d, sizeof(int));
-    ct->s = calloc(ct->d, sizeof(msym_symmetry_species_t));
+    int d = sops[sopsl-1].cla + 1; //max cla
+    msym_character_table_t *ct = calloc(1, sizeof(msym_character_table_t) + sizeof(int[d]) + sizeof(msym_symmetry_species_t[d]) + sizeof(double[d][d]));
+    
+    
+    ct->table = (double (*)[d])(ct + 1);
+    ct->s = (msym_symmetry_species_t*)((double (*)[d])ct->table + d);
+    ct->classc = (int *)(ct->s + d);
+    
+    ct->d = d;
+
     msym_representation_t *rep = calloc(ct->d, sizeof(msym_representation_t));;
     double (*table)[ct->d] = (double (*)[ct->d]) ct->table;
     
@@ -331,9 +336,6 @@ msym_error_t generateCharacterTable(msym_point_group_type_t type, int n, int sop
     free(rep);
     return ret;
 err:
-    free(ct->table);
-    free(ct->s);
-    free(ct->classc);
     free(rep);
     free(ct);
     return ret;

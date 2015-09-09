@@ -209,7 +209,6 @@ msym_error_t partitionPointGroupEquivalenceSets(msym_point_group_t *pg, int leng
         for(msym_symmetry_operation_t *s = pg->sops;s < (pg->sops + pg->order);s++){
             double v[3];
             int f;
-            printf("%d\n",s->type);
             applySymmetryOperation(s, elements[i]->v, v);
             for(f = 0;f < length;f++){
                 if(elements[f]->n == elements[i]->n && elements[f]->m == elements[i]->m && 0 == strncmp(elements[f]->name, elements[i]->name, sizeof(elements[f]->name)) && vequal(elements[f]->v, v, thresholds->permutation)){

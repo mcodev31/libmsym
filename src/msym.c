@@ -85,8 +85,6 @@ msym_error_t msymFindSymmetry(msym_context ctx){
     if(MSYM_SUCCESS != (ret = ctxGetEquivalenceSets(ctx, &esl, &es))) goto err; //This is only for printing, since permutation may regenerate sets
     printf("time: %lf seconds to find permutations of %d symmetry operations in %d equivalence sets\n",time,pg->order,esl);
     
-    //for(int i = 0;i < pg->sopsl;i++){printSymmetryOperation(&pg->sops[i]);}
-    
     free(sops);
     return ret;
     
