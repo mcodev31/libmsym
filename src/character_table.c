@@ -40,6 +40,7 @@ msym_error_t getRepresentationsUnknown(int n, int rl, msym_representation_t rep[
 
 msym_error_t getCharacterTableT(int sopsl, msym_symmetry_operation_t sops[sopsl], msym_character_table_t *ct);
 msym_error_t getCharacterTableTd(int sopsl, msym_symmetry_operation_t sops[sopsl], msym_character_table_t *ct);
+msym_error_t getCharacterTableIh(int sopsl, msym_symmetry_operation_t sops[sopsl], msym_character_table_t *ct);
 msym_error_t getCharacterTableUnknown(int sopsl, msym_symmetry_operation_t sops[sopsl], msym_character_table_t *ct);
 
 
@@ -260,7 +261,7 @@ msym_error_t generateCharacterTable(msym_point_group_type_t type, int n, int sop
         [12] = {POINT_GROUP_O,   TAB, .f.ft = getCharacterTableUnknown},
         [13] = {POINT_GROUP_Oh,  TAB, .f.ft = getCharacterTableUnknown},
         [14] = {POINT_GROUP_I,   TAB, .f.ft = getCharacterTableUnknown},
-        [15] = {POINT_GROUP_Ih,  TAB, .f.ft = getCharacterTableUnknown},
+        [15] = {POINT_GROUP_Ih,  TAB, .f.ft = getCharacterTableIh},
         [16] = {POINT_GROUP_K,   TAB, .f.ft = getCharacterTableUnknown},
         [17] = {POINT_GROUP_Kh,  TAB, .f.ft = getCharacterTableUnknown}
         
@@ -820,6 +821,46 @@ msym_error_t getCharacterTableTd(int sopsl, msym_symmetry_operation_t sops[sopsl
     };
     
     if(MSYM_SUCCESS != (ret = getPredefinedCharacterTable(sopsl, sops, 5, tsops, tname, tdim, table, ct))) goto err;
+    
+err:
+    return ret;
+}
+
+msym_error_t getCharacterTableIh(int sopsl, msym_symmetry_operation_t sops[sopsl], msym_character_table_t *ct){
+    msym_error_t ret = MSYM_SUCCESS;
+    
+    const msym_symmetry_operation_t tsops[10] = {
+        [0] = {.type = IDENTITY, .order = 1, .power = 1, .orientation = NONE},
+        [1] = {.type = PROPER_ROTATION, .order = 2, .power = 1, .orientation = NONE},
+        [2] = {.type = REFLECTION, .order = 1, .power = 1, .orientation = NONE},
+        [3] = {.type = IMPROPER_ROTATION, .order = 6, .power = 1, .orientation = NONE},
+        [4] = {.type = PROPER_ROTATION, .order = 5, .power = 1, .orientation = NONE},
+        [5] = {.type = IMPROPER_ROTATION, .order = 10, .power = 1, .orientation = NONE},
+        [6] = {.type = PROPER_ROTATION, .order = 5, .power = 2, .orientation = NONE},
+        [7] = {.type = INVERSION, .order = 1, .power = 1, .orientation = NONE},
+        [8] = {.type = PROPER_ROTATION, .order = 3, .power = 1, .orientation = NONE},
+        [9] = {.type = IMPROPER_ROTATION, .order = 10, .power = 3, .orientation = NONE},
+    };
+    
+    const char *tname[10] = {"Ag","Au","T1g","T1u","T2g","T2u","Gg","Gu","Hg","Hu"};
+    const int tdim[10] = {1,1,3,3,3,3,4,4,5,5};
+    
+    //          E    C2   R    S6   C5   S10  C52  i    C3   S103
+    static const double table[][10] =
+    {
+        [0] = {1,     1,      1,      1,      1,      1,      1,      1,      1,      1     },
+        [1] = {1,     1,     -1,     -1,      1,     -1,      1,     -1,      1,     -1     },
+        [2] = {3,    -1,     -1,      0,     -C4PI,  -C2PI,  -C2PI,   3,      0,     -C4PI  },
+        [3] = {3,    -1,      1,      0,     -C4PI,   C2PI,  -C2PI,  -3,      0,      C4PI  },
+        [4] = {3,    -1,     -1,      0,     -C2PI,  -C4PI,  -C4PI,   3,      0,     -C2PI  },
+        [5] = {3,    -1,      1,      0,     -C2PI,   C4PI,  -C4PI,  -3,      0,      C2PI  },
+        [6] = {4,     0,      0,      1,     -1,     -1,     -1,      4,      1,     -1     },
+        [7] = {4,     0,      0,     -1,     -1,      1,     -1,     -4,      1,      1     },
+        [8] = {5,     1,      1,     -1,      0,      0,      0,      5,     -1,      0     },
+        [9] = {5,     1,     -1,      1,      0,      0,      0,     -5,     -1,      0     }
+    };
+    
+    if(MSYM_SUCCESS != (ret = getPredefinedCharacterTable(sopsl, sops, 10, tsops, tname, tdim, table, ct))) goto err;
     
 err:
     return ret;
