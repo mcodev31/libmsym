@@ -19,7 +19,6 @@ int read_xyz(const char *name, msym_element_t **ratoms);
 int example(const char* in_file){
     msym_error_t ret = MSYM_SUCCESS;
     msym_element_t *elements = NULL;
-    msym_orbital_t *orbitals = NULL, **porbitals = NULL;
     
     const char *error = NULL;
     char point_group[6];
@@ -29,7 +28,17 @@ int example(const char* in_file){
     msym_element_t *melements = NULL;
     msym_symmetry_operation_t *msops = NULL;
     msym_subgroup_t *msg = NULL;
-    int msgl = 0, msopsl = 0, mlength = 0;
+    msym_basis_function_t *mbfs = NULL;
+    msym_subspace_2_t *mss = NULL;
+    msym_character_table_t *mct = NULL;
+    
+    msym_basis_function_t *bfs = NULL;
+    
+    int msgl = 0, msopsl = 0, mlength = 0, mssl = 0, mbfsl = 0;
+    int orbitalsl = 0, bfsl = 0;
+    
+    char *orbitals[8] = {"2px", "2py", "2pz", "3d2-", "3d1-", "3d0", "3d1+", "3d2+"};
+    
     
     /* This function reads xyz files.
      * It initializes an array of msym_element_t to 0,
@@ -37,20 +46,9 @@ int example(const char* in_file){
     int length = read_xyz(in_file, &elements);
     if(length <= 0) return -1;
     
-    double (*coefficients)[length] = NULL;
-    
-    /* Allocate and initialize memory for orbitals */
-    orbitals = calloc(length, sizeof(msym_orbital_t));
-    porbitals = calloc(length, sizeof(msym_orbital_t*));
-    
-    /* Add a 1s orbital to each atom */
-    for(int i = 0;i < length;i++){
-        /* You can also just set orbitals[i].n = 1 */
-        snprintf(orbitals[i].name,sizeof(orbitals[i].name),"1s");
-        porbitals[i] = &orbitals[i];
-        elements[i].ao = &porbitals[i];
-        elements[i].aol = 1;
-    }
+    orbitalsl = sizeof(orbitals)/sizeof(char*);
+    bfsl = orbitalsl*length;
+    bfs = calloc(bfsl, sizeof(msym_basis_function_t));
     
     /* Create a context */
     msym_context ctx = msymCreateContext();
@@ -58,8 +56,23 @@ int example(const char* in_file){
     /* Use default thresholds otherwise call:
      * msymSetThresholds(msym_context ctx, msym_thresholds_t *thresholds); */
     
-    /* Set elements and orbitals */
+    /* Set elements */
     if(MSYM_SUCCESS != (ret = msymSetElements(ctx, length, elements))) goto err;
+    
+    /* Get elements msym elements */
+    if(MSYM_SUCCESS != (ret = msymGetElements(ctx, &mlength, &melements))) goto err;
+    
+    for(int i = 0, k = 0;i < length;i++){
+        for(int j = 0; j < orbitalsl; j++){
+            snprintf(bfs[k].name,sizeof(bfs[i].name),"%s",orbitals[j]);
+            bfs[k].element = &melements[i];
+            bfs[k].type = REAL_SPHERICAL_HARMONIC;
+            k++;
+        }
+    }
+    
+    /* Get elements msym elements */
+    if(MSYM_SUCCESS != (ret = msymSetBasisFunctions(ctx, bfsl, bfs))) goto err;
     
     /* These are no longer needed, internal versions of these are kept in the context,
      * They are indexed in the same way that they have been allocated.
@@ -67,8 +80,6 @@ int example(const char* in_file){
      * the coefficients will correspond to the same indexing as "orbitals",
      * this is the main reason for the two levels of indirection */
     free(elements);  elements = NULL;
-    free(orbitals);  orbitals = NULL;
-    free(porbitals); porbitals = NULL;
     
     /* Some trivial information */
     if(MSYM_SUCCESS != (ret = msymGetCenterOfMass(ctx,cm))) goto err;
@@ -104,7 +115,7 @@ int example(const char* in_file){
      * using the same alignment as the original.
      * If specific axes are wanted the alignment axes can be set instead
      * And of course you can keep Th if you want =D */
-    if(0 == strncmp(point_group, "Ih", 2) && ssg == 0){
+    if(0 == strncmp(point_group, "Th", 2) && ssg == 0){
         double transform[3][3];
         printf("Changing pointgroup from Th -> D2h\n");
         if(MSYM_SUCCESS != (ret = msymGetAlignmentTransform(ctx, transform))) goto err;
@@ -119,26 +130,10 @@ int example(const char* in_file){
     
     for(int i = 0; i < msopsl;i++){
         if(msops[i].type == PROPER_ROTATION && msops[i].order == 3 && msops[i].power == 1){
+            
             printf("Found a C3^1 axis, YEY!\n");
         }
     }
-    
-    coefficients = malloc(sizeof(double[length][length]));
-    
-    /* Get the subspaces for this point group (in order of irreducible representation) */
-    if(MSYM_SUCCESS != (ret = msymGetOrbitalSubspaces(ctx,length,coefficients))) goto err;
-    
-    /* Mess them up a bit */
-    for(int i = 0;i < length;i++){
-        for(int j = 0;j < length;j++){
-            coefficients[i][j] += i*0.001/length - j*0.001/length;
-        }
-    }
-    
-    /* And symmetrize them */
-    if(MSYM_SUCCESS != (ret = msymSymmetrizeOrbitals(ctx,length,coefficients))) goto err;
-
-    free(coefficients); coefficients = NULL;
     
     /* Aligning axes prior to orbital symmetrization will
      * change the orientation of orbitals with l >= 1 */
@@ -165,6 +160,22 @@ int example(const char* in_file){
                melements[i].v[1],
                melements[i].v[2]);
     }
+    
+    if(MSYM_SUCCESS != (ret = msymGetBasisFunctions(ctx, &mbfsl, &mbfs))) goto err;
+    if(MSYM_SUCCESS != (ret = msymGetSALCSubspaces(ctx, &mssl, &mss))) goto err;
+    if(MSYM_SUCCESS != (ret = msymGetCharacterTable(ctx, &mct))) goto err;
+    
+    for(int i = 0; i < mssl;i++){
+        printf("Got %d SALCs with %d partner functions of symmetry species %s\n",mss[i].salcl,mct->s[mss[i].s].d, mct->s[mss[i].s].name);
+        for(int j = 0;j < mss[i].salcl;j++){
+            char *type = "";
+            msym_salc_t *salc = &mss[i].salc[j];
+            msym_basis_function_t *bf = salc->f[0];
+            if(bf->type == REAL_SPHERICAL_HARMONIC) type = "real spherical harmonic ";
+            printf("\tSALC %d was constructed from %d %sbasis functions on %s with quantum numbers n=%d and l=%d\n",j,salc->fl,type,bf->element->name,bf->f.sh.n,bf->f.sh.l);
+        }
+    }
+    
     
     /* Make a new element with the same type as the first one we read */
     msym_element_t myelement;
@@ -196,9 +207,6 @@ int example(const char* in_file){
     return ret;
 err:
     free(elements);
-    free(orbitals);
-    free(porbitals);
-    free(coefficients);
     error = msymErrorString(ret);
     fprintf(stderr,"Error %s: ",error);
     error = msymGetErrorDetails();
