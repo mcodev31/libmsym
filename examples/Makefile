@@ -1,10 +1,10 @@
 LELEMENTS = msym msym_error context symmetry symmetrize linalg point_group character_table geometry orbital\
 		permutation symop equivalence_set elements vibration subspace
 
-SRC = example.c
+SRC = example.c msym_example.c
 OBJDIR = ../obj
 BINDIR = ../bin
-OBJS = $(OBJDIR)/example.o
+OBJS = $(OBJDIR)/example.o $(OBJDIR)/msym_example.o
 LSRC = $(foreach I,$(LELEMENTS),../src/$I.c)
 LOBJS = $(foreach I,$(LELEMENTS),$(OBJDIR)/$I.o)
 
@@ -26,6 +26,9 @@ $(BINDIR) :
 	mkdir -p $(BINDIR)
 
 ../obj/example.o: example.c
+	$(CC) ${CFLAGS} -I $(INC) -o $@ -c $<
+
+../obj/msym_example.o: msym_example.c
 	$(CC) ${CFLAGS} -I $(INC) -o $@ -c $<
 
 ../obj/%.o: ../src/%.c

@@ -12,20 +12,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include "msym.h"
+#include "example.h"
 
-int example(const char* in_file);
 int read_xyz(const char *name, msym_element_t **ratoms);
-
-int main(int argc, const char * argv[]) {
-    int ret = 1;
-    if(argc == 2){
-        ret = example(argv[1]);
-        fflush(stdout);
-    } else {
-        printf("usage msym_example <xyz-file>");
-    }
-    return ret;
-}
 
 int example(const char* in_file){
     msym_error_t ret = MSYM_SUCCESS;
