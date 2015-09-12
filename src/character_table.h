@@ -307,20 +307,7 @@ static const enum IrreducibleRepresentationEnum *CnvIrrep[] = {
 };
 
 
-typedef struct {
-    const char *name;
-    const double *v;
-    int l;
-    int d;
 
-} IrreducibleRepresentation;
-
-typedef struct {
-    IrreducibleRepresentation *irrep;
-    int *classc;
-    char (*name)[6];
-    int l;
-} CharacterTable;
 
 
 msym_error_t characterTableUnknown(int n, CharacterTable *ct);

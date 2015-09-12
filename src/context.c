@@ -328,7 +328,7 @@ err:
     return ret;
 }
 
-msym_error_t msymGetPointGroup(msym_context ctx, int l, char buf[l]){
+msym_error_t msymGetPointGroupName(msym_context ctx, int l, char buf[l]){
     msym_error_t ret = MSYM_SUCCESS;
     if(ctx == NULL) {ret = MSYM_INVALID_CONTEXT;goto err;}
     if(ctx->pg == NULL) {ret = MSYM_INVALID_POINT_GROUP;goto err;}
@@ -423,11 +423,26 @@ err:
     return ret;
 }
 
+msym_error_t msymGetPointGroup(msym_context ctx, msym_point_group_t **pg){
+    msym_error_t ret = MSYM_SUCCESS;
+    if(NULL == ctx) {ret = MSYM_INVALID_CONTEXT;goto err;}
+    if(NULL == ctx->pg){ret = MSYM_INVALID_POINT_GROUP;goto err;}
+    printf("WARNING returning internal pointer\n");
+    *pg = ctx->pg;
+    
+err:
+    return ret;
+    
+}
+
 msym_error_t msymGetCharacterTable(msym_context ctx, msym_character_table_t **ct){
     msym_error_t ret = MSYM_SUCCESS;
     if(NULL == ctx) {ret = MSYM_INVALID_CONTEXT;goto err;}
     if(NULL == ctx->pg){ret = MSYM_INVALID_POINT_GROUP;goto err;}
-    if(NULL == ctx->pg->ct2){ret = MSYM_INVALID_CHARACTER_TABLE;goto err;}
+    if(NULL == ctx->pg->ct2){
+        msym_point_group_t *pg = ctx->pg;
+        if(MSYM_SUCCESS != (ret = generateCharacterTable(pg->type, pg->n, pg->order, pg->sops, &pg->ct2))) goto err;
+    }
     printf("WARNING returning internal pointer\n");
     *ct = ctx->pg->ct2;
     

@@ -97,7 +97,7 @@ err:
     return ret;
 }
 
-msym_error_t msymSetPointGroup(msym_context ctx, char *name){
+msym_error_t msymSetPointGroupByName(msym_context ctx, const char *name){
     msym_error_t ret = MSYM_SUCCESS;
     msym_point_group_t *pg = NULL;
     msym_thresholds_t *t = NULL;

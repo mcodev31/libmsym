@@ -182,7 +182,7 @@ extern "C" {
         msym_salc_t *salc;
     } msym_subspace_2_t;
     
-    
+    //rename representation? we need info on wheather or not it's irreducible
     typedef struct _msym_symmetry_species {
         int d;
         char name[8];
@@ -191,9 +191,54 @@ extern "C" {
     typedef struct _msym_character_table {
         int d;
         int *classc;
+        msym_symmetry_operation_t **sops;
         msym_symmetry_species_t *s;
         void *table;  //double[d][d]
     } msym_character_table_t;
+    
+    //temporary
+    typedef struct {
+        const char *name;
+        const double *v;
+        int l;
+        int d;
+        
+    } IrreducibleRepresentation;
+    
+    typedef struct {
+        IrreducibleRepresentation *irrep;
+        int *classc;
+        char (*name)[6];
+        int l;
+    } CharacterTable;
+    
+    //\temporary
+    
+    //There are better ways of representing a permutation (lika a Lehmer code) but I'll leave that for later
+    typedef struct _msym_permutation_cycle_t {
+        int l;
+        int s;
+    } msym_permutation_cycle_t;
+    
+    typedef struct _msym_permutation {
+        int *p;
+        int p_length;
+        msym_permutation_cycle_t *c;
+        int c_length;
+    } msym_permutation_t;
+    
+    typedef struct {
+        msym_point_group_type_t type;
+        int n;
+        int order;
+        msym_symmetry_operation_t *primary;
+        msym_symmetry_operation_t *sops;
+        msym_permutation_t *perm;
+        double transform[3][3];
+        CharacterTable *ct;
+        msym_character_table_t *ct2;
+        char name[8];
+    } msym_point_group_t;
     
     
     msym_context msymCreateContext();
@@ -205,8 +250,9 @@ extern "C" {
     msym_error_t msymGetElements(msym_context ctx, int *length, msym_element_t **elements);
     msym_error_t msymSetBasisFunctions(msym_context ctx, int length, msym_basis_function_t *basis);
     msym_error_t msymGetBasisFunctions(msym_context ctx, int *length, msym_basis_function_t **basis);
-    msym_error_t msymSetPointGroup(msym_context ctx, char *name);
-    msym_error_t msymGetPointGroup(msym_context ctx, int l, char buf[l]);
+    msym_error_t msymGetPointGroup(msym_context ctx, msym_point_group_t **pg);
+    msym_error_t msymSetPointGroupByName(msym_context ctx, const char *name);
+    msym_error_t msymGetPointGroupName(msym_context ctx, int l, char buf[l]);
     msym_error_t msymGetSubgroups(msym_context ctx, int *l, msym_subgroup_t **subgroups);
     msym_error_t msymSelectSubgroup(msym_context ctx, msym_subgroup_t *subgroup);
     msym_error_t msymGetSymmetryOperations(msym_context ctx, int *sopsl, msym_symmetry_operation_t **sops);

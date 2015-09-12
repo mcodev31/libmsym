@@ -292,11 +292,13 @@ msym_error_t findDecentSubgroup(msym_point_group_t *pg, int irrep, int sgl, msym
         case POINT_GROUP_Cn :
         {
             ret = MSYM_POINT_GROUP_ERROR;
+            printf("Separate by imaginary component, what we have is the real components\n");
             msymSetErrorDetails("Point %s group has complex characters in symmetry species %s",pg->name, pg->ct2->s[irrep].name);
             goto err;
         }
         case POINT_GROUP_Cnh :
         {
+            printf("Separate by imaginary component, what we have is the real components\n");
             ret = MSYM_POINT_GROUP_ERROR;
             msymSetErrorDetails("Lowering of symmetry would require complex characters for point group %s symmetry species %s",pg->name, pg->ct2->s[irrep].name);
             goto err;
@@ -594,6 +596,8 @@ msym_error_t testSpan2(msym_point_group_t *pg, int sgl, msym_subgroup_t sg[sgl],
         }
     }
     
+    
+    
     /* scale basis span, calculate basis function transforms and symmetry species vectors */
     for(int l = 0;l <= lmax;l++){
         int d = 2*l+1;
@@ -612,7 +616,7 @@ msym_error_t testSpan2(msym_point_group_t *pg, int sgl, msym_subgroup_t sg[sgl],
         memset(st[pg->order], 0, sizeof(double[d][d]));
         
         for(int k = 0, oirl = 0, nirl = 0;k < pg->ct2->d;k++, oirl = nirl){
-            
+            printf("bspan[%d][%d] = %lf this is only correct if the representation is irreducible\n",l,k,bspan[l][k]);
             int vspan = pg->ct2->s[k].d*((int) round(bspan[l][k]));
             if(vspan == 0) continue;
             
@@ -626,6 +630,8 @@ msym_error_t testSpan2(msym_point_group_t *pg, int sgl, msym_subgroup_t sg[sgl],
             nirl = mgs(d, lproj, st[pg->order], oirl, thresholds->orthogonalization/basisl);
             
             if(nirl - oirl != vspan){
+                
+                printTransform(d, d, st[pg->order]);
                 ret = MSYM_SUBSPACE_ERROR;
                 msymSetErrorDetails("Ortogonal subspace of dimension (%d) inconsistent with span (%d) in %s",nirl - oirl,vspan,pg->ct2->s[k].name);
                 goto err;

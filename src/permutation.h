@@ -16,19 +16,6 @@
 #include "msym_error.h"
 
 
-//There are better ways of representing a permutation (lika a Lehmer code) but I'll leave that for later
-typedef struct _msym_permutation_cycle_t {
-    int l;
-    int s;
-} msym_permutation_cycle_t;
-
-typedef struct _msym_permutation {
-    int *p;
-    int p_length;
-    msym_permutation_cycle_t *c;
-    int c_length;
-} msym_permutation_t;
-
 typedef struct _msym_permutation_morphism {
     enum {BIJECTION, SURJECTION} type;
     msym_permutation_t *domain;

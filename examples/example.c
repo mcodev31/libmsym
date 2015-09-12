@@ -92,7 +92,7 @@ int example(const char* in_file){
     if(MSYM_SUCCESS != (ret = msymFindSymmetry(ctx))) goto err;
     
     /* Get the point group name */
-    if(MSYM_SUCCESS != (ret = msymGetPointGroup(ctx, sizeof(char[6]), point_group))) goto err;
+    if(MSYM_SUCCESS != (ret = msymGetPointGroupName(ctx, sizeof(char[6]), point_group))) goto err;
     if(MSYM_SUCCESS != (ret = msymGetSubgroups(ctx, &msgl, &msg))) goto err;
     printf("Found point group [0] %s select subgroup\n",point_group);
     for(int i = 0; i < msgl;i++) printf("\t [%d] %s\n",i+1,msg[i].name);
@@ -119,10 +119,10 @@ int example(const char* in_file){
         double transform[3][3];
         printf("Changing pointgroup from Th -> D2h\n");
         if(MSYM_SUCCESS != (ret = msymGetAlignmentTransform(ctx, transform))) goto err;
-        if(MSYM_SUCCESS != (ret = msymSetPointGroup(ctx, "D2h"))) goto err;
+        if(MSYM_SUCCESS != (ret = msymSetPointGroupByName(ctx, "D2h"))) goto err;
         if(MSYM_SUCCESS != (ret = msymSetAlignmentTransform(ctx, transform))) goto err;
         if(MSYM_SUCCESS != (ret = msymFindSymmetry(ctx))) goto err;
-        if(MSYM_SUCCESS != (ret = msymGetPointGroup(ctx, sizeof(char[6]), point_group))) goto err;
+        if(MSYM_SUCCESS != (ret = msymGetPointGroupName(ctx, sizeof(char[6]), point_group))) goto err;
     }
     
     /* Retreive the symmetry operations */
