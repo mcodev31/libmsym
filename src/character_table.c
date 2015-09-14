@@ -386,7 +386,7 @@ msym_error_t getRepresentationsCn(int n, int rl, msym_representation_t rep[rl]){
     rep[r].eig.p = rep[r].eig.l = rep[r].eig.v = rep[r].eig.h = rep[r].eig.i = 1;
     //if(MSYM_SUCCESS != (ret = setRepresentationName(&rep[r]))) goto err;
     r++;
-    if(~n & 1){
+    if(!(n & 1)){
         rep[r].type = IRREDUCIBLE;
         rep[r].d = 1;
         rep[r].eig.l = rep[r].eig.v = rep[r].eig.h = rep[r].eig.i = 1;
@@ -421,33 +421,37 @@ msym_error_t getRepresentationsCnh(int n, int rl, msym_representation_t rep[rl])
     rep[r].eig.h = rep[r].eig.i = -1;
     //if(MSYM_SUCCESS != (ret = setRepresentationName(&rep[r]))) goto err;
     r++;
-    if(~n & 1){
+    if(!(n & 1)){
         rep[r].type = IRREDUCIBLE;
         rep[r].d = 1;
-        rep[r].eig.l = rep[r].eig.v = rep[r].eig.i = rep[r].eig.h = 1;
+        rep[r].eig.l = rep[r].eig.v = rep[r].eig.i = 1;
         rep[r].eig.p = -1;
+        rep[r].eig.h = 1 - (n & 2);
         //if(MSYM_SUCCESS != (ret = setRepresentationName(&rep[r]))) goto err;
         r++;
         rep[r].type = IRREDUCIBLE;
         rep[r].d = 1;
         rep[r].eig.l = rep[r].eig.v = 1;
-        rep[r].eig.p = rep[r].eig.i = rep[r].eig.h = -1;
+        rep[r].eig.p = rep[r].eig.i = -1;
+        rep[r].eig.h = -1 + (n & 2);
         //if(MSYM_SUCCESS != (ret = setRepresentationName(&rep[r]))) goto err;
         r++;
     }
-    for(int i = 1;r < rl;i++, r++){
+    for(int i = 1;r < rl;i++){
         rep[r].type = REDUCIBLE;
         rep[r].d = 2;
         rep[r].eig.l = i;
         rep[r].eig.p = rep[r].eig.v = rep[r].eig.h = 1;
-        rep[r].eig.i = -1;
+        rep[r].eig.i = 1 - ((i & 1) << 1);
         //if(MSYM_SUCCESS != (ret = setRepresentationName(&rep[r]))) goto err;;
         r++;
         rep[r].type = REDUCIBLE;
         rep[r].d = 2;
         rep[r].eig.l = i;
-        rep[r].eig.p = rep[r].eig.v = rep[r].eig.i = 1;
+        rep[r].eig.p = rep[r].eig.v = 1;
         rep[r].eig.h = -1;
+        rep[r].eig.i = -1 + ((i & 1) << 1);
+        r++;
         //if(MSYM_SUCCESS != (ret = setRepresentationName(&rep[r]))) goto err;;
     }
     
@@ -564,33 +568,39 @@ msym_error_t getRepresentationsDnh(int n, int rl, msym_representation_t rep[rl])
     rep[r].eig.h = rep[r].eig.i = rep[r].eig.v = -1;
     //if(MSYM_SUCCESS != (ret = setRepresentationName(&rep[r]))) goto err;
     r++;
-    if(~n & 1){
+    if(!(n & 1)){
+        
         rep[r].type = IRREDUCIBLE;
         rep[r].d = 1;
         rep[r].eig.l = rep[r].eig.v = rep[r].eig.i = 1;
-        rep[r].eig.p = rep[r].eig.h = -1;
+        rep[r].eig.p = -1;
+        rep[r].eig.h = 1 - (n & 2);
         //if(MSYM_SUCCESS != (ret = setRepresentationName(&rep[r]))) goto err;
         r++;
+        rep[r].type = IRREDUCIBLE;
+        rep[r].d = 1;
+        rep[r].eig.l = rep[r].eig.v = 1;
+        rep[r].eig.p = rep[r].eig.i = -1;
+        rep[r].eig.h = -1 + (n & 2);
+        //if(MSYM_SUCCESS != (ret = setRepresentationName(&rep[r]))) goto err;
+        r++;
+        
         rep[r].type = IRREDUCIBLE;
         rep[r].d = 1;
         rep[r].eig.l = rep[r].eig.i = 1;
-        rep[r].eig.p = rep[r].eig.h = rep[r].eig.v = -1;
+        rep[r].eig.p = rep[r].eig.v = -1;
+        rep[r].eig.h = 1 - (n & 2);
         //if(MSYM_SUCCESS != (ret = setRepresentationName(&rep[r]))) goto err;
         r++;
         rep[r].type = IRREDUCIBLE;
         rep[r].d = 1;
-        rep[r].eig.l = rep[r].eig.h = rep[r].eig.v = 1;
-        rep[r].eig.p = rep[r].eig.i = -1;
-        //if(MSYM_SUCCESS != (ret = setRepresentationName(&rep[r]))) goto err;
-        r++;
-        rep[r].type = IRREDUCIBLE;
-        rep[r].d = 1;
-        rep[r].eig.l = rep[r].eig.h = 1;
-        rep[r].eig.p = rep[r].eig.i = rep[r].eig.v = -1;
+        rep[r].eig.l = 1;
+        rep[r].eig.p = rep[r].eig.v = rep[r].eig.i = -1;
+        rep[r].eig.h = -1 + (n & 2);
         //if(MSYM_SUCCESS != (ret = setRepresentationName(&rep[r]))) goto err;
         r++;
     }
-    for(int i = 1;r < rl;i++, r++){
+    for(int i = 1;r < rl;i++){
         rep[r].type = IRREDUCIBLE;
         rep[r].d = 2;
         rep[r].eig.l = i;
@@ -604,7 +614,7 @@ msym_error_t getRepresentationsDnh(int n, int rl, msym_representation_t rep[rl])
         rep[r].eig.p = rep[r].eig.v = 1;
         rep[r].eig.h = -1;
         rep[r].eig.i = -1 + ((i & 1) << 1);
-        //if(MSYM_SUCCESS != (ret = setRepresentationName(&rep[r]))) goto err;;
+        r++;
     }
     
     return ret;
@@ -659,7 +669,7 @@ msym_error_t getRepresentationsDnd(int n, int rl, msym_representation_t rep[rl])
         rep[r].eig.h = rep[r].eig.i = rep[r].eig.v = -1;
         //if(MSYM_SUCCESS != (ret = setRepresentationName(&rep[r]))) goto err;
         r++;
-        for(int i = 1;r < rl;i++, r++){
+        for(int i = 1;r < rl;i++){
             rep[r].type = IRREDUCIBLE;
             rep[r].d = 2;
             rep[r].eig.l = i;
@@ -673,6 +683,7 @@ msym_error_t getRepresentationsDnd(int n, int rl, msym_representation_t rep[rl])
             rep[r].eig.p = rep[r].eig.v;
             rep[r].eig.h = -1 + ((i % 2) << 1);
             rep[r].eig.i = -1;
+            r++;
             //if(MSYM_SUCCESS != (ret = setRepresentationName(&rep[r]))) goto err;;
         }
         
@@ -700,7 +711,7 @@ msym_error_t representationCharacter(int n, msym_symmetry_operation_t *sop, msym
                     case REFLECTION         : x = rep->eig.h; break;
                     case INVERSION          : x = rep->eig.i; break;
                     case PROPER_ROTATION    : x = ((n/sop->order) & 1) ? rep->eig.p : 1 ; break;
-                    case IMPROPER_ROTATION  : x = rep->eig.h*(((n/sop->order) & 1) ? rep->eig.p : 1); break;
+                    case IMPROPER_ROTATION  : x = rep->eig.h*(((n/sop->order) & 1) ? rep->eig.p : 1); break; //TODO: fix does not consider S2n
                     default :
                         ret = MSYM_INVALID_CHARACTER_TABLE;
                         msymSetErrorDetails("Invalid symmetry operation when building character table");
@@ -736,9 +747,8 @@ msym_error_t representationCharacter(int n, msym_symmetry_operation_t *sop, msym
                 switch (sop->type) {
                     case IDENTITY           : x = 1; break;
                     case INVERSION          : x = rep->eig.i; break;
-                    case REFLECTION         : x = rep->eig.p == 1 || sop->orientation == VERTICAL ? rep->eig.h*rep->eig.v : rep->eig.i*rep->eig.v; break;
-                    //case REFLECTION         : x = rep->eig.p == 1 || sop->orientation == VERTICAL ? rep->eig.h*rep->eig.v : -rep->eig.h*rep->eig.v; break;
-                    case PROPER_ROTATION    : x = rep->eig.p == 1 || sop->orientation == VERTICAL ? rep->eig.v : -rep->eig.v; break;
+                    case REFLECTION         : x = sop->orientation == VERTICAL ? rep->eig.v*rep->eig.h : rep->eig.p*rep->eig.v*rep->eig.h; break;
+                    case PROPER_ROTATION    : x = sop->orientation == VERTICAL ? rep->eig.v : rep->eig.p*rep->eig.v; break;
                     case IMPROPER_ROTATION  :
                     default :
                         ret = MSYM_INVALID_CHARACTER_TABLE;

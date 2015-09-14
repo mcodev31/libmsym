@@ -1,11 +1,15 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <float.h>
+#include <math.h>
+
 #include "msym.h"
 
 void characterTableToTex(FILE *fp, msym_point_group_t *pg, msym_character_table_t *ct);
 void pointGroupToTex(FILE *fp, msym_point_group_t *pg, int l, char buf[l]);
 void symmetryOperationToTex(FILE *fp, msym_symmetry_operation_t *sop, int l, char buf[l]);
 void symmetrySpeciesToTex(FILE *fp, char *name);
+void characterToTex(FILE *fp,int n, msym_character_table_t *ct, int i, int j, int mode);
 
 int main(int argc, const char * argv[]) {
     msym_error_t ret = MSYM_SUCCESS;
@@ -39,15 +43,16 @@ err:
 
 void characterTableToTex(FILE *fp, msym_point_group_t *pg, msym_character_table_t *ct){
     char buf[256];
-    double (*table)[ct->d] = (double (*)[ct->d]) ct->table;
     pointGroupToTex(fp,pg,sizeof(buf),buf);
     fprintf(fp,"\\documentclass{article}\n\
 \\usepackage{tabu}\n\
+\\usepackage{adjustbox}\n\
 \\begin{document}\n\
 \\begin{table}[h]\n\
-\\caption{$%s$ character table}\n\
+\\caption{$%s$ character table, where $\\theta = \\frac{2\\pi}{%d}$}\n\
 \\label{tab:%s_character_table}\n\
-\\begin{center}\n",buf,pg->name);
+\\begin{center}\n\
+\\begin{adjustbox}{max width=\\textwidth}",buf,pg->n,pg->name);
 
     fprintf(fp,"\\begin{tabular}{ l | ");
     for(int i = 0;i < ct->d;i++) fprintf(fp,"r ");
@@ -62,16 +67,58 @@ void characterTableToTex(FILE *fp, msym_point_group_t *pg, msym_character_table_
     for(int i = 0;i < ct->d;i++){
         symmetrySpeciesToTex(fp,ct->s[i].name);
         for(int j = 0;j < ct->d;j++){
-            fprintf(fp,"& $%.3lf$ ",table[i][j]);
+            characterToTex(fp,pg->n,ct,i,j,2);
         }
         fprintf(fp,"\\\\\n");
     }
     
     fprintf(fp,"\\end{tabular}\n\
+\\end{adjustbox}\n\
 \\end{center}\n\
 \\end{table}\n\
 \\end{document}\n");
     
+}
+
+#ifndef M_PI
+#define M_PI 3.14159265358979323846264338327950288419716939937510582
+#endif
+
+#define CHARACTER_EQUAL 1.0e-9
+
+void characterToTex(FILE *fp,int n, msym_character_table_t *ct, int i, int j, int mode){
+    double (*table)[ct->d] = (double (*)[ct->d]) ct->table;
+    double c = table[i][j];
+    if(mode == 0){
+        fprintf(fp,"& $%.3lf$ ",c);
+        return;
+    }
+    if(mode >= 1){
+        for(int k = 0;k < 5;k++){
+            if(fabs(round(c) - c) < CHARACTER_EQUAL){
+                fprintf(fp,"& $%d$ ",(int) round(c));
+                return;
+            }
+        }
+    }
+        
+    double theta = (2*M_PI)/n;
+    
+    if(mode == 2){
+        for(int k = 1;k < n;k++){
+            if(fabs(c - 2*cos(k*theta)) < CHARACTER_EQUAL){
+                if(k == 1) fprintf(fp,"& $2\\cos(\\theta)$ ");
+                else fprintf(fp,"& $2\\cos(%d \\theta)$ ",k);
+                return;
+            } else if(fabs(c + 2*cos(k*theta)) < CHARACTER_EQUAL){
+                if(k == 1) fprintf(fp,"& $-2\\cos(\\theta)$ ");
+                else fprintf(fp,"& $-2\\cos(%d \\theta)$ ",k);
+                return;
+            }
+        }
+    }
+    
+    fprintf(fp,"& $%.3lf$ ",c);
 }
 
 void symmetrySpeciesToTex(FILE *fp, char *name){
@@ -108,6 +155,7 @@ void pointGroupToTex(FILE *fp, msym_point_group_t *pg, int l, char buf[l]){
         case POINT_GROUP_Dn : snprintf(buf,l,"D_{%d}",pg->n); break;
         case POINT_GROUP_Dnh : snprintf(buf,l,"D_{%dh}",pg->n); break;
         case POINT_GROUP_Dnd : snprintf(buf,l,"D_{%dd}",pg->n); break;
+        case POINT_GROUP_Sn : snprintf(buf,l,"S_{%d}",pg->n); break;
         case POINT_GROUP_T : snprintf(buf,l,"T"); break;
         case POINT_GROUP_Td : snprintf(buf,l,"T_{d}"); break;
         case POINT_GROUP_Th : snprintf(buf,l,"T_{h}"); break;
