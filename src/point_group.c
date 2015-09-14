@@ -97,7 +97,7 @@ msym_error_t generateC2Axes(int n, int l, msym_symmetry_operation_t sops[l], int
 msym_error_t generateSymmetryOperationsUnknown(int n, int l, msym_symmetry_operation_t sops[l], int *pk, int *pcla);
 
 
-msym_error_t pointGroupFromName(char *name, msym_point_group_t *pg);
+msym_error_t pointGroupFromName(const char *name, msym_point_group_t *pg);
 
 int classifySymmetryOperations(msym_point_group_t *pg);
 void sortSymmetryOperations(msym_point_group_t *pg, int classes);
@@ -134,7 +134,7 @@ err:
 }
 
 
-msym_error_t pointGroupFromName(char *name, msym_point_group_t *pg){
+msym_error_t pointGroupFromName(const char *name, msym_point_group_t *pg){
     msym_error_t ret = MSYM_SUCCESS;
     int n = 0, gi = 0, ri = 0;;
     char g = 0, r = 0;
@@ -247,6 +247,26 @@ msym_error_t pointGroupFromName(char *name, msym_point_group_t *pg){
     }
     
     pg->type = pg_map[fi].type;
+    switch (pg->type) {
+        case POINT_GROUP_Cs:
+        case POINT_GROUP_Ci:
+            n = 1;
+        case POINT_GROUP_T:
+        case POINT_GROUP_Td:
+        case POINT_GROUP_Th:
+            n = 3;
+            break;
+        case POINT_GROUP_O:
+        case POINT_GROUP_Oh:
+            n = 4;
+            break;
+        case POINT_GROUP_I:
+        case POINT_GROUP_Ih:
+            n = 5;
+            break;
+        default:
+            break;
+    }
     pg->n = n;
     if(MSYM_SUCCESS != (ret = getPointGroupOrder(pg->type, pg->n, &pg->order))) goto err;
     if(MSYM_SUCCESS != (ret = getPointGroupName(pg->type, pg->n, sizeof(pg->name)/sizeof(char), pg->name))) goto err;
