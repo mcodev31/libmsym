@@ -168,7 +168,7 @@ msym_error_t findPermutationSubgroups(int l, msym_permutation_t perm[l], int sgm
     msym_subgroup_t *mgroup = calloc(gl, sizeof(msym_subgroup_t));
     for(int i = 0;i < gl;i++){
         mgroup[i].sops = calloc(group[i].sopsl, sizeof(msym_symmetry_operation_t *));
-        mgroup[i].sopsl = group[i].sopsl;
+        mgroup[i].order = group[i].sopsl;
         mgroup[i].subgroup[0] = group[i].subgroup[0] < 0 ? NULL : &mgroup[group[i].subgroup[0]];
         mgroup[i].subgroup[1] = group[i].subgroup[1] < 0 ? NULL : &mgroup[group[i].subgroup[1]];
         

@@ -61,12 +61,7 @@ msym_error_t generateEquivalenceSet(msym_point_group_t *pg, int length, msym_ele
         } else {
             continue;
         }
-        
-        if(elements[i].aol > 0 || elements[i].ao != NULL){
-            msymSetErrorDetails("Cannot (currently) generate equivalence sets from elements with orbitals");
-            ret = MSYM_INVALID_ELEMENTS;
-            goto err;
-        }
+
         for(msym_symmetry_operation_t *s = pg->sops;s < (pg->sops + pg->order);s++){
             double v[3];
             applySymmetryOperation(s, elements[i].v, v);

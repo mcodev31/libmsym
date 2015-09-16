@@ -54,17 +54,7 @@ msym_error_t getPredefinedCharacterTable(int sopsl, msym_symmetry_operation_t so
 msym_error_t getRepresentationName(msym_point_group_type_t type, int n, msym_representation_t *rep, int l, char name[l]);
 
 
-void decomposeRepresentation(CharacterTable *ct, double rspan[ct->l], double dspan[ct->l]){
-    int order = 0;
-    memset(dspan,0, sizeof(double[ct->l]));
-    for(int k = 0;k < ct->l;k++){
-        order += ct->classc[k];
-        for(int j = 0; j < ct->l;j++) dspan[k] += ct->classc[j]*rspan[j]*ct->irrep[k].v[j];
-    }
-    for(int k = 0;k < ct->l;k++) dspan[k] /= order;
-}
-
-void decomposeRepresentation2(msym_character_table_t *ct, double rspan[ct->d], double dspan[ct->d]){
+void decomposeRepresentation(msym_character_table_t *ct, double rspan[ct->d], double dspan[ct->d]){
     int order = 0;
     double (*ctable)[ct->d] = ct->table;
     memset(dspan,0, sizeof(double[ct->d]));
@@ -76,155 +66,9 @@ void decomposeRepresentation2(msym_character_table_t *ct, double rspan[ct->d], d
     for(int k = 0;k < ct->d;k++) dspan[k] /= order;
 }
 
-void directProduct(int l, IrreducibleRepresentation *irrep1, IrreducibleRepresentation *irrep2, double pspan[l]){
-    for(int i = 0;i < l;i++) pspan[i] = irrep1->v[i]*irrep2->v[i];
-}
 
-void directProduct2(int l, double irrep1[l], double irrep2[l], double pspan[l]){
+void directProduct(int l, double irrep1[l], double irrep2[l], double pspan[l]){
     for(int i = 0;i < l;i++) pspan[i] = irrep1[i]*irrep2[i];
-}
-
-msym_error_t characterTableUnknown(int n, CharacterTable *ct){
-    printf("WARNING UNKOWN\n");
-    msymSetErrorDetails("Character table unknown");
-    //return MSYM_INVALID_CHARACTER_TABLE;
-    return MSYM_SUCCESS;
-}
-
-msym_error_t characterTableTd(int n, CharacterTable *ct){
-    ct->l = sizeof(TdIrrep)/sizeof(TdIrrep[0]);
-    ct->irrep = malloc(ct->l*sizeof(IrreducibleRepresentation));
-    for(int i = 0; i < ct->l;i++){
-        enum IrreducibleRepresentationEnum irrep = TdIrrep[i];
-        ct->irrep[i].name = IrreducibleRepresentationName[irrep];
-        ct->irrep[i].v = TdTable[irrep];
-        ct->irrep[i].d = Degeneracy[irrep];
-        ct->irrep[i].l = sizeof(TdTable[irrep])/sizeof(TdTable[irrep][0]);
-    }
-    return MSYM_SUCCESS;
-}
-
-msym_error_t characterTableIh(int n, CharacterTable *ct){
-    ct->l = sizeof(IhIrrep)/sizeof(IhIrrep[0]);
-    ct->irrep = malloc(ct->l*sizeof(IrreducibleRepresentation));
-    for(int i = 0; i < ct->l;i++){
-        enum IrreducibleRepresentationEnum irrep = IhIrrep[i];
-        ct->irrep[i].name = IrreducibleRepresentationName[irrep];
-        ct->irrep[i].v = IhTable[irrep];
-        ct->irrep[i].d = Degeneracy[irrep];
-        ct->irrep[i].l = sizeof(IhTable[irrep])/sizeof(IhTable[irrep][0]);
-    }
-    return MSYM_SUCCESS;
-}
-
-msym_error_t characterTableCnv(int n, CharacterTable *ct){
-    msym_error_t ret = MSYM_SUCCESS;
-    switch(n) {
-        case 3 : {
-            ct->l = sizeof(C3vIrrep)/sizeof(C3vIrrep[0]);
-            ct->irrep = malloc(ct->l*sizeof(IrreducibleRepresentation));
-            for(int i = 0; i < ct->l;i++){
-                enum IrreducibleRepresentationEnum irrep = C3vIrrep[i];
-                ct->irrep[i].name = IrreducibleRepresentationName[irrep];
-                ct->irrep[i].v = C3vTable[irrep];
-                ct->irrep[i].d = Degeneracy[irrep];
-                ct->irrep[i].l = sizeof(C3vTable[irrep])/sizeof(C3vTable[irrep][0]);
-            }
-            break;
-        }
-        case 4 : {
-            ct->l = sizeof(C4vIrrep)/sizeof(C4vIrrep[0]);
-            ct->irrep = malloc(ct->l*sizeof(IrreducibleRepresentation));
-            for(int i = 0; i < ct->l;i++){
-                enum IrreducibleRepresentationEnum irrep = C4vIrrep[i];
-                ct->irrep[i].name = IrreducibleRepresentationName[irrep];
-                ct->irrep[i].v = C4vTable[irrep];
-                ct->irrep[i].d = Degeneracy[irrep];
-                ct->irrep[i].l = sizeof(C4vTable[irrep])/sizeof(C4vTable[irrep][0]);
-            }
-            break;
-        }
-
-        default:
-            msymSetErrorDetails("Cannot find C%dv character table",n);
-            ret = MSYM_INVALID_CHARACTER_TABLE;
-    }
-    
-    return ret;
-}
-
-msym_error_t characterTableCnh(int n, CharacterTable *ct){
-    msym_error_t ret = MSYM_SUCCESS;
-    switch(n) {
-        case 2 : {
-            ct->l = sizeof(C2hIrrep)/sizeof(C2hIrrep[0]);
-            ct->irrep = malloc(ct->l*sizeof(IrreducibleRepresentation));
-            for(int i = 0; i < ct->l;i++){
-                enum IrreducibleRepresentationEnum irrep = C2hIrrep[i];
-                ct->irrep[i].name = IrreducibleRepresentationName[irrep];
-                ct->irrep[i].v = C2hTable[irrep];
-                ct->irrep[i].d = Degeneracy[irrep];
-                ct->irrep[i].l = sizeof(C2hTable[irrep])/sizeof(C2hTable[irrep][0]);
-            }
-            break;
-        }
-            
-        default:
-            msymSetErrorDetails("Cannot find C%dh character table",n);
-            ret = MSYM_INVALID_CHARACTER_TABLE;
-    }
-    
-    return ret;
-}
-
-msym_error_t characterTableDnh(int n, CharacterTable *ct){
-    msym_error_t ret = MSYM_SUCCESS;
-    switch(n) {
-        case 2 : {
-            ct->l = sizeof(D2hIrrep)/sizeof(D2hIrrep[0]);
-            ct->irrep = malloc(ct->l*sizeof(IrreducibleRepresentation));
-            for(int i = 0; i < ct->l;i++){
-                enum IrreducibleRepresentationEnum irrep = D2hIrrep[i];
-                ct->irrep[i].name = IrreducibleRepresentationName[irrep];
-                ct->irrep[i].v = D2hTable[irrep];
-                ct->irrep[i].d = Degeneracy[irrep];
-                ct->irrep[i].l = sizeof(D2hTable[irrep])/sizeof(D2hTable[irrep][0]);
-            }
-            break;
-        }
-        case 4 : {
-            ct->l = sizeof(D4hIrrep)/sizeof(D4hIrrep[0]);
-            ct->irrep = malloc(ct->l*sizeof(IrreducibleRepresentation));
-            for(int i = 0; i < ct->l;i++){
-                enum IrreducibleRepresentationEnum irrep = D4hIrrep[i];
-                ct->irrep[i].name = IrreducibleRepresentationName[irrep];
-                ct->irrep[i].v = D4hTable[irrep];
-                ct->irrep[i].d = Degeneracy[irrep];
-                ct->irrep[i].l = sizeof(D4hTable[irrep])/sizeof(D4hTable[irrep][0]);
-            }
-            break;
-        }
-        case 6 : {
-            ct->l = sizeof(D6hIrrep)/sizeof(D6hIrrep[0]);
-            ct->irrep = malloc(ct->l*sizeof(IrreducibleRepresentation));
-            for(int i = 0; i < ct->l;i++){
-                enum IrreducibleRepresentationEnum irrep = D6hIrrep[i];
-                ct->irrep[i].name = IrreducibleRepresentationName[irrep];
-                ct->irrep[i].v = D6hTable[irrep];
-                ct->irrep[i].d = Degeneracy[irrep];
-                ct->irrep[i].l = sizeof(D6hTable[irrep])/sizeof(D6hTable[irrep][0]);
-            }
-            break;
-        }
-        default:
-            msymSetErrorDetails("Cannot find D%dh character table",n);
-            ret = MSYM_INVALID_CHARACTER_TABLE;
-    }
-    return ret;
-}
-
-double getCharacterCnv(int n, int k){
-    return 0;
 }
 
 msym_error_t generateCharacterTable(msym_point_group_type_t type, int n, int sopsl, msym_symmetry_operation_t sops[sopsl], msym_character_table_t **oct){
@@ -1017,37 +861,4 @@ err:
     return ret;
 }
 
-// \u03C0 = pi
-// \u03C3 = sigma
-void printCharacterTable(CharacterTable *ct){
-    printf("Character Table:\n");
-    for(int i = 0; i < ct->l;i++){
-        printf("\t %d%s",ct->classc[i],ct->name[i]);
-    }
-    printf("\n");
-    for(int i = 0; i < ct->l;i++){
-        printf("%s:\t",ct->irrep[i].name);
-        for(int j = 0; j < ct->irrep[i].l; j++){
-            char *pre = signbit(ct->irrep[i].v[j]) == 1 ? "" : " ";
-            printf("%s%.3lf\t",pre,ct->irrep[i].v[j]);
-        }
-        printf("\n");
-    
-    }
-}
 
-void convertNewCharacterTable(msym_point_group_t *pg){
-    msym_character_table_t *ct = malloc(sizeof(msym_character_table_t));
-    ct->d = pg->ct->l;
-    double (*t)[ct->d] = malloc(sizeof(double[ct->d][ct->d]));
-    msym_symmetry_species_t *ssp = malloc(sizeof(msym_symmetry_species_t[ct->d]));
-    ct->s = ssp;
-    ct->table = t;
-    ct->classc = pg->ct->classc;
-    for(int i = 0;i < pg->ct->l;i++){
-        memcpy(t[i], pg->ct->irrep[i].v, sizeof(double[ct->d]));
-        ssp[i].d = pg->ct->irrep[i].d;
-        sprintf(ssp[i].name, "%s",pg->ct->irrep[i].name);
-    }
-    pg->ct2 = ct;
-}

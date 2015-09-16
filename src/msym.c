@@ -41,7 +41,7 @@ msym_error_t msymFindSymmetry(msym_context ctx){
     
     if(MSYM_SUCCESS != (ret = ctxGetElements(ctx, &elementsl, &elements))) goto err;
     
-    if(MSYM_SUCCESS != (ret = msymGetThresholds(ctx, &t))) goto err;
+    if(MSYM_SUCCESS != (ret = ctxGetThresholds(ctx, &t))) goto err;
     
     if(MSYM_SUCCESS != (ret = ctxGetEquivalenceSets(ctx, &esl, &des))){
         if(MSYM_SUCCESS != (ret = msymFindEquivalenceSets(ctx))) goto err;
@@ -101,7 +101,7 @@ msym_error_t msymSetPointGroupByName(msym_context ctx, const char *name){
     msym_error_t ret = MSYM_SUCCESS;
     msym_point_group_t *pg = NULL;
     msym_thresholds_t *t = NULL;
-    if(MSYM_SUCCESS != (ret = msymGetThresholds(ctx, &t))) goto err;
+    if(MSYM_SUCCESS != (ret = ctxGetThresholds(ctx, &t))) goto err;
     if(MSYM_SUCCESS != (ret = generatePointGroupFromName(name, t, &pg))) goto err;
     if(MSYM_SUCCESS != (ret = ctxSetPointGroup(ctx, pg))) goto err;
     
@@ -123,7 +123,7 @@ msym_error_t msymGenerateElements(msym_context ctx, int length, msym_element_t e
     
     
     int glength = 0, plength = 0, esl = 0;
-    if(MSYM_SUCCESS != (ret = msymGetThresholds(ctx, &t))) goto err;
+    if(MSYM_SUCCESS != (ret = ctxGetThresholds(ctx, &t))) goto err;
     if(MSYM_SUCCESS != (ret = ctxGetPointGroup(ctx, &pg))) goto err;
     if(MSYM_SUCCESS != (ret = generateEquivalenceSet(pg, length, elements, &glength, &gelements, &esl, &es,t))) goto err;
     if(MSYM_SUCCESS != (ret = msymSetElements(ctx, glength, gelements))) goto err;
@@ -168,7 +168,7 @@ msym_error_t msymFindEquivalenceSets(msym_context ctx){
     double time;
     
     if(MSYM_SUCCESS != (ret = ctxGetElementPtrs(ctx, &pelementsl, &pelements))) goto err;
-    if(MSYM_SUCCESS != (ret = msymGetThresholds(ctx, &t))) goto err;
+    if(MSYM_SUCCESS != (ret = ctxGetThresholds(ctx, &t))) goto err;
     if(MSYM_SUCCESS != (ret = ctxGetPointGroup(ctx, &pg))) {
         if(MSYM_SUCCESS != (ret = ctxGetGeometry(ctx, &g, eigval, eigvec))) goto err;
         start = clock();
@@ -203,7 +203,7 @@ msym_error_t msymAlignAxes(msym_context ctx){
         goto err;
     }
     
-    if(MSYM_SUCCESS != (ret = ctxSetCenterOfMass(ctx, zero))) goto err;
+    if(MSYM_SUCCESS != (ret = msymSetCenterOfMass(ctx, zero))) goto err;
     
     for(int i = 0; i < elementsl;i++) mvmul(elements[i].v, pg->transform, elements[i].v);
     for(int i = 0; i < pg->order;i++) mvmul(pg->sops[i].v, pg->transform, pg->sops[i].v);
@@ -251,7 +251,7 @@ msym_error_t msymSetAlignmentTransform(msym_context ctx, double transform[3][3])
     int elementsl = 0;
     double m[3][3];
     
-    if(MSYM_SUCCESS != (ret = msymGetThresholds(ctx, &t))) goto err;
+    if(MSYM_SUCCESS != (ret = ctxGetThresholds(ctx, &t))) goto err;
     if(MSYM_SUCCESS != (ret = ctxGetElements(ctx, &elementsl, &elements))){
         elements = NULL;
         elementsl = 0;
@@ -290,7 +290,7 @@ msym_error_t msymSetAlignmentAxes(msym_context ctx, double primary[3], double se
     vnorm2(primary, p);
     vnorm2(secondary,s);
     
-    if(MSYM_SUCCESS != (ret = msymGetThresholds(ctx, &t))) goto err;
+    if(MSYM_SUCCESS != (ret = ctxGetThresholds(ctx, &t))) goto err;
     if(MSYM_SUCCESS != (ret = ctxGetElements(ctx, &elementsl, &elements))){
         elements = NULL;
         elementsl = 0;
@@ -328,14 +328,20 @@ err:
     return ret;
 }
 
-msym_error_t msymSelectSubgroup(msym_context ctx, msym_subgroup_t *ext){
+msym_error_t msymSelectSubgroup(msym_context ctx, msym_subgroup_t *sg){
     msym_error_t ret = MSYM_SUCCESS;
-    msym_subgroup_t *sg;
+    msym_subgroup_t *sgs;
     msym_point_group_t *pg;
     msym_thresholds_t *t = NULL;
+    int sgl = 0;
     
-    if(MSYM_SUCCESS != (ret = ctxGetInternalSubgroup(ctx, ext, &sg))) goto err;
-    if(MSYM_SUCCESS != (ret = msymGetThresholds(ctx, &t))) goto err;
+    if(MSYM_SUCCESS != (ret = ctxGetSubgroups(ctx, &sgl, &sgs))) goto err;
+    if(sg < sgs || sg >= sgs + sgl){
+        msymSetErrorDetails("Subgroup not available in current context");
+        ret = MSYM_INVALID_SUBGROUPS;
+        goto err;
+    }
+    if(MSYM_SUCCESS != (ret = ctxGetThresholds(ctx, &t))) goto err;
     if(MSYM_SUCCESS != (ret = pointGroupFromSubgroup(sg, t, &pg))) goto err;
     if(MSYM_SUCCESS != (ret = ctxSetPointGroup(ctx, pg))) goto err;
     if(MSYM_SUCCESS != (ret = msymFindEquivalenceSets(ctx))) goto err;
@@ -357,7 +363,7 @@ msym_error_t msymSymmetrizeMolecule(msym_context ctx, double *err){
     double error = 0.0;
     int perml = 0, esl = 0, elementsl = 0, sopsl = 0;
     
-    if(MSYM_SUCCESS != (ret = msymGetThresholds(ctx, &t))) goto err;
+    if(MSYM_SUCCESS != (ret = ctxGetThresholds(ctx, &t))) goto err;
     if(MSYM_SUCCESS != (ret = ctxGetElements(ctx, &elementsl, &elements))) goto err;
     if(MSYM_SUCCESS != (ret = ctxGetPointGroup(ctx, &pg))) goto err;
     if(MSYM_SUCCESS != (ret = ctxGetEquivalenceSets(ctx, &esl, &es))){
@@ -398,7 +404,7 @@ msym_error_t msymApplyTranslation(msym_context ctx, msym_element_t *ext, double 
     int perml = 0, esl = 0, elementsl = 0, sopsl = 0;
     
     if(MSYM_SUCCESS != (ret = ctxGetInternalElement(ctx, ext, &element))) goto err;
-    if(MSYM_SUCCESS != (ret = msymGetThresholds(ctx, &t))) goto err;
+    if(MSYM_SUCCESS != (ret = ctxGetThresholds(ctx, &t))) goto err;
     if(MSYM_SUCCESS != (ret = ctxGetElements(ctx, &elementsl, &elements))) goto err;
     if(MSYM_SUCCESS != (ret = ctxGetPointGroup(ctx, &pg))) goto err;
     if(MSYM_SUCCESS != (ret = ctxGetEquivalenceSets(ctx, &esl, &es))){
@@ -434,53 +440,6 @@ err:
     return ret;
 }
 
-msym_error_t msymGenerateOrbitalSubspaces(msym_context ctx){
-    msym_error_t ret = MSYM_SUCCESS;
-    
-    msym_point_group_t *pg = NULL;
-    msym_orbital_t *basis = NULL;
-    msym_equivalence_set_t *es = NULL;
-    msym_permutation_t **perm = NULL;
-    msym_thresholds_t *t = NULL;
-    msym_subspace_t *ss = NULL;
-    int *span = NULL;
-    
-    clock_t start = clock();
-    int basisl = 0, esl = 0, perml = 0, sopsl = 0, ssl = 0;
-    
-    if(MSYM_SUCCESS != (ret = msymGetThresholds(ctx, &t))) goto err;
-    if(MSYM_SUCCESS != (ret = ctxGetPointGroup(ctx, &pg))) goto err;
-    if(pg->ct == NULL){
-        if(MSYM_SUCCESS != (ret = findCharacterTable(pg))) goto err;
-    }
-    if(pg->ct2 == NULL){
-        if(MSYM_SUCCESS != (ret = generateCharacterTable(pg->type, pg->n, pg->order, pg->sops, &pg->ct2))) goto err;
-    }
-    if(MSYM_SUCCESS != (ret = ctxGetEquivalenceSets(ctx, &esl, &es))) goto err;
-    if(MSYM_SUCCESS != (ret = ctxGetOrbitals(ctx, &basisl, &basis))) goto err;
-    if(MSYM_SUCCESS != (ret = ctxGetEquivalenceSetPermutations(ctx, &perml, &sopsl, &perm))) goto err;
-    if(sopsl != pg->order || perml != esl) {ret = MSYM_INVALID_PERMUTATION; goto err;}
-
-    if(MSYM_SUCCESS != (ret = generateOrbitalSubspaces(pg, esl, es, perm, basisl, basis, t, &ssl, &ss, &span))) goto err;
-    
-    clock_t end = clock();
-    double time = (double)(end - start) / CLOCKS_PER_SEC;
-    printf("time: %lf seconds to generate %d root orbital subspaces from %d basis functions\n",time,ssl,basisl);
-    
-    //for(int i = 0;i < ssl;i++) printSubspace(pg->ct, &ss[i]);
-    
-    if(MSYM_SUCCESS != (ret = ctxSetOrbitalSubspaces(ctx, ssl, ss, span))) goto err;
-    
-    return ret;
-err:
-    for(int i = 0;i < ssl;i++){
-        freeSubspace(&ss[i]);
-    }
-    free(ss);
-    free(span);
-    return ret;
-}
-
 msym_error_t msymGenerateSALCSubspaces(msym_context ctx){
     msym_error_t ret = MSYM_SUCCESS;
     
@@ -498,17 +457,14 @@ msym_error_t msymGenerateSALCSubspaces(msym_context ctx){
     clock_t start = clock();
     int basisl = 0, esl = 0, perml = 0, sopsl = 0, ssl = 0, elementsl = 0, sgl = 0;
     
-    if(MSYM_SUCCESS != (ret = msymGetThresholds(ctx, &t))) goto err;
-    if(MSYM_SUCCESS != (ret = ctxGetElements(ctx, &elementsl, &elements))) goto err;
+    if(MSYM_SUCCESS != (ret = ctxGetThresholds(ctx, &t))) goto err;
+    if(MSYM_SUCCESS != (ret = ctxGetExternalElements(ctx, &elementsl, &elements))) goto err;
     if(MSYM_SUCCESS != (ret = ctxGetPointGroup(ctx, &pg))) goto err;
     if(pg->ct == NULL){
-        if(MSYM_SUCCESS != (ret = findCharacterTable(pg))) goto err;
+        if(MSYM_SUCCESS != (ret = generateCharacterTable(pg->type, pg->n, pg->order, pg->sops, &pg->ct))) goto err;
     }
-    if(pg->ct2 == NULL){
-        if(MSYM_SUCCESS != (ret = generateCharacterTable(pg->type, pg->n, pg->order, pg->sops, &pg->ct2))) goto err;
-    }
-    if(MSYM_SUCCESS != (ret = ctxGetEquivalenceSets(ctx, &esl, &es))) goto err;
-    if(MSYM_SUCCESS != (ret = ctxGetElementEquivalenceSetMap(ctx, &eesmap))) goto err;
+    if(MSYM_SUCCESS != (ret = ctxGetExternalEquivalenceSets(ctx, &esl, &es))) goto err;
+    if(MSYM_SUCCESS != (ret = ctxGetExternalElementEquivalenceSetMap(ctx, &eesmap))) goto err;
     if(MSYM_SUCCESS != (ret = ctxGetBasisFunctions(ctx, &basisl, &basis))) goto err;
     if(MSYM_SUCCESS != (ret = ctxGetEquivalenceSetPermutations(ctx, &perml, &sopsl, &perm))) goto err;
     if(sopsl != pg->order || perml != esl) {ret = MSYM_INVALID_PERMUTATION; goto err;}
@@ -528,7 +484,7 @@ msym_error_t msymGenerateSALCSubspaces(msym_context ctx){
         }
     }
     
-    if(MSYM_SUCCESS != (ret = testSpan2(pg, sgl, sg, esl, es, perm, basisl, basis, elements, eesmap, t, &ssl, &ss, &span))) goto err;
+    if(MSYM_SUCCESS != (ret = generateSALCSubspaces(pg, sgl, sg, esl, es, perm, basisl, basis, elements, eesmap, t, &ssl, &ss, &span))) goto err;
     
     if(MSYM_SUCCESS != (ret = ctxSetSALCSubspaces(ctx,ssl,ss,span))) goto err;
     
@@ -550,6 +506,7 @@ err:
     return ret;
 }
 
+/*
 msym_error_t msymGenerateDisplacementSubspaces(msym_context ctx){
     msym_error_t ret = MSYM_SUCCESS;
     
@@ -563,19 +520,18 @@ msym_error_t msymGenerateDisplacementSubspaces(msym_context ctx){
     clock_t start = clock();
     int esl = 0, perml = 0, sopsl = 0, ssl = 0;
     
-    if(MSYM_SUCCESS != (ret = msymGetThresholds(ctx, &t))) goto err;
+    if(MSYM_SUCCESS != (ret = ctxGetThresholds(ctx, &t))) goto err;
     if(MSYM_SUCCESS != (ret = ctxGetPointGroup(ctx, &pg))) goto err;
     if(pg->ct == NULL){
-        if(MSYM_SUCCESS != (ret = findCharacterTable(pg))) goto err;
-    }
-    if(pg->ct2 == NULL){
-        if(MSYM_SUCCESS != (ret = generateCharacterTable(pg->type, pg->n, pg->order, pg->sops, &pg->ct2))) goto err;
+        if(MSYM_SUCCESS != (ret = generateCharacterTable(pg->type, pg->n, pg->order, pg->sops, &pg->ct))) goto err;
     }
     if(MSYM_SUCCESS != (ret = ctxGetEquivalenceSets(ctx, &esl, &es))) goto err;
     if(MSYM_SUCCESS != (ret = ctxGetEquivalenceSetPermutations(ctx, &perml, &sopsl, &perm))) goto err;
     if(sopsl != pg->order || perml != esl) {ret = MSYM_INVALID_PERMUTATION; goto err;}
     
-    if(MSYM_SUCCESS != (ret = generateDisplacementSubspaces(pg, esl, es, perm, t, &ssl, &ss, &span))) goto err;
+    msymSetErrorDetails("Funciton NYI");
+    goto err;
+    //if(MSYM_SUCCESS != (ret = generateDisplacementSubspaces(pg, esl, es, perm, t, &ssl, &ss, &span))) goto err;
     
     clock_t end = clock();
     double time = (double)(end - start) / CLOCKS_PER_SEC;
@@ -593,45 +549,9 @@ err:
     free(ss);
     free(span);
     return ret;
-}
+}*/
 
-msym_error_t msymGetOrbitalSubspaces(msym_context ctx, int l, double c[l][l]){
-    msym_error_t ret = MSYM_SUCCESS;
-    msym_subspace_t *ss = NULL;
-    msym_orbital_t *basis = NULL;
-    int *span = NULL;
-    int ssl = 0, basisl = 0;
-    
-    if(MSYM_SUCCESS != (ret = ctxGetOrbitals(ctx, &basisl, &basis))) goto err;
-    
-    if(basisl != l) {
-        ret = MSYM_INVALID_ORBITALS;
-        msymSetErrorDetails("Number of orbital coefficients (%d) do not match orbital basis (%d)",l,basisl);
-        goto err;
-    }
-    
-    if(MSYM_SUCCESS != (ret = ctxGetOrbitalSubspaces(ctx, &ssl, &ss,&span))){
-        if(MSYM_SUCCESS != (ret = msymGenerateOrbitalSubspaces(ctx))) goto err;
-        if(MSYM_SUCCESS != (ret = ctxGetOrbitalSubspaces(ctx, &ssl, &ss,&span))) goto err;
-    }
-    
-    //printf("getting orbital subspaces\n");
-    
-    if(MSYM_SUCCESS != (ret = getOrbitalSubspaces(ssl, ss, basisl, basis, c))) goto err;
-
-    //msym_point_group_t *pg = NULL;
-    //if(MSYM_SUCCESS != (ret = ctxGetPointGroup(ctx, &pg))) goto err;
-    //for(int i = 0;i < ssl;i++) printSubspace(pg->ct, &ss[i]);
-    //printTransform(l,l,c);
-    
-    //printf("get ok\n");
-    
-    return ret;
-err:
-    return ret;
-
-}
-
+/*
 msym_error_t msymGetDisplacementSubspaces(msym_context ctx, int l, double c[l][l]){
     msym_error_t ret = MSYM_SUCCESS;
     msym_subspace_t *ss = NULL;
@@ -667,14 +587,14 @@ msym_error_t msymGetDisplacementSubspaces(msym_context ctx, int l, double c[l][l
 err:
     return ret;
     
-}
+}*/
 
 
 msym_error_t msymSymmetrizeOrbitals(msym_context ctx, int l, double c[l][l]){
     msym_error_t ret = MSYM_SUCCESS;
     msym_point_group_t *pg = NULL;
-    msym_subspace_t *ss = NULL;
-    msym_orbital_t *basis = NULL;
+    msym_subspace_2_t *ss = NULL;
+    msym_basis_function_t *basis = NULL;
     msym_thresholds_t *t = NULL;
     int *span = NULL;
     
@@ -688,17 +608,15 @@ msym_error_t msymSymmetrizeOrbitals(msym_context ctx, int l, double c[l][l]){
     double time;
     
     
-    if(MSYM_SUCCESS != (ret = msymGetThresholds(ctx, &t))) goto err;
+    if(MSYM_SUCCESS != (ret = ctxGetThresholds(ctx, &t))) goto err;
     
     if(MSYM_SUCCESS != (ret = ctxGetPointGroup(ctx, &pg))) goto err;
     if(pg->ct == NULL){
-        if(MSYM_SUCCESS != (ret = findCharacterTable(pg))) goto err;
-    }
-    if(pg->ct2 == NULL){
-        if(MSYM_SUCCESS != (ret = generateCharacterTable(pg->type, pg->n, pg->order, pg->sops, &pg->ct2))) goto err;
+        if(MSYM_SUCCESS != (ret = generateCharacterTable(pg->type, pg->n, pg->order, pg->sops, &pg->ct))) goto err;
     }
     
-    if(MSYM_SUCCESS != (ret = ctxGetOrbitals(ctx, &basisl, &basis))) goto err;
+    
+    if(MSYM_SUCCESS != (ret = ctxGetBasisFunctions(ctx, &basisl, &basis))) goto err;
     
     if(basisl != l) {
         ret = MSYM_INVALID_ORBITALS;
@@ -706,9 +624,9 @@ msym_error_t msymSymmetrizeOrbitals(msym_context ctx, int l, double c[l][l]){
         goto err;
     }
     
-    if(MSYM_SUCCESS != (ret = ctxGetOrbitalSubspaces(ctx, &ssl, &ss, &span))){
-        if(MSYM_SUCCESS != (ret = msymGenerateOrbitalSubspaces(ctx))) goto err;
-        if(MSYM_SUCCESS != (ret = ctxGetOrbitalSubspaces(ctx, &ssl, &ss, &span))) goto err;
+    if(MSYM_SUCCESS != (ret = ctxGetSALCSubspaces(ctx, &ssl, &ss, &span))){
+        if(MSYM_SUCCESS != (ret = msymGenerateSALCSubspaces(ctx))) goto err;
+        if(MSYM_SUCCESS != (ret = ctxGetSALCSubspaces(ctx, &ssl, &ss, &span))) goto err;
     }
     
     
@@ -716,7 +634,10 @@ msym_error_t msymSymmetrizeOrbitals(msym_context ctx, int l, double c[l][l]){
     
     start = clock();
 
-    if(MSYM_SUCCESS != (ret = symmetrizeOrbitals(pg, ssl, ss, span, basisl, basis, t, c , symc))) goto err;
+    msymSetErrorDetails("Function NYI");
+    goto err;
+    
+    //if(MSYM_SUCCESS != (ret = symmetrizeOrbitals(pg, ssl, ss, span, basisl, basis, t, c , symc))) goto err;
 
     /*printf("Pre symmetrization\n");
     printTransform(l,l,c);
@@ -747,7 +668,7 @@ msym_error_t msymFindEquivalenceSetPermutations(msym_context ctx) {
     double (**esv)[3] = NULL;
     int esl = 0;
     
-    if(MSYM_SUCCESS != (ret = msymGetThresholds(ctx, &t))) goto err;
+    if(MSYM_SUCCESS != (ret = ctxGetThresholds(ctx, &t))) goto err;
     if(MSYM_SUCCESS != (ret = ctxGetPointGroup(ctx, &pg))) goto err;
     if(MSYM_SUCCESS != (ret = ctxGetEquivalenceSets(ctx, &esl, &es))) goto err;
     

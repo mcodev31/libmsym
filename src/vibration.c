@@ -22,9 +22,10 @@
 #include "point_group.h"
 #include "subspace.h"
 
-void printVibrationsSubspace(CharacterTable *ct, msym_subspace_t *ss);
+//void printVibrationsSubspace(CharacterTable *ct, msym_subspace_t *ss);
 
 
+/*
 msym_error_t generateDisplacementSubspaces(msym_point_group_t *pg, int esl, msym_equivalence_set_t *es, msym_permutation_t **perm, msym_thresholds_t *thresholds, int *subspacel, msym_subspace_t **subspace, int **pspan){
     printCharacterTable(pg->ct);
     msym_error_t ret = MSYM_SUCCESS;
@@ -38,7 +39,7 @@ msym_error_t generateDisplacementSubspaces(msym_point_group_t *pg, int esl, msym
     double (*mperm)[pg->order] = malloc(sizeof(double[pg->order][pg->order]));
     double (*mproj)[3*pg->order][3*pg->order] = calloc(pg->ct->l+1,sizeof(double[3*pg->order][3*pg->order]));
     
-    /* Just precalculate span, makes things easier even though it may be slightly more calculations we can avoid alot of reallocs */
+    // Just precalculate span, makes things easier even though it may be slightly more calculations we can avoid alot of reallocs
     for(int k = 0;k < pg->ct->l;k++){
         iss[ssl].type = MASS_WEIGHTED_COORDINATES;
         iss[ssl].irrep = k;
@@ -167,8 +168,9 @@ err:
     free(iss);
     return ret;
     
-}
+}*/
 
+/*
 msym_error_t getDisplacementSubspaceCoefficients(msym_subspace_t *ss, int basisl, msym_orbital_t basis[basisl], int *offset, double c[basisl][basisl]){
     msym_error_t ret = MSYM_SUCCESS;
     
@@ -204,5 +206,5 @@ msym_error_t getDisplacementSubspaceCoefficients(msym_subspace_t *ss, int basisl
     return ret;
 err:
     return ret;
-}
+}*/
 

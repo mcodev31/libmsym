@@ -41,27 +41,11 @@ static double dpolynomial [][9] = {
 };
 
 
-typedef struct {
-    IrreducibleRepresentation *irrep;
-    msym_orbital_t **o;
-    double *c;
-    int l;
-
-} LCAO;
-
 msym_error_t basisFunctionFromName(char *, msym_basis_function_t *bf);
 msym_error_t basisFunctionFromQuantumNumbers(int n, int l, int m, msym_basis_function_t *bf);
 
-msym_error_t orbitalFromName(char *, msym_orbital_t *orb);
-msym_error_t orbitalFromQuantumNumbers(int n, int l, int m, msym_orbital_t *orb);
-
-void printOrbital(msym_orbital_t *orb);
-msym_error_t generateOrbitalSubspaces(msym_point_group_t *pg, int esl, msym_equivalence_set_t *es, msym_permutation_t **perm, int basisl, msym_orbital_t basis[basisl], msym_thresholds_t *thresholds, int *subspacel, msym_subspace_t **subspace, int **pspan);
-msym_error_t generateOrbitalTransforms(int sopsl, msym_symmetry_operation_t sops[sopsl], int l, double transform[sopsl][2*l+1][2*l+1]);
-void freeSubspace(msym_subspace_t *ss);
-msym_error_t getOrbitalSubspaces(int ssl, msym_subspace_t ss[ssl],int basisl, msym_orbital_t basis[basisl], double c[basisl][basisl]);
-
-void printSubspace(CharacterTable *ct, msym_subspace_t *ss);
+msym_error_t generateBasisFunctionTransforms(int sopsl, msym_symmetry_operation_t sops[sopsl], int l, double transform[sopsl][2*l+1][2*l+1]);
+msym_error_t generateSALCSubspaces(msym_point_group_t *pg, int sgl, msym_subgroup_t sg[sgl], int esl, msym_equivalence_set_t *es, msym_permutation_t **perm, int basisl, msym_basis_function_t basis[basisl], msym_element_t *elements, msym_equivalence_set_t **esmap, msym_thresholds_t *thresholds, int *ossl, msym_subspace_2_t **oss, int **ospan);
 
 
 #endif /* defined(__MSYM__ORBITAL_h) */
