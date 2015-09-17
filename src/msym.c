@@ -158,7 +158,7 @@ msym_error_t msymFindEquivalenceSets(msym_context ctx){
     msym_element_t **pelements = NULL;
     msym_thresholds_t *t = NULL;
     msym_point_group_t *pg = NULL;
-    msym_geometry_t g = GEOMETRY_UNKNOWN;
+    msym_geometry_t g = MSYM_GEOMETRY_UNKNOWN;
     double eigvec[3][3];
     double eigval[3];
     int esl = 0;

@@ -79,14 +79,14 @@ msym_error_t findEquivalenceSetSymmetryOperations(msym_equivalence_set_t *es, ms
         msym_error_t (*f)(msym_equivalence_set_t*,double[3],double[3][3],msym_thresholds_t*,int*,msym_symmetry_operation_t**);
         
     } fmap[8] = {
-        [0] = {SPHERICAL,           findSymmetrySpherical},
-        [1] = {LINEAR,              findSymmetryLinear},
-        [2] = {PLANAR_REGULAR,      findSymmetryPlanarRegular},
-        [3] = {PLANAR_IRREGULAR,    findSymmetryPlanarIrregular},
-        [4] = {POLYHEDRAL_PROLATE,  findSymmetryPolyhedralProlate},
-        [5] = {POLYHEDRAL_OBLATE,   findSymmetryPolyhedralOblate},
-        [6] = {ASSYMETRIC,          findSymmetryAsymmetricPolyhedron},
-        [7] = {GEOMETRY_UNKNOWN,    findSymmetryUnknown}
+        [0] = {MSYM_GEOMETRY_SPHERICAL,           findSymmetrySpherical},
+        [1] = {MSYM_GEOMETRY_LINEAR,              findSymmetryLinear},
+        [2] = {MSYM_GEOMETRY_PLANAR_REGULAR,      findSymmetryPlanarRegular},
+        [3] = {MSYM_GEOMETRY_PLANAR_IRREGULAR,    findSymmetryPlanarIrregular},
+        [4] = {MSYM_GEOMETRY_POLYHEDRAL_PROLATE,  findSymmetryPolyhedralProlate},
+        [5] = {MSYM_GEOMETRY_POLYHEDRAL_OBLATE,   findSymmetryPolyhedralOblate},
+        [6] = {MSYM_GEOMETRY_ASSYMETRIC,          findSymmetryAsymmetricPolyhedron},
+        [7] = {MSYM_GEOMETRY_UNKNOWN,             findSymmetryUnknown}
     };
     
     msym_error_t ret = MSYM_SUCCESS;

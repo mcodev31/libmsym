@@ -77,7 +77,7 @@ msym_context msymCreateContext(){
     
     memset(ctx, 0, sizeof(struct _msym_context));
     
-    ctx->geometry = GEOMETRY_UNKNOWN;
+    ctx->geometry = MSYM_GEOMETRY_UNKNOWN;
     
     ctx->thresholds = threshols;
     msymSetThresholds(ctx, &default_thresholds);
@@ -88,6 +88,10 @@ msym_context msymCreateContext(){
     free(ctx);
     free(threshols);
     return NULL;
+}
+
+const msym_thresholds_t *msymGetDefaultThresholds(){
+    return &default_thresholds;
 }
 
 msym_error_t msymSetThresholds(msym_context ctx, const msym_thresholds_t *thresholds){
@@ -228,7 +232,7 @@ msym_error_t msymSetBasisFunctions(msym_context ctx, int length, msym_basis_func
             goto err;
         }
         
-        if(bf->type != REAL_SPHERICAL_HARMONIC){
+        if(bf->type != MSYM_BASIS_TYPE_REAL_SPHERICAL_HARMONIC){
             ret = MSYM_INVALID_ORBITALS;
             goto err;
         }
@@ -349,7 +353,7 @@ msym_error_t msymGetGeometry(msym_context ctx, msym_geometry_t *geometry){
     msym_error_t ret = MSYM_SUCCESS;
     if(ctx == NULL) {ret = MSYM_INVALID_CONTEXT;goto err;}
     if(ctx->elements == NULL) {ret = MSYM_INVALID_ELEMENTS;goto err;}
-    if(ctx->geometry == GEOMETRY_UNKNOWN) {ret = MSYM_INVALID_GEOMETRY;goto err;}
+    if(ctx->geometry == MSYM_GEOMETRY_UNKNOWN) {ret = MSYM_INVALID_GEOMETRY;goto err;}
     *geometry = ctx->geometry;
 err:
     return ret;
@@ -658,7 +662,7 @@ err:
 msym_error_t ctxGetGeometry(msym_context ctx, msym_geometry_t *g, double eigval[3], double eigvec[3][3]){
     msym_error_t ret = MSYM_SUCCESS;
     if(ctx == NULL) {ret = MSYM_INVALID_CONTEXT; goto err;}
-    if(ctx->geometry == GEOMETRY_UNKNOWN) {ret = MSYM_INVALID_GEOMETRY; goto err;}
+    if(ctx->geometry == MSYM_GEOMETRY_UNKNOWN) {ret = MSYM_INVALID_GEOMETRY; goto err;}
     *g = ctx->geometry;
     mcopy(ctx->eigvec, eigvec);
     vcopy(ctx->eigval, eigval);
@@ -684,7 +688,7 @@ msym_error_t ctxDestroyElements(msym_context ctx){
     ctx->ext.eesmap = NULL;
     ctx->ext.elements = NULL;
     ctx->elementsl = 0;
-    ctx->geometry = GEOMETRY_UNKNOWN;
+    ctx->geometry = MSYM_GEOMETRY_UNKNOWN;
     memset(ctx->eigvec,0,sizeof(ctx->eigvec));
     memset(ctx->eigval,0,sizeof(ctx->eigval));
     memset(ctx->cm,0,sizeof(ctx->cm));

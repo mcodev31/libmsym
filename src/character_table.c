@@ -96,24 +96,24 @@ msym_error_t generateCharacterTable(msym_point_group_type_t type, int n, int sop
             msym_error_t (*ft)(int, msym_symmetry_operation_t *, msym_character_table_t *);
         } f;
     } fmap[18] = {
-        [ 0] = {POINT_GROUP_Ci,  REP, .f.fr = getRepresentationsUnknown},
-        [ 1] = {POINT_GROUP_Cs,  REP, .f.fr = getRepresentationsUnknown},
-        [ 2] = {POINT_GROUP_Cn,  REP, .f.fr = getRepresentationsCn},
-        [ 3] = {POINT_GROUP_Cnh, REP, .f.fr = getRepresentationsCnh},
-        [ 4] = {POINT_GROUP_Cnv, REP, .f.fr = getRepresentationsCnv},
-        [ 5] = {POINT_GROUP_Dn,  REP, .f.fr = getRepresentationsDn},
-        [ 6] = {POINT_GROUP_Dnh, REP, .f.fr = getRepresentationsDnh},
-        [ 7] = {POINT_GROUP_Dnd, REP, .f.fr = getRepresentationsDnd},
-        [ 8] = {POINT_GROUP_Sn,  REP, .f.fr = getRepresentationsUnknown},
-        [ 9] = {POINT_GROUP_T,   TAB, .f.ft = getCharacterTableT},
-        [10] = {POINT_GROUP_Td,  TAB, .f.ft = getCharacterTableTd},
-        [11] = {POINT_GROUP_Th,  TAB, .f.ft = getCharacterTableUnknown},
-        [12] = {POINT_GROUP_O,   TAB, .f.ft = getCharacterTableUnknown},
-        [13] = {POINT_GROUP_Oh,  TAB, .f.ft = getCharacterTableUnknown},
-        [14] = {POINT_GROUP_I,   TAB, .f.ft = getCharacterTableI},
-        [15] = {POINT_GROUP_Ih,  TAB, .f.ft = getCharacterTableIh},
-        [16] = {POINT_GROUP_K,   TAB, .f.ft = getCharacterTableUnknown},
-        [17] = {POINT_GROUP_Kh,  TAB, .f.ft = getCharacterTableUnknown}
+        [ 0] = {MSYM_POINT_GROUP_TYPE_Ci,  REP, .f.fr = getRepresentationsUnknown},
+        [ 1] = {MSYM_POINT_GROUP_TYPE_Cs,  REP, .f.fr = getRepresentationsUnknown},
+        [ 2] = {MSYM_POINT_GROUP_TYPE_Cn,  REP, .f.fr = getRepresentationsCn},
+        [ 3] = {MSYM_POINT_GROUP_TYPE_Cnh, REP, .f.fr = getRepresentationsCnh},
+        [ 4] = {MSYM_POINT_GROUP_TYPE_Cnv, REP, .f.fr = getRepresentationsCnv},
+        [ 5] = {MSYM_POINT_GROUP_TYPE_Dn,  REP, .f.fr = getRepresentationsDn},
+        [ 6] = {MSYM_POINT_GROUP_TYPE_Dnh, REP, .f.fr = getRepresentationsDnh},
+        [ 7] = {MSYM_POINT_GROUP_TYPE_Dnd, REP, .f.fr = getRepresentationsDnd},
+        [ 8] = {MSYM_POINT_GROUP_TYPE_Sn,  REP, .f.fr = getRepresentationsUnknown},
+        [ 9] = {MSYM_POINT_GROUP_TYPE_T,   TAB, .f.ft = getCharacterTableT},
+        [10] = {MSYM_POINT_GROUP_TYPE_Td,  TAB, .f.ft = getCharacterTableTd},
+        [11] = {MSYM_POINT_GROUP_TYPE_Th,  TAB, .f.ft = getCharacterTableUnknown},
+        [12] = {MSYM_POINT_GROUP_TYPE_O,   TAB, .f.ft = getCharacterTableUnknown},
+        [13] = {MSYM_POINT_GROUP_TYPE_Oh,  TAB, .f.ft = getCharacterTableUnknown},
+        [14] = {MSYM_POINT_GROUP_TYPE_I,   TAB, .f.ft = getCharacterTableI},
+        [15] = {MSYM_POINT_GROUP_TYPE_Ih,  TAB, .f.ft = getCharacterTableIh},
+        [16] = {MSYM_POINT_GROUP_TYPE_K,   TAB, .f.ft = getCharacterTableUnknown},
+        [17] = {MSYM_POINT_GROUP_TYPE_Kh,  TAB, .f.ft = getCharacterTableUnknown}
         
     };
     
@@ -820,26 +820,26 @@ msym_error_t getRepresentationName(msym_point_group_type_t type, int n, msym_rep
     
     int eindex[4] = {rep->eig.p, rep->eig.h,rep->eig.v,rep->eig.i};
     switch (type) {
-        case POINT_GROUP_Cn :
+        case MSYM_POINT_GROUP_TYPE_Cn :
             eindex[1] = eindex[2] = eindex[3] = 0;
             break;
-        case POINT_GROUP_Cnv :
+        case MSYM_POINT_GROUP_TYPE_Cnv :
             eindex[1] = eindex[3] = 0;
             break;
-        case POINT_GROUP_Cnh :
+        case MSYM_POINT_GROUP_TYPE_Cnh :
             if(n & 1){eindex[3] = 0;}
             else {eindex[1] = 0;}
             eindex[2] = 0;
             break;
-        case POINT_GROUP_Dn  :
+        case MSYM_POINT_GROUP_TYPE_Dn  :
             eindex[1] = 0;
             eindex[3] = 0;
             break;
-        case POINT_GROUP_Dnd :
-            if(~n & 1){eindex[3] = 0; eindex[0] = rep->eig.h;}
+        case MSYM_POINT_GROUP_TYPE_Dnd :
+            if(!(n & 1)){eindex[3] = 0; eindex[0] = rep->eig.h;}
             eindex[1] = 0;
             break;
-        case POINT_GROUP_Dnh :
+        case MSYM_POINT_GROUP_TYPE_Dnh :
             if(n & 1){eindex[3] = 0;}
             else {eindex[1] = 0;}
             break;

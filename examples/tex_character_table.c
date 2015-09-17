@@ -147,30 +147,30 @@ void symmetrySpeciesToTex(FILE *fp, char *name){
 
 void pointGroupToTex(FILE *fp, msym_point_group_t *pg, int l, char buf[l]){
     switch(pg->type){
-        case POINT_GROUP_Ci : snprintf(buf,l,"C_{i}"); break;
-        case POINT_GROUP_Cs : snprintf(buf,l,"C_{s}"); break;
-        case POINT_GROUP_Cn : snprintf(buf,l,"C_{%d}",pg->n); break;
-        case POINT_GROUP_Cnh : snprintf(buf,l,"C_{%dh}",pg->n); break;
-        case POINT_GROUP_Cnv : snprintf(buf,l,"C_{%dv}",pg->n); break;
-        case POINT_GROUP_Dn : snprintf(buf,l,"D_{%d}",pg->n); break;
-        case POINT_GROUP_Dnh : snprintf(buf,l,"D_{%dh}",pg->n); break;
-        case POINT_GROUP_Dnd : snprintf(buf,l,"D_{%dd}",pg->n); break;
-        case POINT_GROUP_Sn : snprintf(buf,l,"S_{%d}",pg->n); break;
-        case POINT_GROUP_T : snprintf(buf,l,"T"); break;
-        case POINT_GROUP_Td : snprintf(buf,l,"T_{d}"); break;
-        case POINT_GROUP_Th : snprintf(buf,l,"T_{h}"); break;
-        case POINT_GROUP_O : snprintf(buf,l,"O"); break;
-        case POINT_GROUP_Oh : snprintf(buf,l,"O_{h}"); break;
-        case POINT_GROUP_I : snprintf(buf,l,"I"); break;
-        case POINT_GROUP_Ih : snprintf(buf,l,"I_{h}"); break;
+        case MSYM_POINT_GROUP_TYPE_Ci : snprintf(buf,l,"C_{i}"); break;
+        case MSYM_POINT_GROUP_TYPE_Cs : snprintf(buf,l,"C_{s}"); break;
+        case MSYM_POINT_GROUP_TYPE_Cn : snprintf(buf,l,"C_{%d}",pg->n); break;
+        case MSYM_POINT_GROUP_TYPE_Cnh : snprintf(buf,l,"C_{%dh}",pg->n); break;
+        case MSYM_POINT_GROUP_TYPE_Cnv : snprintf(buf,l,"C_{%dv}",pg->n); break;
+        case MSYM_POINT_GROUP_TYPE_Dn : snprintf(buf,l,"D_{%d}",pg->n); break;
+        case MSYM_POINT_GROUP_TYPE_Dnh : snprintf(buf,l,"D_{%dh}",pg->n); break;
+        case MSYM_POINT_GROUP_TYPE_Dnd : snprintf(buf,l,"D_{%dd}",pg->n); break;
+        case MSYM_POINT_GROUP_TYPE_Sn : snprintf(buf,l,"S_{%d}",pg->n); break;
+        case MSYM_POINT_GROUP_TYPE_T : snprintf(buf,l,"T"); break;
+        case MSYM_POINT_GROUP_TYPE_Td : snprintf(buf,l,"T_{d}"); break;
+        case MSYM_POINT_GROUP_TYPE_Th : snprintf(buf,l,"T_{h}"); break;
+        case MSYM_POINT_GROUP_TYPE_O : snprintf(buf,l,"O"); break;
+        case MSYM_POINT_GROUP_TYPE_Oh : snprintf(buf,l,"O_{h}"); break;
+        case MSYM_POINT_GROUP_TYPE_I : snprintf(buf,l,"I"); break;
+        case MSYM_POINT_GROUP_TYPE_Ih : snprintf(buf,l,"I_{h}"); break;
         default : snprintf(buf,l,"?");
     }
 }
 
 void symmetryOperationToTex(FILE *fp, msym_symmetry_operation_t *sop, int l, char buf[l]){
     switch(sop->type){
-        case IDENTITY : snprintf(buf,l,"\\hat{E}"); break;
-        case PROPER_ROTATION :
+        case MSYM_SYMMETRY_OPERATION_TYPE_IDENTITY : snprintf(buf,l,"\\hat{E}"); break;
+        case MSYM_SYMMETRY_OPERATION_TYPE_PROPER_ROTATION :
             if(sop->order == 2){
                 char *sup = NULL;
                 switch(sop->orientation){
@@ -185,15 +185,15 @@ void symmetryOperationToTex(FILE *fp, msym_symmetry_operation_t *sop, int l, cha
                 snprintf(buf,l,"\\hat{C}_{%d}^{%d}",sop->order,sop->power);
             }
             break;
-        case IMPROPER_ROTATION :
+        case MSYM_SYMMETRY_OPERATION_TYPE_IMPROPER_ROTATION :
             if(sop->power == 1) {
                 snprintf(buf,l,"\\hat{S}_{%d}",sop->order);
             } else {
                 snprintf(buf,l,"\\hat{S}_{%d}^{%d}",sop->order,sop->power);
             }
             break;
-        case INVERSION : {snprintf(buf,l,"\\hat{\\imath}"); break;}
-        case REFLECTION : {
+        case MSYM_SYMMETRY_OPERATION_TYPE_INVERSION : {snprintf(buf,l,"\\hat{\\imath}"); break;}
+        case MSYM_SYMMETRY_OPERATION_TYPE_REFLECTION : {
             char *sub = NULL;
             switch(sop->orientation){
                 case HORIZONTAL : sub = "_{h}"; break;

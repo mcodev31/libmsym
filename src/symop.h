@@ -13,9 +13,14 @@
 #ifndef __MSYM__SYMOP_h
 #define __MSYM__SYMOP_h
 
-#include <stdio.h>
-
 #include "msym.h"
+
+/* external names make the code unreadable */
+#define IDENTITY MSYM_SYMMETRY_OPERATION_TYPE_IDENTITY
+#define REFLECTION MSYM_SYMMETRY_OPERATION_TYPE_REFLECTION
+#define INVERSION MSYM_SYMMETRY_OPERATION_TYPE_INVERSION
+#define PROPER_ROTATION MSYM_SYMMETRY_OPERATION_TYPE_PROPER_ROTATION
+#define IMPROPER_ROTATION MSYM_SYMMETRY_OPERATION_TYPE_IMPROPER_ROTATION
 
 void symopPow(msym_symmetry_operation_t *A, int pow, msym_symmetry_operation_t *O);
 void applySymmetryOperation(msym_symmetry_operation_t *sop,double iv[3], double ov[3]);

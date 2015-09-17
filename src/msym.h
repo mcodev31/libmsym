@@ -20,28 +20,23 @@ extern "C" {
     typedef struct _msym_context * msym_context;
 
     typedef enum _msym_geometry {
-        GEOMETRY_UNKNOWN = -1,
-        SPHERICAL,
-        LINEAR,
-        PLANAR_REGULAR,
-        PLANAR_IRREGULAR,
-        POLYHEDRAL_PROLATE,
-        POLYHEDRAL_OBLATE,
-        ASSYMETRIC
+        MSYM_GEOMETRY_UNKNOWN = -1,
+        MSYM_GEOMETRY_SPHERICAL,
+        MSYM_GEOMETRY_LINEAR,
+        MSYM_GEOMETRY_PLANAR_REGULAR,
+        MSYM_GEOMETRY_PLANAR_IRREGULAR,
+        MSYM_GEOMETRY_POLYHEDRAL_PROLATE,
+        MSYM_GEOMETRY_POLYHEDRAL_OBLATE,
+        MSYM_GEOMETRY_ASSYMETRIC
     } msym_geometry_t;
-    
-    typedef enum _msym_basis_type {
-        ATOMIC_ORBITAL,
-        MASS_WEIGHTED_COORDINATES
-    } msym_basis_type_t;
     
     typedef struct _msym_symmetry_operation {
         enum _msym_symmetry_operation_type {
-            IDENTITY = 0,
-            PROPER_ROTATION = 1,
-            IMPROPER_ROTATION = 2,
-            REFLECTION = 3,
-            INVERSION = 4
+            MSYM_SYMMETRY_OPERATION_TYPE_IDENTITY = 0,
+            MSYM_SYMMETRY_OPERATION_TYPE_PROPER_ROTATION = 1,
+            MSYM_SYMMETRY_OPERATION_TYPE_IMPROPER_ROTATION = 2,
+            MSYM_SYMMETRY_OPERATION_TYPE_REFLECTION = 3,
+            MSYM_SYMMETRY_OPERATION_TYPE_INVERSION = 4
         } type;
         int order;                              // Order of proper/improper rotation
         int power;                              // Power (e.g. C2^2 = I)
@@ -56,24 +51,24 @@ extern "C" {
     } msym_symmetry_operation_t;
     
     typedef enum _msym_point_group_type {
-        POINT_GROUP_Ci,
-        POINT_GROUP_Cs,
-        POINT_GROUP_Cn,
-        POINT_GROUP_Cnh,
-        POINT_GROUP_Cnv,
-        POINT_GROUP_Dn,
-        POINT_GROUP_Dnh,
-        POINT_GROUP_Dnd,
-        POINT_GROUP_Sn,
-        POINT_GROUP_T,
-        POINT_GROUP_Td,
-        POINT_GROUP_Th,
-        POINT_GROUP_O,
-        POINT_GROUP_Oh,
-        POINT_GROUP_I,
-        POINT_GROUP_Ih,
-        POINT_GROUP_K,
-        POINT_GROUP_Kh
+        MSYM_POINT_GROUP_TYPE_Ci,
+        MSYM_POINT_GROUP_TYPE_Cs,
+        MSYM_POINT_GROUP_TYPE_Cn,
+        MSYM_POINT_GROUP_TYPE_Cnh,
+        MSYM_POINT_GROUP_TYPE_Cnv,
+        MSYM_POINT_GROUP_TYPE_Dn,
+        MSYM_POINT_GROUP_TYPE_Dnh,
+        MSYM_POINT_GROUP_TYPE_Dnd,
+        MSYM_POINT_GROUP_TYPE_Sn,
+        MSYM_POINT_GROUP_TYPE_T,
+        MSYM_POINT_GROUP_TYPE_Td,
+        MSYM_POINT_GROUP_TYPE_Th,
+        MSYM_POINT_GROUP_TYPE_O,
+        MSYM_POINT_GROUP_TYPE_Oh,
+        MSYM_POINT_GROUP_TYPE_I,
+        MSYM_POINT_GROUP_TYPE_Ih,
+        MSYM_POINT_GROUP_TYPE_K,
+        MSYM_POINT_GROUP_TYPE_Kh
     } msym_point_group_type_t;
     
     typedef struct _msym_subgroup {
@@ -120,8 +115,8 @@ extern "C" {
     typedef struct _msym_basis_function {
         void *id;                               // custom identifier
         enum _msym_basis_type_t {
-            REAL_SPHERICAL_HARMONIC,
-            CARTESIAN
+            MSYM_BASIS_TYPE_REAL_SPHERICAL_HARMONIC,
+            MSYM_BASIS_TYPE_CARTESIAN
         } type;
         msym_element_t *element;
         union {
@@ -186,6 +181,7 @@ extern "C" {
     msym_context msymCreateContext();
     msym_error_t msymReleaseContext(msym_context ctx);
     
+    const msym_thresholds_t *msymGetDefaultThresholds();
     msym_error_t msymSetThresholds(msym_context ctx, const msym_thresholds_t *thresholds);
     msym_error_t msymGetThresholds(msym_context ctx, msym_thresholds_t **thresholds);
     msym_error_t msymSetElements(msym_context ctx, int length, msym_element_t *elements);

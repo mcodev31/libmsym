@@ -70,7 +70,7 @@ int example(const char* in_file, msym_thresholds_t *thresholds){
         for(int j = 0; j < orbitalsl; j++){
             snprintf(bfs[k].name,sizeof(bfs[i].name),"%s",orbitals[j]);
             bfs[k].element = &melements[i];
-            bfs[k].type = REAL_SPHERICAL_HARMONIC;
+            bfs[k].type = MSYM_BASIS_TYPE_REAL_SPHERICAL_HARMONIC;
             k++;
         }
     }
@@ -133,7 +133,7 @@ int example(const char* in_file, msym_thresholds_t *thresholds){
     if(MSYM_SUCCESS != (ret = msymGetSymmetryOperations(ctx, &msopsl, &msops))) goto err;
     
     for(int i = 0; i < msopsl;i++){
-        if(msops[i].type == PROPER_ROTATION && msops[i].order == 3 && msops[i].power == 1){
+        if(msops[i].type == MSYM_SYMMETRY_OPERATION_TYPE_PROPER_ROTATION && msops[i].order == 3 && msops[i].power == 1){
             
             printf("Found a C3^1 axis, YEY!\n");
         }
@@ -175,7 +175,7 @@ int example(const char* in_file, msym_thresholds_t *thresholds){
             char *type = "";
             msym_salc_t *salc = &mss[i].salc[j];
             msym_basis_function_t *bf = salc->f[0];
-            if(bf->type == REAL_SPHERICAL_HARMONIC) type = "real spherical harmonic ";
+            if(bf->type == MSYM_BASIS_TYPE_REAL_SPHERICAL_HARMONIC) type = "real spherical harmonic ";
             printf("\tSALC %d was constructed from %d %sbasis functions on %s with quantum numbers n=%d and l=%d\n",j,salc->fl,type,bf->element->name,bf->f.sh.n,bf->f.sh.l);
         }
     }

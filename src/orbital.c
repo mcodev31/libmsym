@@ -183,57 +183,57 @@ msym_error_t findDecentSubgroup(msym_point_group_t *pg, int irrep, int sgl, msym
     *osg = NULL;
     msym_character_table_t *ct = pg->ct;
     switch(pg->type){
-        case POINT_GROUP_Cn :
+        case MSYM_POINT_GROUP_TYPE_Cn :
         {
             ret = MSYM_POINT_GROUP_ERROR;
             printf("Separate by imaginary component, what we have is the real components\n");
             msymSetErrorDetails("Point %s group has complex characters in symmetry species %s",pg->name, ct->s[irrep].name);
             goto err;
         }
-        case POINT_GROUP_Cnh :
+        case MSYM_POINT_GROUP_TYPE_Cnh :
         {
             printf("Separate by imaginary component, what we have is the real components\n");
             ret = MSYM_POINT_GROUP_ERROR;
             msymSetErrorDetails("Lowering of symmetry would require complex characters for point group %s symmetry species %s",pg->name, ct->s[irrep].name);
             goto err;
         }
-        case POINT_GROUP_Ci :
-        case POINT_GROUP_Cs :
+        case MSYM_POINT_GROUP_TYPE_Ci :
+        case MSYM_POINT_GROUP_TYPE_Cs :
         {
             ret = MSYM_POINT_GROUP_ERROR;
             msymSetErrorDetails("Cannot lower symmetry of point group %s symmetry species %s",pg->name, ct->s[irrep].name);
             goto err;
         }
-        case POINT_GROUP_I :
-        case POINT_GROUP_Ih :
+        case MSYM_POINT_GROUP_TYPE_I :
+        case MSYM_POINT_GROUP_TYPE_Ih :
         {
             ret = MSYM_POINT_GROUP_ERROR;
             msymSetErrorDetails("Lowering of symmetry not implemented for point group %s symmetry species %s",pg->name, ct->s[irrep].name);
             goto err;
         }
-        case POINT_GROUP_Dnd :
-        case POINT_GROUP_Cnv : {
+        case MSYM_POINT_GROUP_TYPE_Dnd :
+        case MSYM_POINT_GROUP_TYPE_Cnv : {
             if(ct->s[irrep].d != 2){
                 ret = MSYM_POINT_GROUP_ERROR;
                 msymSetErrorDetails("Cannot lower symmetry of point group %s symmetry species %s",pg->name, ct->s[irrep].name);
                 goto err;
             }
             for(int i = 0;i < sgl;i++){
-                if(sg[i].type == POINT_GROUP_Cs){
+                if(sg[i].type == MSYM_POINT_GROUP_TYPE_Cs){
                     *osg = &sg[i];
                     break;
                 }
             }
             break;
         }
-        case POINT_GROUP_Dn : {
+        case MSYM_POINT_GROUP_TYPE_Dn : {
             if(ct->s[irrep].d != 2){
                 ret = MSYM_POINT_GROUP_ERROR;
                 msymSetErrorDetails("Cannot lower symmetry of point group %s symmetry species %s",pg->name, ct->s[irrep].name);
                 goto err;
             }
             for(int i = 0;i < sgl;i++){
-                if(sg[i].type == POINT_GROUP_Cn && sg[i].n == 2){
+                if(sg[i].type == MSYM_POINT_GROUP_TYPE_Cn && sg[i].n == 2){
                     int h = 0;
                     for(int j = 0;j < sg[i].order;j++){
                         msym_symmetry_operation_t *sop = sg[i].sops[j];
@@ -251,7 +251,7 @@ msym_error_t findDecentSubgroup(msym_point_group_t *pg, int irrep, int sgl, msym
             }
             break;
         }
-        case POINT_GROUP_Dnh : {
+        case MSYM_POINT_GROUP_TYPE_Dnh : {
             if(ct->s[irrep].d != 2){
                 ret = MSYM_POINT_GROUP_ERROR;
                 msymSetErrorDetails("Cannot lower symmetry of point group %s symmetry species %s",pg->name, ct->s[irrep].name);
@@ -259,7 +259,7 @@ msym_error_t findDecentSubgroup(msym_point_group_t *pg, int irrep, int sgl, msym
             }
             for(int i = 0;i < sgl;i++){
             
-                if(sg[i].type == POINT_GROUP_Cs){
+                if(sg[i].type == MSYM_POINT_GROUP_TYPE_Cs){
                     int h = 0;
                     for(int j = 0;j < sg[i].order;j++){
                         msym_symmetry_operation_t *sop = sg[i].sops[j];
@@ -278,13 +278,13 @@ msym_error_t findDecentSubgroup(msym_point_group_t *pg, int irrep, int sgl, msym
             break;
         }
         
-        case POINT_GROUP_Oh :
-        case POINT_GROUP_O  :
+        case MSYM_POINT_GROUP_TYPE_Oh :
+        case MSYM_POINT_GROUP_TYPE_O  :
             ret = MSYM_POINT_GROUP_ERROR;
             msymSetErrorDetails("Not implemented for octahedral symmetry of symmetry species %s, requires Dn orientation determination",pg->name, ct->s[irrep].name);
             goto err;
-        case POINT_GROUP_Th :
-        case POINT_GROUP_T : {
+        case MSYM_POINT_GROUP_TYPE_Th :
+        case MSYM_POINT_GROUP_TYPE_T : {
             if(ct->s[irrep].d == 2){
                 ret = MSYM_POINT_GROUP_ERROR;
                 msymSetErrorDetails("Lowering of symmetry would require complex characters for point group %s symmetry species %s",pg->name, ct->s[irrep].name);
@@ -292,17 +292,17 @@ msym_error_t findDecentSubgroup(msym_point_group_t *pg, int irrep, int sgl, msym
             }
             //fall through
         }
-        case POINT_GROUP_Td : {
+        case MSYM_POINT_GROUP_TYPE_Td : {
             if(ct->s[irrep].d == 2){
                 for(int i = 0;i < sgl;i++){
-                    if(sg[i].type == POINT_GROUP_Cs){
+                    if(sg[i].type == MSYM_POINT_GROUP_TYPE_Cs){
                         *osg = &sg[i];
                         break;
                     }
                 }
             } else if(ct->s[irrep].d == 3){
                 for(int i = 0;i < sgl;i++){
-                    if(sg[i].type == POINT_GROUP_Dn && sg[i].n == 2){
+                    if(sg[i].type == MSYM_POINT_GROUP_TYPE_Dn && sg[i].n == 2){
                         *osg = &sg[i];
                         break;
                     }
@@ -332,7 +332,7 @@ err:
 msym_error_t getDecentSubgroupCharacters(msym_point_group_t *pg, msym_subgroup_t *sg, double (*c)[pg->order]){
     msym_error_t ret = MSYM_SUCCESS;
     int e = 0;
-    if(sg->type == POINT_GROUP_Dn && sg->n == 2){
+    if(sg->type == MSYM_POINT_GROUP_TYPE_Dn && sg->n == 2){
         int index = 0;
         double d2c[3][3] = {
             [0] = { 1, -1, -1},
@@ -358,7 +358,7 @@ msym_error_t getDecentSubgroupCharacters(msym_point_group_t *pg, msym_subgroup_t
             }
         }
     
-    } else if((sg->type == POINT_GROUP_Cs) || (sg->type == POINT_GROUP_Cn && sg->n == 2)){
+    } else if((sg->type == MSYM_POINT_GROUP_TYPE_Cs) || (sg->type == MSYM_POINT_GROUP_TYPE_Cn && sg->n == 2)){
         int faxis = 0;
         memset(c, 0, sizeof(double[2][pg->order]));
         for(int s = 0;s < pg->order && !(e && faxis);s++){
@@ -404,7 +404,7 @@ msym_error_t generateSALCSubspaces(msym_point_group_t *pg, int sgl, msym_subgrou
         else msymSetErrorDetails("Invalid sperical harmonics quantum numbers");
         ret = MSYM_INVALID_ORBITALS;
         return ret;
-    } else if (ftype != REAL_SPHERICAL_HARMONIC){
+    } else if (ftype != MSYM_BASIS_TYPE_REAL_SPHERICAL_HARMONIC){
         msymSetErrorDetails("Basis function type not supported");
         ret = MSYM_INVALID_ORBITALS;
         return ret;

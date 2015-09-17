@@ -26,7 +26,7 @@ msym_error_t symmetrizeMoleculeLinear(msym_point_group_t *pg, int esl, msym_equi
 
 msym_error_t symmetrizeMolecule(msym_point_group_t *pg, int esl, msym_equivalence_set_t *es, msym_permutation_t **perm, msym_thresholds_t *thresholds, double *err){
     msym_error_t ret = MSYM_SUCCESS;
-    if((pg->type == POINT_GROUP_Cnv || pg->type == POINT_GROUP_Dnh) && pg->n == 0){
+    if((pg->type == MSYM_POINT_GROUP_TYPE_Cnv || pg->type == MSYM_POINT_GROUP_TYPE_Dnh) && pg->n == 0){
         ret = symmetrizeMoleculeLinear(pg,esl,es,perm,thresholds,err);
     } else {
         ret = symmetrizeMoleculeProject(pg,esl,es,perm,thresholds,err);
