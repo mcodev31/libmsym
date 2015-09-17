@@ -186,7 +186,7 @@ extern "C" {
     msym_context msymCreateContext();
     msym_error_t msymReleaseContext(msym_context ctx);
     
-    msym_error_t msymSetThresholds(msym_context ctx, msym_thresholds_t *thresholds);
+    msym_error_t msymSetThresholds(msym_context ctx, const msym_thresholds_t *thresholds);
     msym_error_t msymGetThresholds(msym_context ctx, msym_thresholds_t **thresholds);
     msym_error_t msymSetElements(msym_context ctx, int length, msym_element_t *elements);
     msym_error_t msymGetElements(msym_context ctx, int *length, msym_element_t **elements);

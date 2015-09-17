@@ -20,7 +20,7 @@
 #include "linalg.h"
 #include "subspace.h"
 
-msym_thresholds_t default_thresholds = {
+const msym_thresholds_t default_thresholds = {
     .zero = DEFAULT_ZERO_THRESHOLD,
     .geometry = DEFAULT_GEOMETRY_THRESHOLD,
     .angle = DEFAULT_ANGLE_THRESHOLD,
@@ -90,7 +90,7 @@ msym_context msymCreateContext(){
     return NULL;
 }
 
-msym_error_t msymSetThresholds(msym_context ctx, msym_thresholds_t *thresholds){
+msym_error_t msymSetThresholds(msym_context ctx, const msym_thresholds_t *thresholds){
     msym_error_t ret = MSYM_SUCCESS;
     if(NULL == ctx) {ret = MSYM_INVALID_CONTEXT;goto err;}
     if(NULL != thresholds &&
@@ -461,6 +461,23 @@ msym_error_t ctxGetExternalElements(msym_context ctx, int *l, msym_element_t **e
 err:
     return ret;
 }
+
+
+msym_error_t ctxUpdateExternalElementCoordinates(msym_context ctx){
+    msym_error_t ret = MSYM_SUCCESS;
+    if(NULL == ctx) {ret = MSYM_INVALID_CONTEXT;goto err;}
+    if(NULL == ctx->elements || NULL == ctx->ext.elements) {ret = MSYM_INVALID_ELEMENTS; goto err;}
+    
+    msym_element_t *internal = ctx->elements, *external = ctx->ext.elements;
+    
+    for(int i = 0; i < ctx->elementsl;i++){
+        vadd(internal[i].v, ctx->cm, external[i].v);
+    }
+    
+err:
+    return ret;
+}
+
 
 msym_error_t ctxGetInternalElement(msym_context ctx, msym_element_t *ext, msym_element_t **element){
     msym_error_t ret = MSYM_SUCCESS;

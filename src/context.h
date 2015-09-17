@@ -28,6 +28,7 @@
 msym_error_t ctxGetThresholds(msym_context ctx, msym_thresholds_t **thresholds);
 msym_error_t ctxGetElements(msym_context, int *l, msym_element_t **elements);
 msym_error_t ctxGetExternalElements(msym_context ctx, int *l, msym_element_t **elements);
+msym_error_t ctxUpdateExternalElementCoordinates(msym_context ctx);
 msym_error_t ctxGetElementPtrs(msym_context ctx, int *l, msym_element_t ***pelements);
 msym_error_t ctxGetInternalElement(msym_context ctx, msym_element_t *ext, msym_element_t **element);
 msym_error_t ctxGetInternalSubgroup(msym_context ctx, msym_subgroup_t *ext, msym_subgroup_t **sg);

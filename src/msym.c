@@ -382,6 +382,8 @@ msym_error_t msymSymmetrizeMolecule(msym_context ctx, double *err){
     
     if(MSYM_SUCCESS != (ret = symmetrizeMolecule(pg, esl, es, perm, t, &error))) goto err;
     
+    if(MSYM_SUCCESS != (ret = ctxUpdateExternalElementCoordinates(ctx))) goto err;
+    
     clock_t end = clock();
     double time = (double)(end - start) / CLOCKS_PER_SEC;
     printf("time: %lf seconds to symmetrize %d equivalence sets in %d element molecule\n",time,esl,elementsl);

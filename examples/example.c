@@ -16,7 +16,7 @@
 
 int read_xyz(const char *name, msym_element_t **ratoms);
 
-int example(const char* in_file){
+int example(const char* in_file, msym_thresholds_t *thresholds){
     msym_error_t ret = MSYM_SUCCESS;
     msym_element_t *elements = NULL;
     
@@ -52,6 +52,10 @@ int example(const char* in_file){
     
     /* Create a context */
     msym_context ctx = msymCreateContext();
+    
+    if(NULL != thresholds){
+        if(MSYM_SUCCESS != (ret = msymSetThresholds(ctx, thresholds))) goto err;
+    }
     
     /* Use default thresholds otherwise call:
      * msymSetThresholds(msym_context ctx, msym_thresholds_t *thresholds); */
