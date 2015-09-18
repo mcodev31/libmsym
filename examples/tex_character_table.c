@@ -5,11 +5,11 @@
 
 #include "msym.h"
 
-void characterTableToTex(FILE *fp, msym_point_group_t *pg, msym_character_table_t *ct);
+void characterTableToTex(FILE *fp, msym_point_group_t *pg, const msym_character_table_t *ct);
 void pointGroupToTex(FILE *fp, msym_point_group_t *pg, int l, char buf[l]);
 void symmetryOperationToTex(FILE *fp, msym_symmetry_operation_t *sop, int l, char buf[l]);
 void symmetrySpeciesToTex(FILE *fp, char *name);
-void characterToTex(FILE *fp,int n, msym_character_table_t *ct, int i, int j, int mode);
+void characterToTex(FILE *fp,int n, const msym_character_table_t *ct, int i, int j, int mode);
 
 int main(int argc, const char * argv[]) {
     msym_error_t ret = MSYM_SUCCESS;
@@ -21,7 +21,7 @@ int main(int argc, const char * argv[]) {
             fprintf(stderr,"unable to open file %s for writing\n",argv[2]);
             return 1;
         }
-        msym_character_table_t *ct = NULL;
+        const msym_character_table_t *ct = NULL;
         msym_point_group_t *pg = NULL;
         if(MSYM_SUCCESS != (ret = msymSetPointGroupByName(ctx, argv[1]))) goto err;
         if(MSYM_SUCCESS != (ret = msymGetPointGroup(ctx, &pg))) goto err;
@@ -41,7 +41,7 @@ err:
     return ret;
 }
 
-void characterTableToTex(FILE *fp, msym_point_group_t *pg, msym_character_table_t *ct){
+void characterTableToTex(FILE *fp, msym_point_group_t *pg, const msym_character_table_t *ct){
     char buf[256];
     pointGroupToTex(fp,pg,sizeof(buf),buf);
     fprintf(fp,"\\documentclass{article}\n\
@@ -86,7 +86,7 @@ void characterTableToTex(FILE *fp, msym_point_group_t *pg, msym_character_table_
 
 #define CHARACTER_EQUAL 1.0e-9
 
-void characterToTex(FILE *fp,int n, msym_character_table_t *ct, int i, int j, int mode){
+void characterToTex(FILE *fp,int n, const msym_character_table_t *ct, int i, int j, int mode){
     double (*table)[ct->d] = (double (*)[ct->d]) ct->table;
     double c = table[i][j];
     if(mode == 0){

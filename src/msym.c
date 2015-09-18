@@ -142,7 +142,7 @@ msym_error_t msymGenerateElements(msym_context ctx, int length, msym_element_t e
     if(MSYM_SUCCESS != (ret = ctxSetEquivalenceSets(ctx, esl, es))) goto err;
     es = NULL; esl = 0;
     if(MSYM_SUCCESS != (ret = msymFindEquivalenceSetPermutations(ctx))) goto err;
-    if(MSYM_SUCCESS != (ret = msymSymmetrizeMolecule(ctx, &err))) goto err;
+    if(MSYM_SUCCESS != (ret = msymSymmetrizeElements(ctx, &err))) goto err;
     free(gelements);
     return ret;
     
@@ -328,7 +328,7 @@ err:
     return ret;
 }
 
-msym_error_t msymSelectSubgroup(msym_context ctx, msym_subgroup_t *sg){
+msym_error_t msymSelectSubgroup(msym_context ctx, const msym_subgroup_t *sg){
     msym_error_t ret = MSYM_SUCCESS;
     msym_subgroup_t *sgs;
     msym_point_group_t *pg;
@@ -351,7 +351,7 @@ err:
     return ret;
 }
 
-msym_error_t msymSymmetrizeMolecule(msym_context ctx, double *err){
+msym_error_t msymSymmetrizeElements(msym_context ctx, double *err){
     msym_error_t ret = MSYM_SUCCESS;
     
     msym_point_group_t *pg;
@@ -451,7 +451,7 @@ msym_error_t msymGenerateSALCSubspaces(msym_context ctx){
     msym_equivalence_set_t **eesmap = NULL;
     msym_permutation_t **perm = NULL;
     msym_thresholds_t *t = NULL;
-    msym_subspace_2_t *ss = NULL;
+    msym_subspace_t *ss = NULL;
     msym_element_t *elements = NULL;
     msym_subgroup_t *sg = NULL;
     int *span = NULL;
@@ -592,10 +592,10 @@ err:
 }*/
 
 
-msym_error_t msymSymmetrizeOrbitals(msym_context ctx, int l, double c[l][l]){
+msym_error_t msymSymmetrizeWavefunctions(msym_context ctx, int l, double c[l][l]){
     msym_error_t ret = MSYM_SUCCESS;
     msym_point_group_t *pg = NULL;
-    msym_subspace_2_t *ss = NULL;
+    msym_subspace_t *ss = NULL;
     msym_basis_function_t *basis = NULL;
     msym_thresholds_t *t = NULL;
     int *span = NULL;
@@ -639,7 +639,7 @@ msym_error_t msymSymmetrizeOrbitals(msym_context ctx, int l, double c[l][l]){
     msymSetErrorDetails("Function NYI");
     goto err;
     
-    //if(MSYM_SUCCESS != (ret = symmetrizeOrbitals(pg, ssl, ss, span, basisl, basis, t, c , symc))) goto err;
+    if(MSYM_SUCCESS != (ret = symmetrizeWavefunctions(pg, ssl, ss, span, basisl, basis, t, c , symc))) goto err;
 
     /*printf("Pre symmetrization\n");
     printTransform(l,l,c);

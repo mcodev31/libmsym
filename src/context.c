@@ -38,7 +38,7 @@ struct _msym_context {
     msym_basis_function_t *basis;
     msym_equivalence_set_t *es;
     msym_permutation_t **es_perm;
-    msym_subspace_2_t *salc_ss;
+    msym_subspace_t *salc_ss;
     int *oss_span;
     int *dss_span;
     int *salc_span;
@@ -191,7 +191,7 @@ err:
     return ret;
 }
 
-msym_error_t msymGetEquivalenceSets(msym_context ctx, int *length, msym_equivalence_set_t **es){
+msym_error_t msymGetEquivalenceSets(msym_context ctx, int *length, const msym_equivalence_set_t **es){
     msym_error_t ret = MSYM_SUCCESS;
     
     if(ctx->ext.es == NULL){ret = MSYM_INVALID_EQUIVALENCE_SET;goto err;}
@@ -265,7 +265,7 @@ err:
     return ret;
 }
 
-msym_error_t msymGetSubgroups(msym_context ctx, int *sgl, msym_subgroup_t **sg){
+msym_error_t msymGetSubgroups(msym_context ctx, int *sgl, const msym_subgroup_t **sg){
     msym_error_t ret = MSYM_SUCCESS;
     if(ctx == NULL) {ret = MSYM_INVALID_CONTEXT;goto err;}
     if(ctx->pg == NULL) {ret = MSYM_INVALID_POINT_GROUP;goto err;}
@@ -291,7 +291,7 @@ err:
     
 }
 
-msym_error_t msymGetSALCSubspaces(msym_context ctx, int *l, msym_subspace_2_t **ss){
+msym_error_t msymGetSALCSubspaces(msym_context ctx, int *l, const msym_subspace_t **ss){
     msym_error_t ret = MSYM_SUCCESS;
     if(NULL == ctx) {ret = MSYM_INVALID_CONTEXT;goto err;}
     if(NULL == ctx->salc_ss){
@@ -317,7 +317,7 @@ err:
     
 }
 
-msym_error_t msymGetCharacterTable(msym_context ctx, msym_character_table_t **ct){
+msym_error_t msymGetCharacterTable(msym_context ctx, const msym_character_table_t **ct){
     msym_error_t ret = MSYM_SUCCESS;
     if(NULL == ctx) {ret = MSYM_INVALID_CONTEXT;goto err;}
     if(NULL == ctx->pg){ret = MSYM_INVALID_POINT_GROUP;goto err;}
@@ -391,7 +391,7 @@ err:
     return ret;
 }
 
-msym_error_t msymGetSymmetryOperations(msym_context ctx, int *sopsl, msym_symmetry_operation_t **sops){
+msym_error_t msymGetSymmetryOperations(msym_context ctx, int *sopsl, const msym_symmetry_operation_t **sops){
     msym_error_t ret = MSYM_SUCCESS;
     msym_symmetry_operation_t *rsops = NULL;
     if(ctx == NULL) {ret = MSYM_INVALID_CONTEXT;goto err;}
@@ -605,7 +605,15 @@ err:
 }
 
 msym_error_t ctxGetExternalEquivalenceSets(msym_context ctx, int *esl, msym_equivalence_set_t **es){
-    return msymGetEquivalenceSets(ctx, esl, es);
+    msym_error_t ret = MSYM_SUCCESS;
+    
+    if(ctx->ext.es == NULL){ret = MSYM_INVALID_EQUIVALENCE_SET;goto err;}
+    
+    *es = ctx->ext.es;
+    *esl = ctx->esl;
+    
+err:
+    return ret;
 }
 
 msym_error_t ctxGetExternalElementEquivalenceSetMap(msym_context ctx, msym_equivalence_set_t ***eesmap){
@@ -638,7 +646,7 @@ err:
     return ret;
 }
 
-msym_error_t ctxGetSALCSubspaces(msym_context ctx, int *ssl, msym_subspace_2_t **ss, int **span){
+msym_error_t ctxGetSALCSubspaces(msym_context ctx, int *ssl, msym_subspace_t **ss, int **span){
     msym_error_t ret = MSYM_SUCCESS;
     if(ctx == NULL) {ret = MSYM_INVALID_CONTEXT; goto err;}
     if(ctx->salc_ss == NULL) {ret = MSYM_INVALID_SUBSPACE; goto err;}
@@ -649,7 +657,7 @@ err:
     return ret;
 }
 
-msym_error_t ctxSetSALCSubspaces(msym_context ctx, int ssl, msym_subspace_2_t *ss, int *span){
+msym_error_t ctxSetSALCSubspaces(msym_context ctx, int ssl, msym_subspace_t *ss, int *span){
     msym_error_t ret = MSYM_SUCCESS;
     if(MSYM_SUCCESS != (ret = ctxDestroySALCSubspaces(ctx))) goto err;
     ctx->salc_ssl = ssl;

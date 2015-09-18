@@ -20,7 +20,7 @@
 void tabprintf(char *format, int indent, ...);
 void tabPrintTransform(int r, int c, double M[r][c],int indent);
 
-void freeSALCSubspaces(int ssl, msym_subspace_2_t *ss){
+void freeSALCSubspaces(int ssl, msym_subspace_t *ss){
     for(int i = 0;i < ssl && NULL != ss;i++){
         for(int j = 0;j < ss[i].salcl;j++){
             free(ss[i].salc[j].f);

@@ -26,11 +26,12 @@ int example(const char* in_file, msym_thresholds_t *thresholds){
     
     /* Do not free these variables */
     msym_element_t *melements = NULL;
-    msym_symmetry_operation_t *msops = NULL;
-    msym_subgroup_t *msg = NULL;
     msym_basis_function_t *mbfs = NULL;
-    msym_subspace_2_t *mss = NULL;
-    msym_character_table_t *mct = NULL;
+    /* these are not mutable */
+    const msym_symmetry_operation_t *msops = NULL;
+    const msym_subgroup_t *msg = NULL;
+    const msym_subspace_t *mss = NULL;
+    const msym_character_table_t *mct = NULL;
     
     msym_basis_function_t *bfs = NULL;
     
@@ -146,7 +147,7 @@ int example(const char* in_file, msym_thresholds_t *thresholds){
     /* Symmetrize the molecule.
      * You can do this before orbital symmetrization as well,
      * but the permutations are already built, so you don't need to */
-    if(MSYM_SUCCESS != (ret = msymSymmetrizeMolecule(ctx, &symerr))) goto err;
+    if(MSYM_SUCCESS != (ret = msymSymmetrizeElements(ctx, &symerr))) goto err;
     
     printf("Molecule has been symmetrized to point group %s "
            "with an error of %lf\n",point_group, symerr);
@@ -177,6 +178,7 @@ int example(const char* in_file, msym_thresholds_t *thresholds){
             msym_basis_function_t *bf = salc->f[0];
             if(bf->type == MSYM_BASIS_TYPE_REAL_SPHERICAL_HARMONIC) type = "real spherical harmonic ";
             printf("\tSALC %d was constructed from %d %sbasis functions on %s with quantum numbers n=%d and l=%d\n",j,salc->fl,type,bf->element->name,bf->f.sh.n,bf->f.sh.l);
+            printTransform(mss[i].salc[j].d, mss[i].salc[j].fl, mss[i].salc[j].pf);
         }
     }
     

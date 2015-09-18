@@ -22,7 +22,7 @@ msym_error_t findPointGroup(int sopsl, msym_symmetry_operation_t *sops, msym_thr
 msym_error_t findSubgroup(msym_subgroup_t *subgroup, msym_thresholds_t *thresholds);
 msym_error_t findCharacterTable(msym_point_group_t *pg);
 msym_error_t generatePointGroupFromName(const char *name, msym_thresholds_t *thresholds, msym_point_group_t **opg);
-msym_error_t pointGroupFromSubgroup(msym_subgroup_t *sg, msym_thresholds_t *thresholds, msym_point_group_t **opg);
+msym_error_t pointGroupFromSubgroup(const msym_subgroup_t *sg, msym_thresholds_t *thresholds, msym_point_group_t **opg);
 int numberOfSubgroups(msym_point_group_t *pg);
 
 #endif /* defined(__MSYM__POINT_GROUP_h) */

@@ -23,7 +23,7 @@
 #include "subspace.h"
 
 void printTransform(int r, int c, double M[r][c]);
-void printNewSubspace(msym_character_table_t *ct, int l, msym_subspace_2_t ss[l]);
+void printNewSubspace(msym_character_table_t *ct, int l, msym_subspace_t ss[l]);
 void tabPrintTransform(int r, int c, double M[r][c],int indent);
 void tabprintf(char *format, int indent, ...);
 
@@ -388,7 +388,7 @@ err:
 
 
 
-msym_error_t generateSALCSubspaces(msym_point_group_t *pg, int sgl, msym_subgroup_t sg[sgl], int esl, msym_equivalence_set_t *es, msym_permutation_t **perm, int basisl, msym_basis_function_t basis[basisl], msym_element_t *elements, msym_equivalence_set_t **esmap, msym_thresholds_t *thresholds, int *ossl, msym_subspace_2_t **oss, int **ospan){
+msym_error_t generateSALCSubspaces(msym_point_group_t *pg, int sgl, msym_subgroup_t sg[sgl], int esl, msym_equivalence_set_t *es, msym_permutation_t **perm, int basisl, msym_basis_function_t basis[basisl], msym_element_t *elements, msym_equivalence_set_t **esmap, msym_thresholds_t *thresholds, int *ossl, msym_subspace_t **oss, int **ospan){
     msym_error_t ret = MSYM_SUCCESS;
     msym_character_table_t *ct = pg->ct;
     int lmax = -1, nmax = 0;
@@ -445,7 +445,7 @@ msym_error_t generateSALCSubspaces(msym_point_group_t *pg, int sgl, msym_subgrou
     msym_basis_function_t dbf = {.type = ftype};
     double (*ctable)[ct->d] = ct->table;
     
-    msym_subspace_2_t *ss = calloc(ct->d, sizeof(msym_subspace_2_t));
+    msym_subspace_t *ss = calloc(ct->d, sizeof(msym_subspace_t));
     
     /* determine number of l-type basis functions in each ES */
     for(int o = 0;o < basisl;o++){
@@ -803,10 +803,12 @@ msym_error_t generateSALCSubspaces(msym_point_group_t *pg, int sgl, msym_subgrou
         */
     }
     
-    //printNewSubspace(ct,ct->d,ss);
+    printNewSubspace(ct,ct->d,ss);
     *ospan = ispan;
     *ossl = ct->d;
     *oss = ss;
+    
+    
 
     
     free(bspan);
@@ -1145,7 +1147,7 @@ void densityMatrix(int l, double M[l][l], double D[l][l]){
     }
 }
 
-void printNewSubspace(msym_character_table_t *ct, int l, msym_subspace_2_t ss[l]){
+void printNewSubspace(msym_character_table_t *ct, int l, msym_subspace_t ss[l]){
     for(int k = 0;k < l;k++){
         printf("Subspace %d %s\n",k,ct->s[ss[k].s].name);
         for(int i = 0;i < ss[k].salcl;i++){

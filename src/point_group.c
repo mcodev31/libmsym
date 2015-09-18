@@ -764,7 +764,7 @@ err:
 }
 
 
-msym_error_t pointGroupFromSubgroup(msym_subgroup_t *sg, msym_thresholds_t *thresholds, msym_point_group_t **opg){
+msym_error_t pointGroupFromSubgroup(const msym_subgroup_t *sg, msym_thresholds_t *thresholds, msym_point_group_t **opg){
     msym_error_t ret = MSYM_SUCCESS;
     *opg = calloc(1,sizeof(msym_point_group_t));
     msym_point_group_t *pg = *opg;
@@ -1807,7 +1807,7 @@ msym_error_t generateReflectionPlanes(int n, int l, msym_symmetry_operation_t so
     msym_error_t ret = MSYM_SUCCESS;
     int k = *pk, cla = *pcla;
     double z[3] = {0.0,0.0,1.0}, y[3] = {0.0,1.0,0.0};
-    msym_symmetry_operation_t sigma = {.type = REFLECTION, .power = 1};
+    msym_symmetry_operation_t sigma = {.type = REFLECTION, .power = 1, .order = 1};
     if(k + n > l){ret = MSYM_POINT_GROUP_ERROR; msymSetErrorDetails("Too many operations when generating reflection planes"); goto err;}
     vcopy(y,sigma.v);
     enum _msym_symmetry_operation_orientation orientation[2] = {VERTICAL, DIHEDRAL};

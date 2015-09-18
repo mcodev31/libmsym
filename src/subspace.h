@@ -16,7 +16,7 @@
 #include "character_table.h"
 
 void printTransform(int r, int c, double M[r][c]);
-void freeSALCSubspaces(int ssl, msym_subspace_2_t *ss);
+void freeSALCSubspaces(int ssl, msym_subspace_t *ss);
 
 #endif /* defined(__MSYM__SUBSPACE_h) */
 
