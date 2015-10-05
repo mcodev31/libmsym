@@ -64,13 +64,13 @@ msym_error_t basisFunctionFromQuantumNumbers(int n, int l, int m, msym_basis_fun
         }
         case 2 : {
             //o->v = dpolynomial[m+l];
-            char *d = (signbit(m) == 1 ? "-" : "+");
+            char *d = (m < 0 ? "-" : "+");
             snprintf(bf->name, sizeof(bf->name), "%dd%d%s",n,abs(m),d);
             break;
         }
         default : {
             char t = 'f' - 3 + l;
-            char *d = (signbit(m) == 1 ? "-" : "+");
+            char *d = (m < 0 ? "-" : "+");
             snprintf(bf->name, sizeof(bf->name), "%d%c%d%s",n,t,abs(m),d);
         }
     }
