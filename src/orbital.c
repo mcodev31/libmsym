@@ -82,7 +82,7 @@ err:
 
 msym_error_t basisFunctionFromName(char *name, msym_basis_function_t *bf){
     int n, l, m;
-    char cl, cm1, cm2;
+    char cl, cm1 = '\0', cm2 = '\0';
     
     sscanf(name,"%d%c%c%c",&n,&cl,&cm1,&cm2);
     
@@ -454,7 +454,7 @@ msym_error_t generateSALCSubspaces(msym_point_group_t *pg, int sgl, msym_subgrou
     
     for(int o = 0;o < basisl;o++){
         msym_basis_function_t *bf = &basis[o];
-        int ei = (int)(bf->element - elements), esi;
+        int ei = (int)(bf->element - elements), esi = 0;
         msym_equivalence_set_t *e = esmap[ei];
         for(esi = 0;esi < e->length && e->elements[esi] != bf->element;esi++){}; //could improve perf with a map here
         if(esi >= e->length){
