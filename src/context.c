@@ -756,6 +756,9 @@ err:
 
 msym_error_t ctxDestroySubgroups(msym_context ctx){
     msym_error_t ret = MSYM_SUCCESS;
+    for(int i = 0;i < ctx->sgl;i++){
+        free(ctx->sg[i].sops);
+    }
     free(ctx->sg);
     ctx->sg = NULL;
     ctx->sgl = 0;
