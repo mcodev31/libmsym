@@ -14,3 +14,4 @@
 void initmsympy_element(PyObject *m);
 int initmsympy_element_ready();
 int msympy_elements_from_sequence(PyObject *data, int *out_size, msym_element_t **out_elements);
+PyObject *msympy_elements_to_PyList(int len, msym_element_t *elements);

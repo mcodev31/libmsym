@@ -13,12 +13,7 @@
 #include "msympy_element.h"
 #include "libmsym/msym.h"
 
-#ifdef DEBUG
 #define DEBUG_FUNCTION() printf("%s:%d\n",__FUNCTION__,__LINE__)
-#else
-#define DEBUG_FUNCTION() do {} while(0)
-#endif
-
 
 typedef struct {
     PyObject_HEAD
@@ -141,17 +136,15 @@ int msympy_elements_from_sequence(PyObject *data, int *out_size, msym_element_t 
             Py_DECREF(seq);
             return -1;
         }
-        MSymPyElement *element = (MSymPyElement *) obj;
-        
-        printf("object %p n=%d,m=%lf,v=[%lf,%lf,%lf],name=%s\n",obj,element->n,element->m,element->v[0],element->v[1],element->v[2],PyString_AsString(element->name));
+        MSymPyElement *pyelement = (MSymPyElement *) obj;
         
         elements[i].id = obj;
-        elements[i].n = element->n;
-        elements[i].m = element->m;
-        elements[i].v[0] = element->v[0];
-        elements[i].v[1] = element->v[1];
-        elements[i].v[2] = element->v[2];
-        snprintf(elements[i].name,sizeof(elements[i].name), "%s", PyString_AsString(element->name));
+        elements[i].n = pyelement->n;
+        elements[i].m = pyelement->m;
+        elements[i].v[0] = pyelement->v[0];
+        elements[i].v[1] = pyelement->v[1];
+        elements[i].v[2] = pyelement->v[2];
+        snprintf(elements[i].name,sizeof(elements[i].name), "%s", PyString_AsString(pyelement->name));
     }
     
     Py_DECREF(seq);
@@ -165,6 +158,35 @@ int msympy_elements_from_sequence(PyObject *data, int *out_size, msym_element_t 
     
     return 0;
 }
+
+PyObject *msympy_elements_to_PyList(int len, msym_element_t *elements){
+    PyObject* list = PyList_New((Py_ssize_t) len);
+    if(NULL == list){
+        return NULL;
+    }
+
+    for(int i = 0;i < len;i++){
+        MSymPyElement *pyelement = PyObject_New(MSymPyElement, &MSymPyElementType);
+        
+        if(NULL == pyelement || PyList_SetItem(list, (Py_ssize_t) i, (PyObject*) pyelement) < 0){
+            Py_XDECREF(list);
+            list = NULL;
+            break;
+        }
+        
+        pyelement->n = elements[i].n;
+        pyelement->m = elements[i].m;
+        pyelement->v[0] = elements[i].v[0];
+        pyelement->v[1] = elements[i].v[1];
+        pyelement->v[2] = elements[i].v[2];
+        pyelement->name = PyString_FromString(elements[i].name);
+    }
+    
+    return list;
+}
+
+
+
 
 /********************
  * Python functions *
@@ -210,10 +232,9 @@ static int MSymPyElement_init(MSymPyElement *self, PyObject *args, PyObject *kwd
         return -1;
     
     if (name) {
-        PyObject *tmp = self->name;
         Py_INCREF(name);
+        Py_XDECREF(self->name);
         self->name = name;
-        Py_DECREF(tmp);
     }
     
     return 0;

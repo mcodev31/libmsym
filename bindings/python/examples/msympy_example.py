@@ -2,11 +2,9 @@
 
 import msympy
 
-e1 = msympy.Element(mass = 1.0, charge = 1, name = "H", coordinates = [1, 0, 0])
-e2 = msympy.Element(mass = 1.0, charge = 1, name = "H", coordinates = [0, 1, 0])
-e3 = msympy.Element(mass = 1.0, charge = 1, name = "H", coordinates = [0, 0, 1])
-
-elements = [e1, e2, e3]
+elements = [msympy.Element(mass = 1.0, charge = 1, name = "H", coordinates = [1, 0, 0]),
+		msympy.Element(mass = 1.0, charge = 1, name = "H", coordinates = [0, 1, 0]),
+		msympy.Element(mass = 1.0, charge = 1, name = "H", coordinates = [0, 0, 1.0000001])]
 
 ctx = msympy.Context()
 
@@ -16,13 +14,18 @@ name = ctx.findSymmetry()
 
 print "Python has received point group %s." % name
 
-e1.name = "C"
-e2.name = "C"
-e1.coordinates = (0.0,0.0,1.0)
-e2.coordinates = (0.0,0.0,-1.0)
+symelements = ctx.symmetrizeElements()
+for element in symelements:
+	print element.coordinates
 
-ctx.elements = [e1,e2]
+elements[0].name = "C"
+elements[1].name = "C"
+elements[0].coordinates = (0.0,0.0,1.0)
+elements[1].coordinates = (0.0,0.0,-1.0)
+
+ctx.elements = [elements[0],elements[1]]
 
 name = ctx.findSymmetry()
 
 print "Python has received point group %s." % name
+

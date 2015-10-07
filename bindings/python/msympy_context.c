@@ -35,9 +35,11 @@ static int MSymPyContext_setElements(MSymPyContext *self, PyObject *data, void *
 
 // Methods
 static PyObject *MSymPyContext_findSymmetry(MSymPyContext* self);
+static PyObject *MSymPyContext_symmetrizeElements(MSymPyContext* self);
 
 static PyMethodDef MSymPyContext_methods[] = {
     {"findSymmetry", (PyCFunction)MSymPyContext_findSymmetry, METH_NOARGS, "determine symmetry of current elements"},
+    {"symmetrizeElements", (PyCFunction)MSymPyContext_symmetrizeElements, METH_NOARGS, "symmetrize current elements"},
     {NULL}  /* Sentinel */
 };
 
@@ -137,11 +139,11 @@ static int MSymPyContext_init(MSymPyContext *self, PyObject *args, PyObject *kwd
 static PyObject *MSymPyContext_getElements(MSymPyContext *self, void *closure){
     //Make new elements when we call symmetrize and generate, otherwise just keep what we have
     // generate needs set element id function in msym
-    //Py_INCREF(self->elements);
-    return NULL;
+    Py_INCREF(self->elements);
+    return self->elements;
 }
 
-static int MSymPyContext_setElements(MSymPyContext *self, PyObject *data, void *closure)
+static int MSymPyContext_setElements(MSymPyContext *self, PyObject *pyelements, void *closure)
 {
     msym_element_t *elements = NULL;
     int elementsl = 0;
@@ -149,7 +151,7 @@ static int MSymPyContext_setElements(MSymPyContext *self, PyObject *data, void *
     //int melementsl = 0;
     //PyObject **eobjs = NULL;
     
-    if(msympy_elements_from_sequence(data, &elementsl, &elements) < 0){
+    if(msympy_elements_from_sequence(pyelements, &elementsl, &elements) < 0){
         return -1;
     }
     
@@ -179,9 +181,9 @@ static int MSymPyContext_setElements(MSymPyContext *self, PyObject *data, void *
     
     PyMem_Free(elements);
     
-    Py_INCREF(data);
+    Py_INCREF(pyelements);
     Py_XDECREF(self->elements);
-    self->elements = data;
+    self->elements = pyelements;
     
     return 0;
 }
@@ -201,3 +203,38 @@ static PyObject *MSymPyContext_findSymmetry(MSymPyContext* self){
     PyObject *name = PyString_FromString(buf);
     return name;
 }
+
+static PyObject *MSymPyContext_symmetrizeElements(MSymPyContext* self){
+    DEBUG_FUNCTION();
+    msym_error_t ret = MSYM_SUCCESS;
+    msym_element_t *melements = NULL;
+    int melementsl = 0;
+    PyObject *pyelements = NULL;
+    double symmetrize_error = 0.0;
+    
+    if(MSYM_SUCCESS != (ret = msymSymmetrizeElements(self->ctx,&symmetrize_error))){
+        PyErr_SetString(MSymPyContextError, msymGetErrorDetails());
+        return NULL;
+    }
+    
+    if(MSYM_SUCCESS != (ret = msymGetElements(self->ctx, &melementsl, &melements))){
+        PyErr_SetString(MSymPyContextError, msymGetErrorDetails());
+        return NULL;
+    }
+    
+    pyelements = msympy_elements_to_PyList(melementsl, melements);
+    
+    if(NULL == pyelements){
+        return NULL;
+    }
+
+    Py_INCREF(pyelements);
+    
+    Py_XDECREF(self->elements);
+    self->elements = pyelements;
+
+    return pyelements;
+}
+
+
+
