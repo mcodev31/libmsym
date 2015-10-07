@@ -126,7 +126,7 @@ msym_error_t msymGenerateElements(msym_context ctx, int length, msym_element_t e
     if(MSYM_SUCCESS != (ret = ctxGetThresholds(ctx, &t))) goto err;
     if(MSYM_SUCCESS != (ret = ctxGetPointGroup(ctx, &pg))) goto err;
     if(MSYM_SUCCESS != (ret = generateEquivalenceSet(pg, length, elements, &glength, &gelements, &esl, &es,t))) goto err;
-    if(MSYM_SUCCESS != (ret = msymSetElements(ctx, glength, gelements))) goto err;
+    if(MSYM_SUCCESS != (ret = ctxSetElements(ctx, glength, gelements))) goto err;
     if(MSYM_SUCCESS != (ret = ctxGetElementPtrs(ctx, &plength, &pelements))) goto err;
     if(plength != glength){
         ret = MSYM_INVALID_ELEMENTS;

@@ -1261,14 +1261,29 @@ err:
 msym_error_t generateSymmetryOperationsCnv(int n, int l, msym_symmetry_operation_t sops[l], int *pk, int *pcla){
     msym_error_t ret = MSYM_SUCCESS;
     int k = *pk, cla = *pcla;
-    if(k + (n << 1) - 1 > l){ret = MSYM_POINT_GROUP_ERROR; msymSetErrorDetails("Too many operations when generating C%dv symmetry operations",n); goto err;}
-    if(MSYM_SUCCESS != (ret = generateSymmetryOperationsCn(n,l,sops,&k,&cla))) goto err;
-    //k += n-1;
-    //cla = sops[k-1].cla + 1;
-    if(MSYM_SUCCESS != (ret = generateReflectionPlanes(n,l,sops,&k,&cla))) goto err;
-    //k += n;
-    //cla = sops[k-1].cla + 1;
-    printf("------ Cnv %d operations %d classes------\n",k-*pk, cla-*pcla);
+    
+    if(n == 0){
+        if(k + 1 > l){
+            ret = MSYM_POINT_GROUP_ERROR;
+            msymSetErrorDetails("Too many operations when generating C%dv symmetry operations",n);
+            goto err;
+        }
+        msym_symmetry_operation_t c0 = {.type = PROPER_ROTATION, .order = n, .power = 1, .orientation = HORIZONTAL, .cla = cla, .v = {0,0,1}};
+        memcpy(&sops[k], &c0, sizeof(msym_symmetry_operation_t));
+        k += 1;
+        cla += 1;
+    } else {
+        if(k + (n << 1) - 1 > l){
+            ret = MSYM_POINT_GROUP_ERROR;
+            msymSetErrorDetails("Too many operations when generating C%dv symmetry operations",n);
+            goto err;
+        }
+        if(MSYM_SUCCESS != (ret = generateSymmetryOperationsCn(n,l,sops,&k,&cla))) goto err;
+        if(MSYM_SUCCESS != (ret = generateReflectionPlanes(n,l,sops,&k,&cla))) goto err;
+        printf("------ Cnv %d operations %d classes------\n",k-*pk, cla-*pcla);
+        
+    }
+    
     *pk = k; *pcla = cla;
     
     return ret;
@@ -1300,11 +1315,34 @@ err:
 msym_error_t generateSymmetryOperationsDnh(int n, int l, msym_symmetry_operation_t sops[l], int *pk, int *pcla){
     msym_error_t ret = MSYM_SUCCESS;
     int k = *pk, cla = *pcla;
-    if(k + (n << 2) - 1 > l){ret = MSYM_POINT_GROUP_ERROR; msymSetErrorDetails("Too many operations when generating D%dh symmetry operations",n); goto err;}
-    if(MSYM_SUCCESS != (ret = generateSymmetryOperationsCnh(n,l,sops,&k,&cla))) goto err;
-    if(MSYM_SUCCESS != (ret = generateReflectionPlanes(n,l,sops,&k,&cla))) goto err;
-    if(MSYM_SUCCESS != (ret = generateC2Axes(n,l,sops,&k,&cla))) goto err;
-    printf("\n------ Dnh %d operations %d classes------\n",k-*pk, cla-*pcla);
+    
+    if(n == 0){
+        if(k + 3 > l){
+            ret = MSYM_POINT_GROUP_ERROR;
+            msymSetErrorDetails("Too many operations when generating D%dh symmetry operations",n);
+            goto err;
+        }
+        if(MSYM_SUCCESS != (ret = generateSymmetryOperationsCnv(n,l,sops,&k,&cla))) goto err;
+        msym_symmetry_operation_t sigma = {.type = REFLECTION, .order = 1, .power = 1, .orientation = HORIZONTAL, .cla = cla, .v = {0,0,1}};
+        msym_symmetry_operation_t inversion = {.type = PROPER_ROTATION, .order = n, .power = 1, .orientation = HORIZONTAL, .cla = cla+1, .v = {0,0,1}};
+        memcpy(&sops[k], &sigma, sizeof(msym_symmetry_operation_t));
+        memcpy(&sops[k+1], &inversion, sizeof(msym_symmetry_operation_t));
+        k += 2;
+        cla += 2;
+    } else {
+        
+        if(k + (n << 2) - 1 > l){
+            ret = MSYM_POINT_GROUP_ERROR;
+            msymSetErrorDetails("Too many operations when generating D%dh symmetry operations",n);
+            goto err;
+        }
+        if(MSYM_SUCCESS != (ret = generateSymmetryOperationsCnh(n,l,sops,&k,&cla))) goto err;
+        if(MSYM_SUCCESS != (ret = generateReflectionPlanes(n,l,sops,&k,&cla))) goto err;
+        if(MSYM_SUCCESS != (ret = generateC2Axes(n,l,sops,&k,&cla))) goto err;
+        printf("\n------ Dnh %d operations %d classes------\n",k-*pk, cla-*pcla);
+        
+    }
+    
     *pk = k; *pcla = cla;
     
     return ret;

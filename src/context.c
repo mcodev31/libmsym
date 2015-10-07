@@ -124,54 +124,12 @@ err:
     return ret;
 }
 
-
-msym_error_t msymSetElements(msym_context ctx, int length, msym_element_t elements[length]){
+msym_error_t msymSetElements(msym_context ctx, int length, msym_element_t *elements){
     msym_error_t ret = MSYM_SUCCESS;
-    msym_thresholds_t *thresholds = NULL;
     if(ctx == NULL) {ret = MSYM_INVALID_CONTEXT;goto err;}
-
-    ctxDestroyElements(ctx);
-    
-    if(MSYM_SUCCESS != (ret = ctxGetThresholds(ctx, &thresholds))) goto err;
-    
-    ctx->elements = malloc(sizeof(msym_element_t[length]));
-    ctx->pelements = malloc(sizeof(msym_element_t *[length]));
-    memcpy(ctx->elements, elements, sizeof(msym_element_t[length]));
-    ctx->elementsl = length;
-    
-    for(int i = 0;i < length;i++){
-        ctx->pelements[i] = &(ctx->elements[i]);
-        if(MSYM_SUCCESS != (ret = complementElementData(ctx->pelements[i]))) goto err;
-        printElement(ctx->pelements[i]);
-    }
-    
-    
-    
-    if(MSYM_SUCCESS != (ret = findCenterOfMass(ctx->elementsl,ctx->pelements,ctx->cm))) goto err;
-    
-    for(msym_element_t *a = ctx->elements; a < (ctx->elements+length); a++){
-        vsub(a->v,ctx->cm,a->v);
-    }
-    
-    double zero[3] = {0,0,0};
-    
-    if(MSYM_SUCCESS != (ret = findGeometry(length, ctx->pelements, zero, thresholds, &ctx->geometry, ctx->eigval, ctx->eigvec))) goto err;
-    
-    ctx->ext.elements = malloc(sizeof(msym_element_t[length]));
-    memcpy(ctx->ext.elements, ctx->elements, sizeof(msym_element_t[length]));
-    
-    ctx->ext.set_elements_ptr = elements;
-    
-    return ret;
+    ctxDestroyPointGroup(ctx);
+    return ctxSetElements(ctx, length, elements);
 err:
-    free(ctx->elements);
-    free(ctx->pelements);
-    free(ctx->ext.elements);
-    ctx->ext.elements = NULL;
-    ctx->elements = NULL;
-    ctx->pelements = NULL;
-    ctx->elementsl = 0;
-
     return ret;
 }
 
@@ -424,6 +382,55 @@ err:
 /***********************
  * Private API
  ***********************/
+
+
+msym_error_t ctxSetElements(msym_context ctx, int length, msym_element_t elements[length]){
+    msym_error_t ret = MSYM_SUCCESS;
+    msym_thresholds_t *thresholds = NULL;
+    if(ctx == NULL) {ret = MSYM_INVALID_CONTEXT;goto err;}
+    
+    ctxDestroyElements(ctx);
+    
+    if(MSYM_SUCCESS != (ret = ctxGetThresholds(ctx, &thresholds))) goto err;
+    
+    ctx->elements = malloc(sizeof(msym_element_t[length]));
+    ctx->pelements = malloc(sizeof(msym_element_t *[length]));
+    memcpy(ctx->elements, elements, sizeof(msym_element_t[length]));
+    ctx->elementsl = length;
+    
+    for(int i = 0;i < length;i++){
+        ctx->pelements[i] = &(ctx->elements[i]);
+        if(MSYM_SUCCESS != (ret = complementElementData(ctx->pelements[i]))) goto err;
+    }
+    
+    if(MSYM_SUCCESS != (ret = findCenterOfMass(ctx->elementsl,ctx->pelements,ctx->cm))) goto err;
+    
+    for(msym_element_t *a = ctx->elements; a < (ctx->elements+length); a++){
+        vsub(a->v,ctx->cm,a->v);
+    }
+    
+    double zero[3] = {0,0,0};
+    
+    if(MSYM_SUCCESS != (ret = findGeometry(length, ctx->pelements, zero, thresholds, &ctx->geometry, ctx->eigval, ctx->eigvec))) goto err;
+    
+    ctx->ext.elements = malloc(sizeof(msym_element_t[length]));
+    memcpy(ctx->ext.elements, ctx->elements, sizeof(msym_element_t[length]));
+    
+    ctx->ext.set_elements_ptr = elements;
+    
+    return ret;
+err:
+    free(ctx->elements);
+    free(ctx->pelements);
+    free(ctx->ext.elements);
+    ctx->ext.elements = NULL;
+    ctx->elements = NULL;
+    ctx->pelements = NULL;
+    ctx->elementsl = 0;
+    
+    return ret;
+}
+
 
 msym_error_t ctxGetThresholds(msym_context ctx, msym_thresholds_t **thresholds){
     msym_error_t ret = MSYM_SUCCESS;
