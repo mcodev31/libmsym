@@ -215,7 +215,6 @@ err:
  * Way too complicated (and pointless) to do recursive multidimensional averaging
  */
 
-#if 0
 msym_error_t symmetrizeWavefunctions(msym_point_group_t *pg, int ssl, msym_subspace_t *ss, int *span, int basisl, msym_basis_function_t basis[basisl], msym_thresholds_t *thresholds, double wf[basisl][basisl], double symwf[basisl][basisl]){
     msym_error_t ret = MSYM_SUCCESS;
     double (*proj)[pg->ct->d][basisl] = malloc(sizeof(double[basisl][pg->ct->d][basisl]));
@@ -236,13 +235,14 @@ msym_error_t symmetrizeWavefunctions(msym_point_group_t *pg, int ssl, msym_subsp
     double (*dmem)[md+1] = calloc(md,sizeof(double[md+1]));
     double *dmpf = (double *) dmem;
     
+    int psalcl = 0, psalci = 0;
     
+    for(int i = 0;i < ssl;i++){
+        psalcl += ss[i].salcl;
+    }
     
-    /*printf("SUBSPACES\n");
-     msym_subspace_t tss = {.subspacel = ssl, .subspace = ss, .d = 0, .basisl = 0, .space = NULL};
-     printSubspace(pg->ct, &tss);*/
+    double (*psalc)[psalcl] = calloc(basisl,sizeof(double[psalcl]));
     
-    /* not really needed anymore, we have can do this in the next loop */
     for(int o = 0;o < basisl;o++){
         double mcomp = -1.0;
         for(int k = 0;k < pg->ct->d;k++){
@@ -256,8 +256,11 @@ msym_error_t symmetrizeWavefunctions(msym_point_group_t *pg, int ssl, msym_subsp
                     }
                     vlproj(basisl, wf[o], mem[0], mem[1]);
                     vladd(basisl, mem[1], proj[o][k], proj[o][k]);
-                    comp[o][k][d] += vlabs(basisl, mem[1]);
+                    double pabs = vlabs(basisl, mem[1]);
+                    comp[o][k][d] += pabs;
+                    psalc[o][psalci] += pabs;
                 }
+                psalci++;
             }
             double mabs = vlabs(md,comp[o][k]);
             if(mabs > mcomp){
@@ -269,7 +272,7 @@ msym_error_t symmetrizeWavefunctions(msym_point_group_t *pg, int ssl, msym_subsp
     }
     
     for(int k = 0;k < pg->ct->d;k++){
-        if(ispan[k] != span[k]){
+        if(ispan[k] != span[k]*pg->ct->s[k].d){
             msymSetErrorDetails("Projected orbitals do not span the expected irredicible representations. Expected %d%s, got %d",span[k],pg->ct->s[k].name,ispan[k]);
             ret = MSYM_SYMMETRIZATION_ERROR;
             goto err;
@@ -279,8 +282,8 @@ msym_error_t symmetrizeWavefunctions(msym_point_group_t *pg, int ssl, msym_subsp
     
     for(int o = 0;o < basisl;o++){
         int ko = icomp[o], dim = pg->ct->s[ko].d, found = 0;
-        memset(pf[o], -1, sizeof(int[md])); //2s complement
         
+        for(int i = 0;i < md;i++){pf[o][i] = -1;};
         
         for(int i = 0;i < o && !found;i++){
             for(int j = 0;j < md && !found;j++){
@@ -296,7 +299,6 @@ msym_error_t symmetrizeWavefunctions(msym_point_group_t *pg, int ssl, msym_subsp
             if(icomp[po] != ko || o == po) continue;
             for(int d = 0; d < dim;d++){
                 vlsub(ssl, comp[d][o], comp[d][po], mem[1]);
-                
             }
             double c = vlabs(ssl, mem[0]), mc = 0.0;
             int mic = 0;
@@ -322,7 +324,7 @@ msym_error_t symmetrizeWavefunctions(msym_point_group_t *pg, int ssl, msym_subsp
     
     
     //should validate pf, only 1 orb of each
-    
+#if 0
     for(int o = 0;o < basisl;o++){
         int dim = pg->ct2->s[icomp[o]].d, md2 = md*md;
         if(pf[o][0] == -1 || dim <= 1) continue;
@@ -453,7 +455,7 @@ msym_error_t symmetrizeWavefunctions(msym_point_group_t *pg, int ssl, msym_subsp
     
     //printf("\n");
     
-    
+#endif
     free(ispan);
     free(icomp);
     free(comp);
@@ -468,7 +470,6 @@ err:
     free(proj);
     return ret;
 }
-#endif
 
 #if 0
 msym_error_t symmetrizeWavefunctions(msym_point_group_t *pg, int ssl, msym_subspace_t *ss, int *span, int basisl, msym_basis_function_t basis[basisl], msym_thresholds_t *thresholds, double orb[basisl][basisl], double symorb[basisl][basisl]){

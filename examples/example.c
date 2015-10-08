@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include "msym.h"
 #include "example.h"
 
@@ -33,6 +34,7 @@ int example(const char* in_file, msym_thresholds_t *thresholds){
     const msym_subspace_t *mss = NULL;
     const msym_character_table_t *mct = NULL;
     
+    
     msym_basis_function_t *bfs = NULL;
     
     int msgl = 0, msopsl = 0, mlength = 0, mssl = 0, mbfsl = 0;
@@ -50,6 +52,8 @@ int example(const char* in_file, msym_thresholds_t *thresholds){
     orbitalsl = sizeof(orbitals)/sizeof(char*);
     bfsl = orbitalsl*length;
     bfs = calloc(bfsl, sizeof(msym_basis_function_t));
+    double (*coefficients)[bfsl] = calloc(bfsl, sizeof(*coefficients)); // SALCs in matrix form, and input for symmetrization
+    double *cmem = calloc(bfsl, sizeof(double)); // Some temporary memory
     
     /* Create a context */
     msym_context ctx = msymCreateContext();
@@ -182,6 +186,52 @@ int example(const char* in_file, msym_thresholds_t *thresholds){
         }
     }
     
+
+    for(int i = 0, ci = 0;i < mssl;i++){
+        for(int j = 0;j < mss[i].salcl;j++){
+            msym_salc_t *salc = &mss[i].salc[j];
+            double (*c)[salc->fl] = salc->pf;
+            for(int k = 0;k < salc->d;k++){
+                if(ci >= bfsl){
+                    //Used for convenience, this error should be handled seprately, but the function is exported for this reason
+                    msymSetErrorDetails("There seems to be more SALCs than the number of basis functions (%d)", bfsl);
+                    goto err;
+                }
+                for(int l = 0;l < salc->fl;l++){
+                    /* Use pointer arithmetics to get the index of the basis function.
+                     * Be sure to use mbfs as returned from msymGetBasisFunctions, not bfs allocated above,
+                     * these are always in the same order, but not necessarily the same memory */
+                    coefficients[ci][salc->f[l] - mbfs] = c[k][l];
+                }
+                
+                ci++;
+            }
+        }
+    }
+    
+    printf("salcs = ");
+    printTransform(bfsl, bfsl, coefficients);
+    
+    /* Reorder the SALCs */
+    for(int i = 0;i < bfsl;i++){
+        memcpy(cmem, coefficients[i], sizeof(double[bfsl]));
+        memcpy(coefficients[i], coefficients[i*i % bfsl], sizeof(double[bfsl]));
+        memcpy(coefficients[i*i % bfsl], cmem, sizeof(double[bfsl]));
+    }
+    
+    /* Add some noise */
+    srand((unsigned)time(NULL));
+    for(int i = 0;i < bfsl;i++){
+        for(int j = 0;j < bfsl;j++){
+            double r = ((double) (rand() - (RAND_MAX >> 1)))/RAND_MAX;
+            coefficients[i][j] += r*1.0e-5;
+        }
+    }
+    printf("noise = ");
+    printTransform(bfsl, bfsl, coefficients);
+    
+    /* Symmetrize wavefunctions */
+    if(MSYM_SUCCESS != (ret = msymSymmetrizeWavefunctions(ctx, bfsl, coefficients))) goto err;
     
     /* Make a new element with the same type as the first one we read */
     msym_element_t myelement;

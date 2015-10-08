@@ -636,8 +636,8 @@ msym_error_t msymSymmetrizeWavefunctions(msym_context ctx, int l, double c[l][l]
     
     start = clock();
 
-    msymSetErrorDetails("Function NYI");
-    goto err;
+    //msymSetErrorDetails("Function NYI");
+    //goto err;
     
     if(MSYM_SUCCESS != (ret = symmetrizeWavefunctions(pg, ssl, ss, span, basisl, basis, t, c , symc))) goto err;
 
