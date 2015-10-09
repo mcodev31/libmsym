@@ -170,6 +170,7 @@ class Context(object):
         celements = POINTER(Element)()
         csize = c_int(0)
         self._assert_success(_func(self._ctx,byref(csize),byref(celements)))
+        self._elements_array = celements
         self._elements = celements[0:csize.value]
 
     def _update_point_group(self, _func=libmsym.msymGetPointGroupName):
