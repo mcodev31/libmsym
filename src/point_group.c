@@ -1048,7 +1048,7 @@ msym_error_t generateSymmetryOperations(msym_point_group_type_t type, int n, int
     sops[0].type = IDENTITY;
     sops[0].power = 1;
     sops[0].order = 1;
-    sops[0].orientation = NONE;
+    sops[0].orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_NONE;
     int cla = 1, gsopsl = 1;
     
     const struct _fmap {
@@ -1114,7 +1114,7 @@ msym_error_t generateSymmetryOperationsSn(int n, int l, msym_symmetry_operation_
     msym_error_t ret = MSYM_SUCCESS;
     int k = *pk, cla = *pcla, m = (n << (n & 1));
     double z[3] = {0.0,0.0,1.0};
-    msym_symmetry_operation_t sn = {.type = IMPROPER_ROTATION, .order = n, .power = 1, .orientation = HORIZONTAL};
+    msym_symmetry_operation_t sn = {.type = IMPROPER_ROTATION, .order = n, .power = 1, .orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_HORIZONTAL};
     vcopy(z,sn.v);
     if(k + m - 1 > l){ret = MSYM_POINT_GROUP_ERROR; msymSetErrorDetails("Too many operations when generating S%d symmetry operations",n); goto err;}
     for(int i = 1;i <= m >> 1;i++){
@@ -1157,7 +1157,7 @@ msym_error_t generateSymmetryOperationsCn(int n, int l, msym_symmetry_operation_
     msym_error_t ret = MSYM_SUCCESS;
     int k = *pk, cla = *pcla;
     double z[3] = {0.0,0.0,1.0};
-    msym_symmetry_operation_t cn = {.type = PROPER_ROTATION, .order = n, .power = 1, .orientation = HORIZONTAL};
+    msym_symmetry_operation_t cn = {.type = PROPER_ROTATION, .order = n, .power = 1, .orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_HORIZONTAL};
     if(k + n - 1 > l){ret = MSYM_POINT_GROUP_ERROR; msymSetErrorDetails("Too many operations when generating C%d symmetry operations",n); goto err;}
     vcopy(z,cn.v);
     
@@ -1192,8 +1192,8 @@ msym_error_t generateSymmetryOperationsCnh(int n, int l, msym_symmetry_operation
     msym_error_t ret = MSYM_SUCCESS;
     int k = *pk, cla = *pcla, s = 0;
     double z[3] = {0.0,0.0,1.0};
-    msym_symmetry_operation_t cn = {.type = PROPER_ROTATION, .order = n, .power = 1, .orientation = HORIZONTAL};
-    msym_symmetry_operation_t sn = {.type = IMPROPER_ROTATION, .order = n, .power = 1, .orientation = HORIZONTAL};
+    msym_symmetry_operation_t cn = {.type = PROPER_ROTATION, .order = n, .power = 1, .orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_HORIZONTAL};
+    msym_symmetry_operation_t sn = {.type = IMPROPER_ROTATION, .order = n, .power = 1, .orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_HORIZONTAL};
     if(k + (n << 1) - 1 > l){ret = MSYM_POINT_GROUP_ERROR; msymSetErrorDetails("Too many operations when generating C%dh symmetry operations",n); goto err;}
     vcopy(z,cn.v); vcopy(z,sn.v);
     printf("------ Cnh begin ------\n");
@@ -1268,7 +1268,7 @@ msym_error_t generateSymmetryOperationsCnv(int n, int l, msym_symmetry_operation
             msymSetErrorDetails("Too many operations when generating C%dv symmetry operations",n);
             goto err;
         }
-        msym_symmetry_operation_t c0 = {.type = PROPER_ROTATION, .order = n, .power = 1, .orientation = HORIZONTAL, .cla = cla, .v = {0,0,1}};
+        msym_symmetry_operation_t c0 = {.type = PROPER_ROTATION, .order = n, .power = 1, .orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_HORIZONTAL, .cla = cla, .v = {0,0,1}};
         memcpy(&sops[k], &c0, sizeof(msym_symmetry_operation_t));
         k += 1;
         cla += 1;
@@ -1323,8 +1323,8 @@ msym_error_t generateSymmetryOperationsDnh(int n, int l, msym_symmetry_operation
             goto err;
         }
         if(MSYM_SUCCESS != (ret = generateSymmetryOperationsCnv(n,l,sops,&k,&cla))) goto err;
-        msym_symmetry_operation_t sigma = {.type = REFLECTION, .order = 1, .power = 1, .orientation = HORIZONTAL, .cla = cla, .v = {0,0,1}};
-        msym_symmetry_operation_t inversion = {.type = PROPER_ROTATION, .order = n, .power = 1, .orientation = HORIZONTAL, .cla = cla+1, .v = {0,0,1}};
+        msym_symmetry_operation_t sigma = {.type = REFLECTION, .order = 1, .power = 1, .orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_HORIZONTAL, .cla = cla, .v = {0,0,1}};
+        msym_symmetry_operation_t inversion = {.type = PROPER_ROTATION, .order = n, .power = 1, .orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_HORIZONTAL, .cla = cla+1, .v = {0,0,1}};
         memcpy(&sops[k], &sigma, sizeof(msym_symmetry_operation_t));
         memcpy(&sops[k+1], &inversion, sizeof(msym_symmetry_operation_t));
         k += 2;
@@ -1354,8 +1354,8 @@ msym_error_t generateSymmetryOperationsDnd(int n, int l, msym_symmetry_operation
     msym_error_t ret = MSYM_SUCCESS;
     int k = *pk, cla = *pcla;
     double x[3] = {1.0,0.0,0.0}, y[3] = {0.0,1.0,0.0}, z[3] = {0.0,0.0,1.0};
-    msym_symmetry_operation_t sigma = {.type = REFLECTION, .orientation = DIHEDRAL, .power = 1};
-    msym_symmetry_operation_t c2 = {.type = PROPER_ROTATION, .order = 2, .power = 1, .orientation = VERTICAL};
+    msym_symmetry_operation_t sigma = {.type = REFLECTION, .orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_DIHEDRAL, .power = 1};
+    msym_symmetry_operation_t c2 = {.type = PROPER_ROTATION, .order = 2, .power = 1, .orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_VERTICAL};
     
     if(k + (n << 2) - 1 > l){ret = MSYM_POINT_GROUP_ERROR; msymSetErrorDetails("Too many operations when generating D%dd symmetry operations",n); goto err;}
     
@@ -1401,7 +1401,7 @@ msym_error_t generateSymmetryOperationsT(int n, int l, msym_symmetry_operation_t
         sops[k].type = PROPER_ROTATION;
         sops[k].order = 2;
         sops[k].power = 1;
-        sops[k].orientation = NONE;
+        sops[k].orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_NONE;
         sops[k].cla = cla;
     }
     
@@ -1412,7 +1412,7 @@ msym_error_t generateSymmetryOperationsT(int n, int l, msym_symmetry_operation_t
         sops[k].type = PROPER_ROTATION;
         sops[k].order = 3;
         sops[k].power = 1 + (i/4);
-        sops[k].orientation = NONE;
+        sops[k].orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_NONE;
         sops[k].cla = cla;
     }
     
@@ -1446,7 +1446,7 @@ msym_error_t generateSymmetryOperationsTd(int n, int l, msym_symmetry_operation_
     if(MSYM_SUCCESS != (ret = generateSymmetryOperationsT(n,l,sops, &k, &cla))) goto err;
     if(k + 12 > l){ret = MSYM_POINT_GROUP_ERROR; msymSetErrorDetails("Too many operations when generating Td operations %d >= %d",k + 12, l); goto err;}
     
-    msym_symmetry_operation_t sigma = {.type = REFLECTION, .order = 1, .power = 1, .cla = cla, .orientation = NONE};
+    msym_symmetry_operation_t sigma = {.type = REFLECTION, .order = 1, .power = 1, .cla = cla, .orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_NONE};
 
     for(int i = 0; i < 6; i++){
         memcpy(&sops[k+i], &sigma, sizeof(msym_symmetry_operation_t));
@@ -1456,7 +1456,7 @@ msym_error_t generateSymmetryOperationsTd(int n, int l, msym_symmetry_operation_
     k += 6;
     cla += 1;
     
-    msym_symmetry_operation_t s4 = {.type = IMPROPER_ROTATION, .order = 4, .power = 1, .cla = cla, .orientation = NONE};
+    msym_symmetry_operation_t s4 = {.type = IMPROPER_ROTATION, .order = 4, .power = 1, .cla = cla, .orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_NONE};
     
     for(int i = 0; i < 3; i++){
         memcpy(&sops[k+i], &s4, sizeof(msym_symmetry_operation_t));
@@ -1484,18 +1484,18 @@ msym_error_t generateSymmetryOperationsO(int n, int l, msym_symmetry_operation_t
     int k = *pk, cla = *pcla;
     
     msym_symmetry_operation_t c2[1] = {
-        [0] = {.type = PROPER_ROTATION, .order = 2, .power = 1, .cla = cla, .orientation = VERTICAL}
+        [0] = {.type = PROPER_ROTATION, .order = 2, .power = 1, .cla = cla, .orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_VERTICAL}
     };
     
     msym_symmetry_operation_t c3[2] = {
-        [0] = {.type = PROPER_ROTATION, .order = 3, .power = 1, .cla = cla+1, .orientation = NONE},
-        [1] = {.type = PROPER_ROTATION, .order = 3, .power = 2, .cla = cla+1, .orientation = NONE}
+        [0] = {.type = PROPER_ROTATION, .order = 3, .power = 1, .cla = cla+1, .orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_NONE},
+        [1] = {.type = PROPER_ROTATION, .order = 3, .power = 2, .cla = cla+1, .orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_NONE}
     };
     
     msym_symmetry_operation_t c4[4] = {
-        [0] = {.type = PROPER_ROTATION, .order = 2, .power = 1, .cla = cla+2, .orientation = NONE},
-        [1] = {.type = PROPER_ROTATION, .order = 4, .power = 1, .cla = cla+3, .orientation = NONE},
-        [2] = {.type = PROPER_ROTATION, .order = 4, .power = 3, .cla = cla+3, .orientation = NONE}
+        [0] = {.type = PROPER_ROTATION, .order = 2, .power = 1, .cla = cla+2, .orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_NONE},
+        [1] = {.type = PROPER_ROTATION, .order = 4, .power = 1, .cla = cla+3, .orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_NONE},
+        [2] = {.type = PROPER_ROTATION, .order = 4, .power = 3, .cla = cla+3, .orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_NONE}
     };
     
     if(MSYM_SUCCESS != (ret = generateSymmetryOperationsOctahedral(l,sops, 1, c2, 2, c3, 3, c4, &k))) goto err;
@@ -1515,24 +1515,24 @@ msym_error_t generateSymmetryOperationsOh(int n, int l, msym_symmetry_operation_
     int k = *pk, cla = *pcla;
     
     msym_symmetry_operation_t c2[2] = {
-        [0] = {.type = PROPER_ROTATION, .order = 2, .power = 1, .cla = cla, .orientation = VERTICAL},
-        [1] = {.type = REFLECTION, .order = 1, .power = 1, .cla = cla+1, .orientation = DIHEDRAL}
+        [0] = {.type = PROPER_ROTATION, .order = 2, .power = 1, .cla = cla, .orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_VERTICAL},
+        [1] = {.type = REFLECTION, .order = 1, .power = 1, .cla = cla+1, .orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_DIHEDRAL}
     };
     
     msym_symmetry_operation_t c3[4] = {
-        [0] = {.type = PROPER_ROTATION, .order = 3, .power = 1, .cla = cla+2, .orientation = NONE},
-        [1] = {.type = PROPER_ROTATION, .order = 3, .power = 2, .cla = cla+2, .orientation = NONE},
-        [2] = {.type = IMPROPER_ROTATION, .order = 6, .power = 1, .cla = cla+3, .orientation = NONE},
-        [3] = {.type = IMPROPER_ROTATION, .order = 6, .power = 5, .cla = cla+3, .orientation = NONE}
+        [0] = {.type = PROPER_ROTATION, .order = 3, .power = 1, .cla = cla+2, .orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_NONE},
+        [1] = {.type = PROPER_ROTATION, .order = 3, .power = 2, .cla = cla+2, .orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_NONE},
+        [2] = {.type = IMPROPER_ROTATION, .order = 6, .power = 1, .cla = cla+3, .orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_NONE},
+        [3] = {.type = IMPROPER_ROTATION, .order = 6, .power = 5, .cla = cla+3, .orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_NONE}
     };
     
     msym_symmetry_operation_t c4[6] = {
-        [0] = {.type = PROPER_ROTATION, .order = 2, .power = 1, .cla = cla+4, .orientation = NONE},
-        [1] = {.type = PROPER_ROTATION, .order = 4, .power = 1, .cla = cla+5, .orientation = NONE},
-        [2] = {.type = PROPER_ROTATION, .order = 4, .power = 3, .cla = cla+5, .orientation = NONE},
-        [3] = {.type = IMPROPER_ROTATION, .order = 4, .power = 1, .cla = cla+6, .orientation = NONE},
-        [4] = {.type = IMPROPER_ROTATION, .order = 4, .power = 3, .cla = cla+6, .orientation = NONE},
-        [5] = {.type = REFLECTION, .order = 1, .power = 1, .cla = cla+7, .orientation = HORIZONTAL}
+        [0] = {.type = PROPER_ROTATION, .order = 2, .power = 1, .cla = cla+4, .orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_NONE},
+        [1] = {.type = PROPER_ROTATION, .order = 4, .power = 1, .cla = cla+5, .orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_NONE},
+        [2] = {.type = PROPER_ROTATION, .order = 4, .power = 3, .cla = cla+5, .orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_NONE},
+        [3] = {.type = IMPROPER_ROTATION, .order = 4, .power = 1, .cla = cla+6, .orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_NONE},
+        [4] = {.type = IMPROPER_ROTATION, .order = 4, .power = 3, .cla = cla+6, .orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_NONE},
+        [5] = {.type = REFLECTION, .order = 1, .power = 1, .cla = cla+7, .orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_HORIZONTAL}
     };
     
     if(MSYM_SUCCESS != (ret = generateSymmetryOperationsOctahedral(l,sops, 2, c2, 4, c3, 6, c4, &k))) goto err;
@@ -1542,7 +1542,7 @@ msym_error_t generateSymmetryOperationsOh(int n, int l, msym_symmetry_operation_
     sops[k].type = INVERSION;
     sops[k].power = 1;
     sops[k].order = 1;
-    sops[k].orientation = NONE;
+    sops[k].orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_NONE;
     sops[k].cla = cla+8;
     k++;
     
@@ -1561,19 +1561,19 @@ msym_error_t generateSymmetryOperationsI(int n, int l, msym_symmetry_operation_t
     int k = *pk, cla = *pcla;
     
     msym_symmetry_operation_t c2[1] = {
-        [0] = {.type = PROPER_ROTATION, .order = 2, .power = 1, .cla = cla, .orientation = NONE}
+        [0] = {.type = PROPER_ROTATION, .order = 2, .power = 1, .cla = cla, .orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_NONE}
     };
     
     msym_symmetry_operation_t c3[2] = {
-        [0] = {.type = PROPER_ROTATION, .order = 3, .power = 1, .cla = cla+1, .orientation = NONE},
-        [1] = {.type = PROPER_ROTATION, .order = 3, .power = 2, .cla = cla+1, .orientation = NONE}
+        [0] = {.type = PROPER_ROTATION, .order = 3, .power = 1, .cla = cla+1, .orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_NONE},
+        [1] = {.type = PROPER_ROTATION, .order = 3, .power = 2, .cla = cla+1, .orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_NONE}
     };
     
     msym_symmetry_operation_t c4[4] = {
-        [0] = {.type = PROPER_ROTATION, .order = 5, .power = 1, .cla = cla+2, .orientation = NONE},
-        [1] = {.type = PROPER_ROTATION, .order = 5, .power = 4, .cla = cla+2, .orientation = NONE},
-        [2] = {.type = PROPER_ROTATION, .order = 5, .power = 2, .cla = cla+3, .orientation = NONE},
-        [3] = {.type = PROPER_ROTATION, .order = 5, .power = 3, .cla = cla+3, .orientation = NONE}
+        [0] = {.type = PROPER_ROTATION, .order = 5, .power = 1, .cla = cla+2, .orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_NONE},
+        [1] = {.type = PROPER_ROTATION, .order = 5, .power = 4, .cla = cla+2, .orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_NONE},
+        [2] = {.type = PROPER_ROTATION, .order = 5, .power = 2, .cla = cla+3, .orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_NONE},
+        [3] = {.type = PROPER_ROTATION, .order = 5, .power = 3, .cla = cla+3, .orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_NONE}
     };
     
     if(MSYM_SUCCESS != (ret = generateSymmetryOperationsIcosahedral(l,sops, 1, c2, 2, c3, 4, c4, &k))) goto err;
@@ -1594,26 +1594,26 @@ msym_error_t generateSymmetryOperationsIh(int n, int l, msym_symmetry_operation_
     int k = *pk, cla = *pcla;
     
     msym_symmetry_operation_t c2[2] = {
-        [0] = {.type = PROPER_ROTATION, .order = 2, .power = 1, .cla = cla, .orientation = NONE},
-        [1] = {.type = REFLECTION, .order = 1, .power = 1, .cla = cla+1, .orientation = NONE}
+        [0] = {.type = PROPER_ROTATION, .order = 2, .power = 1, .cla = cla, .orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_NONE},
+        [1] = {.type = REFLECTION, .order = 1, .power = 1, .cla = cla+1, .orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_NONE}
     };
     
     msym_symmetry_operation_t c3[4] = {
-        [0] = {.type = PROPER_ROTATION, .order = 3, .power = 1, .cla = cla+2, .orientation = NONE},
-        [1] = {.type = PROPER_ROTATION, .order = 3, .power = 2, .cla = cla+2, .orientation = NONE},
-        [2] = {.type = IMPROPER_ROTATION, .order = 6, .power = 1, .cla = cla+3, .orientation = NONE},
-        [3] = {.type = IMPROPER_ROTATION, .order = 6, .power = 5, .cla = cla+3, .orientation = NONE}
+        [0] = {.type = PROPER_ROTATION, .order = 3, .power = 1, .cla = cla+2, .orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_NONE},
+        [1] = {.type = PROPER_ROTATION, .order = 3, .power = 2, .cla = cla+2, .orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_NONE},
+        [2] = {.type = IMPROPER_ROTATION, .order = 6, .power = 1, .cla = cla+3, .orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_NONE},
+        [3] = {.type = IMPROPER_ROTATION, .order = 6, .power = 5, .cla = cla+3, .orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_NONE}
     };
     
     msym_symmetry_operation_t c5[8] = {
-        [0] = {.type = PROPER_ROTATION, .order = 5, .power = 1, .cla = cla+4, .orientation = NONE},
-        [1] = {.type = PROPER_ROTATION, .order = 5, .power = 4, .cla = cla+4, .orientation = NONE},
-        [2] = {.type = PROPER_ROTATION, .order = 5, .power = 2, .cla = cla+5, .orientation = NONE},
-        [3] = {.type = PROPER_ROTATION, .order = 5, .power = 3, .cla = cla+5, .orientation = NONE},
-        [4] = {.type = IMPROPER_ROTATION, .order = 10, .power = 1, .cla = cla+6, .orientation = NONE},
-        [5] = {.type = IMPROPER_ROTATION, .order = 10, .power = 9, .cla = cla+6, .orientation = NONE},
-        [6] = {.type = IMPROPER_ROTATION, .order = 10, .power = 3, .cla = cla+7, .orientation = NONE},
-        [7] = {.type = IMPROPER_ROTATION, .order = 10, .power = 7, .cla = cla+7, .orientation = NONE},
+        [0] = {.type = PROPER_ROTATION, .order = 5, .power = 1, .cla = cla+4, .orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_NONE},
+        [1] = {.type = PROPER_ROTATION, .order = 5, .power = 4, .cla = cla+4, .orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_NONE},
+        [2] = {.type = PROPER_ROTATION, .order = 5, .power = 2, .cla = cla+5, .orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_NONE},
+        [3] = {.type = PROPER_ROTATION, .order = 5, .power = 3, .cla = cla+5, .orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_NONE},
+        [4] = {.type = IMPROPER_ROTATION, .order = 10, .power = 1, .cla = cla+6, .orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_NONE},
+        [5] = {.type = IMPROPER_ROTATION, .order = 10, .power = 9, .cla = cla+6, .orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_NONE},
+        [6] = {.type = IMPROPER_ROTATION, .order = 10, .power = 3, .cla = cla+7, .orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_NONE},
+        [7] = {.type = IMPROPER_ROTATION, .order = 10, .power = 7, .cla = cla+7, .orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_NONE},
     };
     
     if(MSYM_SUCCESS != (ret = generateSymmetryOperationsIcosahedral(l,sops, 2, c2, 4, c3, 8, c5, &k))) goto err;
@@ -1623,7 +1623,7 @@ msym_error_t generateSymmetryOperationsIh(int n, int l, msym_symmetry_operation_
     sops[k].type = INVERSION;
     sops[k].power = 1;
     sops[k].order = 1;
-    sops[k].orientation = NONE;
+    sops[k].orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_NONE;
     sops[k].cla = cla+8;
     k++;
     
@@ -1848,7 +1848,7 @@ msym_error_t generateReflectionPlanes(int n, int l, msym_symmetry_operation_t so
     msym_symmetry_operation_t sigma = {.type = REFLECTION, .power = 1, .order = 1};
     if(k + n > l){ret = MSYM_POINT_GROUP_ERROR; msymSetErrorDetails("Too many operations when generating reflection planes"); goto err;}
     vcopy(y,sigma.v);
-    enum _msym_symmetry_operation_orientation orientation[2] = {VERTICAL, DIHEDRAL};
+    enum _msym_symmetry_operation_orientation orientation[2] = {MSYM_SYMMETRY_OPERATION_ORIENTATION_VERTICAL, MSYM_SYMMETRY_OPERATION_ORIENTATION_DIHEDRAL};
     for(int i = 0;i < n;i++){
         int e = 1 & ~n, ie = ((i & e)), index = k + (i >> e) + (ie ? (n >> 1) : 0); //power = 1 - (ie << 1),
         memcpy(&(sops[index]), &sigma, sizeof(msym_symmetry_operation_t));
@@ -1875,7 +1875,7 @@ msym_error_t generateC2Axes(int n, int l, msym_symmetry_operation_t sops[l], int
     msym_symmetry_operation_t c2 = {.type = PROPER_ROTATION, .order = 2, .power = 1};
     if(k + n > l){ret = MSYM_POINT_GROUP_ERROR; msymSetErrorDetails("Too many operations when generating C2 axes"); goto err;}
     vcopy(x,c2.v);
-    enum _msym_symmetry_operation_orientation orientation[2] = {VERTICAL, DIHEDRAL};
+    enum _msym_symmetry_operation_orientation orientation[2] = {MSYM_SYMMETRY_OPERATION_ORIENTATION_VERTICAL, MSYM_SYMMETRY_OPERATION_ORIENTATION_DIHEDRAL};
     for(int i = 0;i < n;i++){
         int e = 1 & ~n, ie = ((i & e)), index = k + (i >> e) + (ie ? (n >> 1) : 0);
         memcpy(&(sops[index]), &c2, sizeof(msym_symmetry_operation_t));

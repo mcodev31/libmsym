@@ -221,9 +221,9 @@ void symmetryOperationName(msym_symmetry_operation_t* sop, int l, char buf[l]){
     char *rn = "";
     char *cn = "";
     switch(sop->orientation){
-        case HORIZONTAL : rn = "h"; break;
-        case VERTICAL   : rn = "v"; cn = "'"; break;
-        case DIHEDRAL   : rn = "d"; cn = "''"; break;
+        case MSYM_SYMMETRY_OPERATION_ORIENTATION_HORIZONTAL : rn = "h"; break;
+        case MSYM_SYMMETRY_OPERATION_ORIENTATION_VERTICAL   : rn = "v"; cn = "'"; break;
+        case MSYM_SYMMETRY_OPERATION_ORIENTATION_DIHEDRAL   : rn = "d"; cn = "''"; break;
         default: break;
     }
     switch (sop->type) {

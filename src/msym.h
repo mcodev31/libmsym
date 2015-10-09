@@ -41,10 +41,10 @@ extern "C" {
         int order;                              // Order of proper/improper rotation
         int power;                              // Power (e.g. C2^2 = I)
         enum _msym_symmetry_operation_orientation {
-            NONE = -10,
-            HORIZONTAL = -11,
-            VERTICAL = -12,
-            DIHEDRAL = -13
+            MSYM_SYMMETRY_OPERATION_ORIENTATION_NONE = -10,
+            MSYM_SYMMETRY_OPERATION_ORIENTATION_HORIZONTAL = -11,
+            MSYM_SYMMETRY_OPERATION_ORIENTATION_VERTICAL = -12,
+            MSYM_SYMMETRY_OPERATION_ORIENTATION_DIHEDRAL = -13
         } orientation;
         double v[3];                            // Proper/improper rotation vector or reflection plane normal
         int cla;                                // Class of symmetry operation (point group dependant)
