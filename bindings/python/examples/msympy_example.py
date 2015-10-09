@@ -26,12 +26,30 @@ parser.add_argument('outfile', type=argparse.FileType('w'))
 args = parser.parse_args()
 
 (elements, comment) = read_xyz(args.infile)
+ 
+def set_basis(element):
+    basis_function = msym.RealSphericalHarmonic(element = element, name = "1s")
+    element.basis_functions = [basis_function]
+    return basis_function
 
-with msym.Context() as ctx:
-    ctx.elements = elements
-    point_group = ctx.findSymmetry()
-    selements = ctx.symmetrizeElements()
-    write_xyz(args.outfile, selements, comment + " symmetrized by libmsympy according to point group " + point_group)
+basis_functions = [set_basis(e) for e in elements]
+
+#with msym.Context() as ctx:
+#    ctx.elements = elements
+#    point_group = ctx.find_symmetry()
+#    selements = ctx.symmetrize_elements()
+#    write_xyz(args.outfile, selements, comment + " symmetrized by libmsym according to point group " + point_group)
+ 
+with msym.Context(elements = elements, basis_functions = basis_functions) as ctx:
+    point_group = ctx.find_symmetry()
+    selements = ctx.symmetrize_elements()
+    write_xyz(args.outfile, selements, comment + " symmetrized by libmsym according to point group " + point_group)
+    ctx.generate_salc_subspaces()
+
+#with msym.Context(elements = elements, point_group = "T") as ctx:
+#    point_group = ctx.point_group
+#    selements = ctx.symmetrize_elements()
+#    write_xyz(args.outfile, selements, comment + " symmetrized by libmsym according to point group " + point_group)
 
 
 

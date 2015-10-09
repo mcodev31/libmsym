@@ -186,7 +186,7 @@ msym_error_t msymSetBasisFunctions(msym_context ctx, int length, msym_basis_func
         }
         else if(!(bf->element >= ctx->ext.elements && ctx->basis[i].element < ctx->ext.elements + ctx->elementsl)){
             ret = MSYM_INVALID_ORBITALS;
-            msymSetErrorDetails("Basis function element not set");
+            msymSetErrorDetails("Basis function element not set correctly should be within [%p,%p) or [%p,%p) but is at %p",ctx->ext.set_elements_ptr,ctx->ext.set_elements_ptr + ctx->elementsl,ctx->ext.elements,ctx->ext.elements + ctx->elementsl, bf->element);
             goto err;
         }
         

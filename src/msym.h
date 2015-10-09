@@ -115,8 +115,8 @@ extern "C" {
     typedef struct _msym_basis_function {
         void *id;                               // custom identifier
         enum _msym_basis_type_t {
-            MSYM_BASIS_TYPE_REAL_SPHERICAL_HARMONIC,
-            MSYM_BASIS_TYPE_CARTESIAN
+            MSYM_BASIS_TYPE_REAL_SPHERICAL_HARMONIC = 0,
+            MSYM_BASIS_TYPE_CARTESIAN = 1
         } type;
         msym_element_t *element;
         union {
