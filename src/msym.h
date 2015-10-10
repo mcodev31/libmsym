@@ -20,14 +20,14 @@ extern "C" {
     typedef struct _msym_context * msym_context;
 
     typedef enum _msym_geometry {
-        MSYM_GEOMETRY_UNKNOWN = -1,
-        MSYM_GEOMETRY_SPHERICAL,
-        MSYM_GEOMETRY_LINEAR,
-        MSYM_GEOMETRY_PLANAR_REGULAR,
-        MSYM_GEOMETRY_PLANAR_IRREGULAR,
-        MSYM_GEOMETRY_POLYHEDRAL_PROLATE,
-        MSYM_GEOMETRY_POLYHEDRAL_OBLATE,
-        MSYM_GEOMETRY_ASSYMETRIC
+        MSYM_GEOMETRY_UNKNOWN = 0,
+        MSYM_GEOMETRY_SPHERICAL = 1,
+        MSYM_GEOMETRY_LINEAR = 2,
+        MSYM_GEOMETRY_PLANAR_REGULAR = 3,
+        MSYM_GEOMETRY_PLANAR_IRREGULAR = 4,
+        MSYM_GEOMETRY_POLYHEDRAL_PROLATE = 5,
+        MSYM_GEOMETRY_POLYHEDRAL_OBLATE = 6,
+        MSYM_GEOMETRY_ASSYMETRIC = 7
     } msym_geometry_t;
     
     typedef struct _msym_symmetry_operation {
@@ -41,34 +41,35 @@ extern "C" {
         int order;                              // Order of proper/improper rotation
         int power;                              // Power (e.g. C2^2 = I)
         enum _msym_symmetry_operation_orientation {
-            MSYM_SYMMETRY_OPERATION_ORIENTATION_NONE = -10,
-            MSYM_SYMMETRY_OPERATION_ORIENTATION_HORIZONTAL = -11,
-            MSYM_SYMMETRY_OPERATION_ORIENTATION_VERTICAL = -12,
-            MSYM_SYMMETRY_OPERATION_ORIENTATION_DIHEDRAL = -13
+            MSYM_SYMMETRY_OPERATION_ORIENTATION_NONE = 0,
+            MSYM_SYMMETRY_OPERATION_ORIENTATION_HORIZONTAL = 1,
+            MSYM_SYMMETRY_OPERATION_ORIENTATION_VERTICAL = 2,
+            MSYM_SYMMETRY_OPERATION_ORIENTATION_DIHEDRAL = 3
         } orientation;
         double v[3];                            // Proper/improper rotation vector or reflection plane normal
         int cla;                                // Class of symmetry operation (point group dependant)
     } msym_symmetry_operation_t;
     
     typedef enum _msym_point_group_type {
-        MSYM_POINT_GROUP_TYPE_Ci,
-        MSYM_POINT_GROUP_TYPE_Cs,
-        MSYM_POINT_GROUP_TYPE_Cn,
-        MSYM_POINT_GROUP_TYPE_Cnh,
-        MSYM_POINT_GROUP_TYPE_Cnv,
-        MSYM_POINT_GROUP_TYPE_Dn,
-        MSYM_POINT_GROUP_TYPE_Dnh,
-        MSYM_POINT_GROUP_TYPE_Dnd,
-        MSYM_POINT_GROUP_TYPE_Sn,
-        MSYM_POINT_GROUP_TYPE_T,
-        MSYM_POINT_GROUP_TYPE_Td,
-        MSYM_POINT_GROUP_TYPE_Th,
-        MSYM_POINT_GROUP_TYPE_O,
-        MSYM_POINT_GROUP_TYPE_Oh,
-        MSYM_POINT_GROUP_TYPE_I,
-        MSYM_POINT_GROUP_TYPE_Ih,
-        MSYM_POINT_GROUP_TYPE_K,
-        MSYM_POINT_GROUP_TYPE_Kh
+        MSYM_POINT_GROUP_TYPE_Kh  = 0,
+        MSYM_POINT_GROUP_TYPE_K   = 1,
+        MSYM_POINT_GROUP_TYPE_Ci  = 2,
+        MSYM_POINT_GROUP_TYPE_Cs  = 3,
+        MSYM_POINT_GROUP_TYPE_Cn  = 4,
+        MSYM_POINT_GROUP_TYPE_Cnh = 5,
+        MSYM_POINT_GROUP_TYPE_Cnv = 6,
+        MSYM_POINT_GROUP_TYPE_Dn  = 7,
+        MSYM_POINT_GROUP_TYPE_Dnh = 8,
+        MSYM_POINT_GROUP_TYPE_Dnd = 9,
+        MSYM_POINT_GROUP_TYPE_Sn  = 10,
+        MSYM_POINT_GROUP_TYPE_T   = 11,
+        MSYM_POINT_GROUP_TYPE_Td  = 12,
+        MSYM_POINT_GROUP_TYPE_Th  = 13,
+        MSYM_POINT_GROUP_TYPE_O   = 14,
+        MSYM_POINT_GROUP_TYPE_Oh  = 15,
+        MSYM_POINT_GROUP_TYPE_I   = 16,
+        MSYM_POINT_GROUP_TYPE_Ih  = 17
+
     } msym_point_group_type_t;
     
     typedef struct _msym_subgroup {
