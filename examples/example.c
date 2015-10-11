@@ -219,7 +219,7 @@ int example(const char* in_file, msym_thresholds_t *thresholds){
         memcpy(coefficients[i*i % bfsl], cmem, sizeof(double[bfsl]));
     }
     
-    /* Add some noise */
+    /* Add some noise
     srand((unsigned)time(NULL));
     for(int i = 0;i < bfsl;i++){
         for(int j = 0;j < bfsl;j++){
@@ -229,6 +229,8 @@ int example(const char* in_file, msym_thresholds_t *thresholds){
     }
     printf("noise = ");
     printTransform(bfsl, bfsl, coefficients);
+
+    */
     
     /* Symmetrize wavefunctions */
     if(MSYM_SUCCESS != (ret = msymSymmetrizeWavefunctions(ctx, bfsl, coefficients))) goto err;

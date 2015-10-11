@@ -235,7 +235,7 @@ msym_error_t symmetrizeWavefunctions(msym_point_group_t *pg, int ssl, msym_subsp
     double (*dmem)[md+1] = calloc(md,sizeof(double[md+1]));
     double *dmpf = (double *) dmem;
     
-    int psalcl = 0, psalci = 0;
+    int psalcl = 0;
     
     for(int i = 0;i < ssl;i++){
         psalcl += ss[i].salcl;
@@ -245,10 +245,12 @@ msym_error_t symmetrizeWavefunctions(msym_point_group_t *pg, int ssl, msym_subsp
     
     for(int o = 0;o < basisl;o++){
         double mcomp = -1.0;
+        int psalci = 0;
         for(int k = 0;k < pg->ct->d;k++){
             for(int s = 0;s < ss[k].salcl;s++){
                 msym_salc_t *salc = &ss[k].salc[s];
                 double (*space)[salc->fl] = (double (*)[salc->fl]) salc->pf;
+                double psalcd = 0.0;
                 for(int d = 0;d < salc->d;d++){
                     memset(mem[0], 0, sizeof(double[basisl]));
                     for(int j = 0; j < salc->fl;j++){
@@ -258,8 +260,10 @@ msym_error_t symmetrizeWavefunctions(msym_point_group_t *pg, int ssl, msym_subsp
                     vladd(basisl, mem[1], proj[o][k], proj[o][k]);
                     double pabs = vlabs(basisl, mem[1]);
                     comp[o][k][d] += pabs;
-                    psalc[o][psalci] += pabs;
+                    psalcd += SQR(pabs);
+                    //psalc[o][psalci] += pabs;
                 }
+                psalc[o][psalci] += sqrt(psalcd);
                 psalci++;
             }
             double mabs = vlabs(md,comp[o][k]);
@@ -271,6 +275,8 @@ msym_error_t symmetrizeWavefunctions(msym_point_group_t *pg, int ssl, msym_subsp
         ispan[icomp[o]]++;
     }
     
+    printTransform(basisl, psalcl, psalc);
+    
     for(int k = 0;k < pg->ct->d;k++){
         if(ispan[k] != span[k]*pg->ct->s[k].d){
             msymSetErrorDetails("Projected orbitals do not span the expected irredicible representations. Expected %d%s, got %d",span[k],pg->ct->s[k].name,ispan[k]);
@@ -278,8 +284,13 @@ msym_error_t symmetrizeWavefunctions(msym_point_group_t *pg, int ssl, msym_subsp
             goto err;
         }
     }
-
     
+    
+    for(int o = 0;o < basisl;o++){
+        
+    }
+
+    exit(1);
     for(int o = 0;o < basisl;o++){
         int ko = icomp[o], dim = pg->ct->s[ko].d, found = 0;
         
