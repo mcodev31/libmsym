@@ -136,137 +136,55 @@ err:
     return ret;
 }
 
-/*
-msym_error_t symmetrizeOrbitalsOld(msym_point_group_t *pg, int ssl, msym_subspace_t *ss, int *span, int basisl, msym_orbital_t basis[basisl], msym_thresholds_t *thresholds, double orb[basisl][basisl],double symorb[basisl][basisl]){
-    msym_error_t ret = MSYM_SUCCESS;
-    double (*proj)[pg->ct->l][basisl] = malloc(sizeof(double[basisl][pg->ct->l][basisl]));
-    double *mem = malloc(sizeof(double[basisl]));
-    double (*comp)[pg->ct->l] = malloc(sizeof(double[basisl][pg->ct->l]));
-    int *icomp = calloc(basisl,sizeof(int));
-    int (*ispan) = calloc(pg->ct->l,sizeof(int));
-    memset(proj,0,sizeof(double[basisl][pg->ct->l][basisl]));
-    
-    printf("SUBSPACES\n");
-    msym_subspace_t tss = {.subspacel = ssl, .subspace = ss, .d = 0, .basisl = 0, .space = NULL};
-    printSubspace(pg->ct, &tss);
-    
-    for(int o = 0;o < basisl;o++){
-        double mcomp = -1.0;
-        for(int k = 0;k < pg->ct->l;k++){
-            for(int s = 0;s < ssl;s++){
-                if(ss[s].irrep == k){
-                    if(MSYM_SUCCESS != (ret = addProjectionOntoSubspace(basisl, orb[o], &ss[s], basis, mem, proj[o][k]))) goto err;
-                }
-            }
-            comp[o][k] = vlabs(basisl, proj[o][k]);
-            //printf("orbital %d compinent in %s = %lf\n",o,pg->ct->irrep[k].name,comp[o][k]);
-            if(comp[o][k] > mcomp){
-                icomp[o] = k;
-                mcomp = comp[o][k];
-            }
-        }
-        ispan[icomp[o]]++;
-        printf("o = %d: ", o);
-        printTransform(1,pg->ct->l,comp[o]);
-    }
-    
-    
-    
-    for(int o = 0;o < basisl;o++){
-        //ispan[icomp[o]]++;
-        //printf("orbital %d (%lf) has largest component (%lf) in %s\n",o,vlabs(basisl,orb[o]),vlabs(basisl,proj[o][icomp[o]]),pg->ct->irrep[icomp[o]].name);
-        //scale back to full length, this is a more reasonable option, but will look at that later
-        //vlnorm2(basisl, proj[o][icomp[o]], symorb[o]);
-        //vlscale(vlabs(basisl, orb[o]), basisl, symorb[o], symorb[o]);
-        
-        //just throw away
-        vlcopy(basisl, proj[o][icomp[o]], symorb[o]);
-    }
-    
-    //printf("Orbital span (vectors) = ");
-    for(int k = 0;k < pg->ct->l;k++){
-        if(ispan[k] != span[k]){
-            msymSetErrorDetails("Projected orbitals do not span the expected irredicible representations. Expected %d%s, got %d",span[k],pg->ct->irrep[k].name,ispan[k]);
-            ret = MSYM_SYMMETRIZATION_ERROR;
-            goto err;
-        }
-        //printf(" + %d%s",ispan[k],pg->ct->irrep[k].name);
-    }
-    //printf("\n");
-    
-    
-    free(ispan);
-    free(icomp);
-    free(comp);
-    free(mem);
-    free(proj);
-    return ret;
-err:
-    free(ispan);
-    free(icomp);
-    free(comp);
-    free(mem);
-    free(proj);
-    return ret;
-}*/
 
-/* TODO: lots of room for optimization in this code, pressed for time 
- * This code can no longer handle tree structured subpaces, they should be removed.
- * Way too complicated (and pointless) to do recursive multidimensional averaging
- */
-
-msym_error_t symmetrizeWavefunctions(msym_point_group_t *pg, int ssl, msym_subspace_t *ss, int *span, int basisl, msym_basis_function_t basis[basisl], msym_thresholds_t *thresholds, double wf[basisl][basisl], double symwf[basisl][basisl]){
+msym_error_t symmetrizeWavefunctions(msym_point_group_t *pg, int ssl, msym_subspace_t *ss, int *span, int basisl, msym_basis_function_t basis[basisl], double wf[basisl][basisl], double symwf[basisl][basisl]){
     msym_error_t ret = MSYM_SUCCESS;
-    double (*proj)[pg->ct->d][basisl] = malloc(sizeof(double[basisl][pg->ct->d][basisl]));
     
+    int *icomp = calloc(basisl,sizeof(*icomp));
+    int *ispan = calloc(pg->ct->d,sizeof(*ispan));
     
-    int *icomp = calloc(basisl,sizeof(int));
-    int (*ispan) = calloc(pg->ct->d,sizeof(int));
-    
-    memset(proj,0,sizeof(double[basisl][pg->ct->d][basisl]));
     memset(symwf,0,sizeof(double[basisl][basisl]));
     
     int md = 1;
     //could deduce from pg type but can't be bothered
     for(int k = 0;k < pg->ct->d;k++) md = (md > pg->ct->s[k].d ? md : pg->ct->s[k].d);
-    double (*comp)[pg->ct->d][md] = calloc(basisl,sizeof(double[pg->ct->d][md]));
-    double (*mem)[basisl] = malloc(sizeof(double[md*md+1][basisl]));
-    int (*pf)[md] = calloc(basisl+1,sizeof(int[md]));
-    double (*dmem)[md+1] = calloc(md,sizeof(double[md+1]));
-    double *dmpf = (double *) dmem;
+    double (*mem)[basisl] = malloc(sizeof(double[2][basisl > md ? basisl : md]));
+    int (*pf)[md] = calloc(basisl+1,sizeof(*pf));
+    double *dmpf = mem[1];
     
     int psalcl = 0;
     
-    for(int i = 0;i < ssl;i++){
-        psalcl += ss[i].salcl;
-    }
+    for(int i = 0;i < ssl;i++) psalcl += ss[i].salcl;
     
-    double (*psalc)[psalcl] = calloc(basisl,sizeof(double[psalcl]));
+    double (*psalc)[psalcl] = calloc(basisl,sizeof(*psalc));
+    double (*bfd)[md] = calloc(basisl, sizeof(*bfd));
+    int *psalck = calloc(pg->ct->d, sizeof(*psalck));
     
+    /* Determine salc components, and build information vectors (e.g. indexing/offsets/irreps) */
     for(int o = 0;o < basisl;o++){
         double mcomp = -1.0;
         int psalci = 0;
         for(int k = 0;k < pg->ct->d;k++){
+            double mabs = 0.0;
+            psalck[k] = psalci;
             for(int s = 0;s < ss[k].salcl;s++){
                 msym_salc_t *salc = &ss[k].salc[s];
                 double (*space)[salc->fl] = (double (*)[salc->fl]) salc->pf;
-                double psalcd = 0.0;
+                double psalcabs = 0.0;
                 for(int d = 0;d < salc->d;d++){
                     memset(mem[0], 0, sizeof(double[basisl]));
                     for(int j = 0; j < salc->fl;j++){
                         mem[0][salc->f[j] - basis] = space[d][j];
                     }
                     vlproj(basisl, wf[o], mem[0], mem[1]);
-                    vladd(basisl, mem[1], proj[o][k], proj[o][k]);
-                    double pabs = vlabs(basisl, mem[1]);
-                    comp[o][k][d] += pabs;
-                    psalcd += SQR(pabs);
-                    //psalc[o][psalci] += pabs;
+                    double pabssqr = vlsumsqr(basisl, mem[1]);
+                    mabs += pabssqr;
+                    psalcabs += pabssqr;
+                    bfd[o][d] += pabssqr;
                 }
-                psalc[o][psalci] += sqrt(psalcd);
+                psalc[o][psalci] = sqrt(psalcabs);
                 psalci++;
             }
-            double mabs = vlabs(md,comp[o][k]);
             if(mabs > mcomp){
                 icomp[o] = k;
                 mcomp = mabs;
@@ -274,8 +192,6 @@ msym_error_t symmetrizeWavefunctions(msym_point_group_t *pg, int ssl, msym_subsp
         }
         ispan[icomp[o]]++;
     }
-    
-    printTransform(basisl, psalcl, psalc);
     
     for(int k = 0;k < pg->ct->d;k++){
         if(ispan[k] != span[k]*pg->ct->s[k].d){
@@ -285,33 +201,27 @@ msym_error_t symmetrizeWavefunctions(msym_point_group_t *pg, int ssl, msym_subsp
         }
     }
     
-    
-    for(int o = 0;o < basisl;o++){
-        
-    }
-
-    exit(1);
+    /* Find parner functions */
     for(int o = 0;o < basisl;o++){
         int ko = icomp[o], dim = pg->ct->s[ko].d, found = 0;
         
-        for(int i = 0;i < md;i++){pf[o][i] = -1;};
+        for(int i = 1;i < md;i++){
+            pf[o][i] = -1;
+            pf[basisl][i] = -1;
+        };
         
         for(int i = 0;i < o && !found;i++){
-            for(int j = 0;j < md && !found;j++){
-                found = pf[i][j] == o;
-            }
+            for(int j = 1;j < md && !found;j++) found = pf[i][j] == o;
         }
         
-        if(found) continue;
+        if(found || dim <= 1) continue;
         
         for(int i = 0;i < md;i++){dmpf[i] = DBL_MAX;}
         
-        for(int po = 0; po < basisl && dim > 1;po++){
+        for(int po = 0; po < basisl;po++){
             if(icomp[po] != ko || o == po) continue;
-            for(int d = 0; d < dim;d++){
-                vlsub(ssl, comp[d][o], comp[d][po], mem[1]);
-            }
-            double c = vlabs(ssl, mem[0]), mc = 0.0;
+            vlsub(psalcl,psalc[o],psalc[po],mem[0]); //don't use mem[1], dmpf is an alias,
+            double c = vlabs(psalcl, mem[0]), mc = 0.0;
             int mic = 0;
             for(int i = 1;i < dim;i++){
                 double diff = fabs(dmpf[i] - c);
@@ -320,439 +230,122 @@ msym_error_t symmetrizeWavefunctions(msym_point_group_t *pg, int ssl, msym_subsp
                     mc = diff;
                 }
             }
-            dmpf[mic] = c;
-            pf[o][mic] = po;
-        }
-        
-        pf[o][0] = o;
-        
-        printf("basis %d (%s) partner functions = ",o,pg->ct->s[ko].name);
-        for(int i = 0;i < dim;i++){
-            printf("%d,",pf[o][i]);
-        }
-        printf("\n");
-    }
-    
-    
-    //should validate pf, only 1 orb of each
-#if 0
-    for(int o = 0;o < basisl;o++){
-        int dim = pg->ct2->s[icomp[o]].d, md2 = md*md;
-        if(pf[o][0] == -1 || dim <= 1) continue;
-        printf("partner functions: ");
-        for(int i = 0;i < dim;i++){
-            printf("%d,",pf[o][i]);
-        }
-        printf(" require averaging and orthogonalization WARNING need to choose same component in all\n");
-        for(int s = 0;s < ssl;s++){
-            
-            double avg = 0;
-            msym_subspace_t *oss = &ss[s];
-            if(oss->irrep != icomp[o]) {
-                printf("skipping subspace %d (%s) only projecting into %s\n",s,pg->ct2->s[oss->irrep].name,pg->ct2->s[icomp[o]].name);
-                continue;
-            }
-            memset(pf[basisl], -1, sizeof(int[md]));
-            printf("components in subspace: %d: ",s);
-            for(int d = 0;d < dim;d++){
-                int pfo = pf[o][d];
-                printf("%d = %lf, ",pfo,dproj[pfo][s]);
-                avg += dproj[pfo][s];
-                if(oss->d != dim){
-                    printf("ERRORROO subspace dimension %d != %d\n",oss->d,dim);
-                    //printSubspace(pg->ct, oss);
-                    exit(1);
-                }
-                
-                for(int i = 0; i < dim;i++){
-                    double (*space)[oss->basisl] = (double (*)[oss->basisl]) oss->space, c = -1.0;
-                    memset(mem[md2], 0, sizeof(double[basisl]));
-                    //printf("projecting onto basis %d of %d with basis length: %d\n",i,dim,oss->basisl);
-                    for(int j = 0; j < oss->basisl;j++){
-                        //printf("index = %ld -> %lf\n",oss->basis.o[j] - basis,space[i][j]);
-                        mem[md2][oss->basis.o[j] - basis] = space[i][j];
-                    }
-                    vlproj(basisl, orb[pfo], mem[md2], mem[d*md+i]);
-                    double dabs = vlabs(basisl, mem[d*md+i]);
-                    dmem[d][i] = dabs;
-                    if(dabs > c){
-                        //choose max component so that no two have the same
-                        int fi = 0;
-                        for(fi = 0;fi < d;fi++){
-                            if(pf[basisl][fi] == i) break;
-                        }
-                        if(fi == d){
-                            c = dabs;
-                            pf[basisl][d] = i;
-                            //printf("orbital %d max component %lf = %d\n",d,c,i);
-                        }
-                    }
-                    //printTransform(1,basisl,orb[pfo]);
-                    //printTransform(1,basisl,mem[md]);
-                    //printTransform(1,basisl,mem[d]);
-                }
-            }
-            avg /= dim;
-            
-            
-            printf(" average = %lf\n",avg);
-            /* stupid error check;
-             int pfm[2] = {1,1};
-             for(int d = 0;d < dim;d++){
-             pfm[0] *= d+1;
-             pfm[1] *= pf[basisl][d]+1;
-             printf("*%d",pf[basisl][d]+1);
-             }
-             
-             if(pfm[0] != pfm[1]){
-             printf("error %d != %d \n",pfm[0], pfm[1]);
-             exit(1);
-             }
-             end stupid error check */
-            int zspace = 0;
-            for(int d = 0;d < dim;d++){
-                if(dmem[d][pf[basisl][d]] <= thresholds->zero){
-                    printf("found zero max component for partner function %d attempting switch\n",d);
-                    int fim = -1, fid = pf[basisl][d];
-                    double fimd = 0.0;
-                    for(int fi = 0;fi < dim;fi++){
-                        int fii = pf[basisl][fi];
-                        if(dmem[fi][fid] > thresholds->zero && dmem[d][fii] > thresholds->zero && dmem[fi][fid] > fimd){
-                            fim = fi;
-                        }
-                    }
-                    if(fim >= 0){
-                        
-                        printf("found replacement orbital %d(%d) <-> %d(%d)\n",fim,pf[basisl][fim],d,fid);
-                        for(int pr = 0;pr < dim;pr++){
-                            printf("was max %d(%lf)\n",pf[basisl][pr],dmem[pr][pf[basisl][pr]]);
-                        }
-                        pf[basisl][d] = pf[basisl][fim];
-                        pf[basisl][fim] = fid;
-                    } else {
-                        printf("could not find replacement orbital, removing from subspace\n");
-                        for(int pr = 0;pr < dim;pr++){
-                            printf("was max %d(%lf)\n",pf[basisl][pr],dmem[pr][pf[basisl][pr]]);
-                        }
-                        zspace = 1;
-                        break;
-                    }
-                }
-                printf("orbital %d max component in %d = %lf\n",d,pf[basisl][d],dmem[d][pf[basisl][d]]);
-            }
-            
-            if(!zspace){
-                printf("adding symmetrized orbitals %d\n",o);
-                for(int d = 0;d < dim;d++){
-                    
-                    vlnorm2(basisl, mem[d*md+pf[basisl][d]], mem[md2]);
-                    vlscale(avg, basisl, mem[md2], mem[md2]);
-                    printf("adding degenerate component %d\n",d);
-                    printTransform(1,basisl,mem[md2]);
-                    vladd(basisl, symorb[pf[o][d]], mem[md2], symorb[pf[o][d]]);
-                }
-            }
-            
-        }
-    }
-    
-    for(int o = 0;o < basisl;o++){
-        int dim = pg->ct2->s[icomp[o]].d;
-        if(dim != 1) continue;
-        vlcopy(basisl, proj[o][icomp[o]], symorb[o]);
-    }
-    
-    //printf("Orbital span (vectors) = ");
-    
-    //printf("\n");
-    
-#endif
-    free(ispan);
-    free(icomp);
-    free(comp);
-    free(mem);
-    free(proj);
-    return ret;
-err:
-    free(ispan);
-    free(icomp);
-    free(comp);
-    free(mem);
-    free(proj);
-    return ret;
-}
-
-#if 0
-msym_error_t symmetrizeWavefunctions(msym_point_group_t *pg, int ssl, msym_subspace_t *ss, int *span, int basisl, msym_basis_function_t basis[basisl], msym_thresholds_t *thresholds, double orb[basisl][basisl], double symorb[basisl][basisl]){
-    msym_error_t ret = MSYM_SUCCESS;
-    double (*proj)[pg->ct->d][basisl] = malloc(sizeof(double[basisl][pg->ct->d][basisl]));
-    double (*dproj)[ssl] = calloc(basisl,sizeof(double[ssl]));
-    
-    double (*comp)[pg->ct->d] = calloc(basisl,sizeof(double[pg->ct->d]));
-    int *icomp = calloc(basisl,sizeof(int));
-    int (*ispan) = calloc(pg->ct->d,sizeof(int));
-    memset(proj,0,sizeof(double[basisl][pg->ct->d][basisl]));
-    memset(symorb,0,sizeof(double[basisl][basisl]));
-    
-    int md = 0;
-    //could deduce from pg type but can't be bothered
-    for(int k = 0;k < pg->ct->d;k++) md = (md > pg->ct->s[k].d ? md : pg->ct->s[k].d);
-    
-    double (*mem)[basisl] = malloc(sizeof(double[md*md+1][basisl]));
-    int (*pf)[md] = calloc(basisl+1,sizeof(int[md]));
-    double (*dmem)[md+1] = calloc(md,sizeof(double[md+1]));
-    double *dmpf = (double *) dmem;
-
-    
-    /*printf("SUBSPACES\n");
-    msym_subspace_t tss = {.subspacel = ssl, .subspace = ss, .d = 0, .basisl = 0, .space = NULL};
-    printSubspace(pg->ct, &tss);*/
-    
-    /* not really needed anymore, we have can do this in the next loop */
-    for(int o = 0;o < basisl;o++){
-        double mcomp = -1.0;
-        for(int k = 0;k < pg->ct->d;k++){
-            for(int s = 0;s < ssl;s++){
-                if(ss[s].irrep == k){
-                    if(MSYM_SUCCESS != (ret = addProjectionOntoSubspace(basisl, orb[o], &ss[s], basis, mem[0], proj[o][k]))) goto err;
-                }
-            }
-            comp[o][k] = vlabs(basisl, proj[o][k]);
-            //printf("orbital %d compinent in %s = %lf\n",o,pg->ct->irrep[k].name,comp[o][k]);
-            if(comp[o][k] > mcomp){
-                icomp[o] = k;
-                mcomp = comp[o][k];
+            if(mic > 0){
+                dmpf[mic] = c;
+                pf[o][mic] = po;
+                pf[basisl][mic] = po;
             }
         }
         
-        ispan[icomp[o]]++;
-        printf("o = %d: ", o);
-        printTransform(1,pg->ct2->d,comp[o]);
+        for(int i = 1;i < dim;i++){
+            int index = pf[basisl][i];
+            if(index > 0) {
+                pf[o][0]++;
+                pf[index][0]--;
+            }
+        }
     }
     
-    for(int k = 0;k < pg->ct2->d;k++){
-        if(ispan[k] != span[k]){
-            msymSetErrorDetails("Projected orbitals do not span the expected irredicible representations. Expected %d%s, got %d",span[k],pg->ct2->s[k].name,ispan[k]);
+    
+    /* verify that we have partners for everything */
+    for(int o = 0;o < basisl;o++){
+        int dim = pg->ct->s[icomp[o]].d;
+        if(abs(pf[o][0])+1 != dim){
+            msymSetErrorDetails("Unexpected number of partner functions for wave function %d (expected %d got %d)", o,dim,abs(pf[o][0])+1);
             ret = MSYM_SYMMETRIZATION_ERROR;
             goto err;
         }
-        //printf(" + %d%s",ispan[k],pg->ct->irrep[k].name);
-    }
-    
-    
-    for(int o = 0;o < basisl;o++){
-        int ko = icomp[o];
-        printf("basis %d components = ",o);
-        for(int k = 0;k < pg->ct2->d;k++){
-            printf("%lf%s + ",comp[o][k],pg->ct2->s[k].name);
+        
+        for(int i = 0;pf[o][0] >= 0 && i < dim;i++){
+            if(pf[o][i] == -1){
+                msymSetErrorDetails("Could not determine partner function %d of wave function %d",i, o);
+                ret = MSYM_SYMMETRIZATION_ERROR;
+                goto err;
+            }
+        }
+        
+        printf("basis %d (%s) partner functions = %d",o,pg->ct->s[icomp[o]].name,o);
+        for(int i = 1;i < dim;i++){
+            printf(",%d",pf[o][i]);
         }
         printf("\n");
         
-        if(pg->ct2->s[ko].d > 1){
-            for(int s = 0;s < ssl;s++){
-                memset(mem[1], 0, sizeof(double[basisl]));
-                if(MSYM_SUCCESS != (ret = addProjectionOntoSubspace(basisl, orb[o], &ss[s], basis, mem[0], mem[1]))) goto err;
-                dproj[o][s] = vlabs(basisl, mem[1]);
-            }
-            
-            printf("basis %s components = ",pg->ct2->s[ko].name);
-            for(int s = 0;s < ssl;s++){
-                printf("%lf + ",dproj[o][s]);
-            }
-            printf("\n");
-        }
     }
     
     for(int o = 0;o < basisl;o++){
-        int ko = icomp[o], dim = pg->ct2->s[ko].d, found = 0;
-        memset(pf[o], -1, sizeof(int[md])); //2s complement
+        int k = icomp[o];
+        int dim = pg->ct->s[k].d;
         
-        
-        for(int i = 0;i < o && !found;i++){
-            for(int j = 0;j < md && !found;j++){
-                found = pf[i][j] == o;
-            }
-        }
-        
-        if(found) continue;
-        
-        for(int i = 0;i < md;i++){dmpf[i] = DBL_MAX;}
-        
-        for(int po = 0; po < basisl && dim > 1;po++){
-            if(icomp[po] != ko || o == po) continue;
-            vlsub(ssl, dproj[o], dproj[po], mem[0]);
-            double c = vlabs(ssl, mem[0]), mc = 0.0;
-            int mic = 0;
-            for(int i = 1;i < dim;i++){
-                double diff = fabs(dmpf[i] - c);
-                if(c < dmpf[i] && (diff > mc)){
-                    mic = i;
-                    mc = diff;
-                }
-            }
-            dmpf[mic] = c;
-            pf[o][mic] = po;
-        }
-        
+        if(pf[o][0] < 0) continue;
+            
         pf[o][0] = o;
-        
-        printf("basis %d (%s) partner functions = ",o,pg->ct2->s[ko].name);
+        for(int i = 0;i < dim;i++) pf[basisl][i] = -1;
+
+        /* Get the unique dimensions for each partner function in which they have the largest component.
+         * This is only needed when the symmetry is really broken but the degenerate functions can be averaged,
+         * but it also keeps the ordering intact.
+         * This is could be improved with a best match algorithm */
         for(int i = 0;i < dim;i++){
-            printf("%d,",pf[o][i]);
-        }
-        printf("\n");
-    }
-    
-    
-    //should validate pf, only 1 orb of each
-    
-    for(int o = 0;o < basisl;o++){
-        int dim = pg->ct2->s[icomp[o]].d, md2 = md*md;
-        if(pf[o][0] == -1 || dim <= 1) continue;
-        printf("partner functions: ");
-        for(int i = 0;i < dim;i++){
-            printf("%d,",pf[o][i]);
-        }
-        printf(" require averaging and orthogonalization WARNING need to choose same component in all\n");
-        for(int s = 0;s < ssl;s++){
-            
-            double avg = 0;
-            msym_subspace_t *oss = &ss[s];
-            if(oss->irrep != icomp[o]) {
-                printf("skipping subspace %d (%s) only projecting into %s\n",s,pg->ct2->s[oss->irrep].name,pg->ct2->s[icomp[o]].name);
-                continue;
-            }
-            memset(pf[basisl], -1, sizeof(int[md]));
-            printf("components in subspace: %d: ",s);
+            double cmax = 0.0;
             for(int d = 0;d < dim;d++){
-                int pfo = pf[o][d];
-                printf("%d = %lf, ",pfo,dproj[pfo][s]);
-                avg += dproj[pfo][s];
-                if(oss->d != dim){
-                    printf("ERRORROO subspace dimension %d != %d\n",oss->d,dim);
-                    //printSubspace(pg->ct, oss);
-                    exit(1);
-                }
-                
-                for(int i = 0; i < dim;i++){
-                    double (*space)[oss->basisl] = (double (*)[oss->basisl]) oss->space, c = -1.0;
-                    memset(mem[md2], 0, sizeof(double[basisl]));
-                    //printf("projecting onto basis %d of %d with basis length: %d\n",i,dim,oss->basisl);
-                    for(int j = 0; j < oss->basisl;j++){
-                        //printf("index = %ld -> %lf\n",oss->basis.o[j] - basis,space[i][j]);
-                        mem[md2][oss->basis.o[j] - basis] = space[i][j];
-                    }
-                    vlproj(basisl, orb[pfo], mem[md2], mem[d*md+i]);
-                    double dabs = vlabs(basisl, mem[d*md+i]);
-                    dmem[d][i] = dabs;
-                    if(dabs > c){
-                        //choose max component so that no two have the same
-                        int fi = 0;
-                        for(fi = 0;fi < d;fi++){
-                            if(pf[basisl][fi] == i) break;
-                        }
-                        if(fi == d){
-                            c = dabs;
-                            pf[basisl][d] = i;
-                            //printf("orbital %d max component %lf = %d\n",d,c,i);
+                double c = bfd[pf[o][i]][d]; //component of i:th partner in dimension d
+                if(c > cmax){
+                    int found = 0;
+                    for(int j = 0;j < i;j++){
+                        if(pf[basisl][j] == d){
+                            found = 1;
+                            break;
                         }
                     }
-                    //printTransform(1,basisl,orb[pfo]);
-                    //printTransform(1,basisl,mem[md]);
-                    //printTransform(1,basisl,mem[d]);
+                    if(!found){
+                        pf[basisl][i] = d;
+                        cmax = c;
+                    }
                 }
             }
+        }
+        
+        /*for(int i = 0;i < dim;i++){
+            printf("partner function %d has maximum component in dimension %d\n",i,pf[basisl][i]);
+        }*/
+        
+        /* calculate average component in each salc subspace and rotate onto the partner functions with largest component */
+        for(int s = 0;s < ss[k].salcl;s++){
+            int psalci = psalck[k] + s;
+            double avg = 0;
+            
+            
+            for(int d = 0;d < dim;d++) avg += psalc[pf[o][d]][psalci]; //
             avg /= dim;
             
+            //printf("average component in salc %d(%s) for wf %d = %lf\n",psalci,pg->ct->s[k].name,o,avg);
             
-            printf(" average = %lf\n",avg);
-            /* stupid error check;
-            int pfm[2] = {1,1};
-            for(int d = 0;d < dim;d++){
-                pfm[0] *= d+1;
-                pfm[1] *= pf[basisl][d]+1;
-                printf("*%d",pf[basisl][d]+1);
-            }
+            msym_salc_t *salc = &ss[k].salc[s];
+            double (*space)[salc->fl] = (double (*)[salc->fl]) salc->pf;
             
-            if(pfm[0] != pfm[1]){
-                printf("error %d != %d \n",pfm[0], pfm[1]);
-                exit(1);
-            }
-             end stupid error check */
-            int zspace = 0;
-            for(int d = 0;d < dim;d++){
-                if(dmem[d][pf[basisl][d]] <= thresholds->zero){
-                    printf("found zero max component for partner function %d attempting switch\n",d);
-                    int fim = -1, fid = pf[basisl][d];
-                    double fimd = 0.0;
-                    for(int fi = 0;fi < dim;fi++){
-                        int fii = pf[basisl][fi];
-                        if(dmem[fi][fid] > thresholds->zero && dmem[d][fii] > thresholds->zero && dmem[fi][fid] > fimd){
-                            fim = fi;
-                        }
-                    }
-                    if(fim >= 0){
-                        
-                        printf("found replacement orbital %d(%d) <-> %d(%d)\n",fim,pf[basisl][fim],d,fid);
-                        for(int pr = 0;pr < dim;pr++){
-                            printf("was max %d(%lf)\n",pf[basisl][pr],dmem[pr][pf[basisl][pr]]);
-                        }
-                        pf[basisl][d] = pf[basisl][fim];
-                        pf[basisl][fim] = fid;
-                    } else {
-                        printf("could not find replacement orbital, removing from subspace\n");
-                        for(int pr = 0;pr < dim;pr++){
-                            printf("was max %d(%lf)\n",pf[basisl][pr],dmem[pr][pf[basisl][pr]]);
-                        }
-                        zspace = 1;
-                        break;
-                    }
+            for(int d = 0; d < dim;d++){
+                int wfi = pf[o][d], di = pf[basisl][d];
+                memset(mem[0], 0, sizeof(double[basisl]));
+                for(int j = 0; j < salc->fl;j++){
+                    mem[0][salc->f[j] - basis] = avg*space[di][j];
                 }
-                printf("orbital %d max component in %d = %lf\n",d,pf[basisl][d],dmem[d][pf[basisl][d]]);
+                vladd(basisl, mem[0], symwf[wfi], symwf[wfi]);
             }
-            
-            if(!zspace){
-                printf("adding symmetrized orbitals %d\n",o);
-                for(int d = 0;d < dim;d++){
-                    
-                    vlnorm2(basisl, mem[d*md+pf[basisl][d]], mem[md2]);
-                    vlscale(avg, basisl, mem[md2], mem[md2]);
-                    printf("adding degenerate component %d\n",d);
-                    printTransform(1,basisl,mem[md2]);
-                    vladd(basisl, symorb[pf[o][d]], mem[md2], symorb[pf[o][d]]);
-                }
-            }
-            
         }
     }
     
-    for(int o = 0;o < basisl;o++){
-        int dim = pg->ct2->s[icomp[o]].d;
-        if(dim != 1) continue;
-        vlcopy(basisl, proj[o][icomp[o]], symorb[o]);
-    }
-    
-    //printf("Orbital span (vectors) = ");
-    
-    //printf("\n");
-    
-    
-    free(ispan);
-    free(icomp);
-    free(comp);
-    free(mem);
-    free(proj);
-    return ret;
 err:
+    
     free(ispan);
     free(icomp);
-    free(comp);
     free(mem);
-    free(proj);
+    free(pf);
+    free(psalc);
+    free(bfd);
+    free(psalck);
+
     return ret;
 }
-
-#endif
 
 msym_error_t symmetrizeTranslation(msym_point_group_t *pg, msym_equivalence_set_t *es, msym_permutation_t *perm, int pi, double translation[3]){
     msym_error_t ret = MSYM_SUCCESS;

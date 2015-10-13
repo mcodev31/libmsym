@@ -33,6 +33,8 @@ void vadd(const double[3], const double[3], double[3]);
 void vladd(int l, const double v1[l], const double v2[l], double vr[l]);
 void madd(const double A[3][3], const double B[3][3], double C[3][3]);
 void mladd(int l, const double A[l][l], const double B[l][l], double C[l][l]);
+double vlsum(int l, double v[l]);
+double vlsumsqr(int l, double v[l]);
 void vsub(const double[3], const double[3], double[3]);
 void vlsub(int l, const double v1[l], const double v2[l], double vr[l]);
 void vscale(double, const double[3], double[3]);

@@ -597,7 +597,6 @@ msym_error_t msymSymmetrizeWavefunctions(msym_context ctx, int l, double c[l][l]
     msym_point_group_t *pg = NULL;
     msym_subspace_t *ss = NULL;
     msym_basis_function_t *basis = NULL;
-    msym_thresholds_t *t = NULL;
     int *span = NULL;
     
     double (*symc)[l] = NULL;
@@ -608,9 +607,6 @@ msym_error_t msymSymmetrizeWavefunctions(msym_context ctx, int l, double c[l][l]
     clock_t start;
     clock_t end;
     double time;
-    
-    
-    if(MSYM_SUCCESS != (ret = ctxGetThresholds(ctx, &t))) goto err;
     
     if(MSYM_SUCCESS != (ret = ctxGetPointGroup(ctx, &pg))) goto err;
     if(pg->ct == NULL){
@@ -639,7 +635,7 @@ msym_error_t msymSymmetrizeWavefunctions(msym_context ctx, int l, double c[l][l]
     //msymSetErrorDetails("Function NYI");
     //goto err;
     
-    if(MSYM_SUCCESS != (ret = symmetrizeWavefunctions(pg, ssl, ss, span, basisl, basis, t, c , symc))) goto err;
+    if(MSYM_SUCCESS != (ret = symmetrizeWavefunctions(pg, ssl, ss, span, basisl, basis, c , symc))) goto err;
 
     /*printf("Pre symmetrization\n");
     printTransform(l,l,c);
@@ -652,7 +648,7 @@ msym_error_t msymSymmetrizeWavefunctions(msym_context ctx, int l, double c[l][l]
     
     time = (double)(end - start) / CLOCKS_PER_SEC;
     
-    printf("time: %lf seconds to symmetrize %d orbitals\n",time,basisl);
+    printf("time: %lf seconds to symmetrize %d wave functions\n",time,basisl);
     
 err:
     free(symc);

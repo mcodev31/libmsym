@@ -182,7 +182,6 @@ int example(const char* in_file, msym_thresholds_t *thresholds){
             msym_basis_function_t *bf = salc->f[0];
             if(bf->type == MSYM_BASIS_TYPE_REAL_SPHERICAL_HARMONIC) type = "real spherical harmonic ";
             printf("\tSALC %d was constructed from %d %sbasis functions on %s with quantum numbers n=%d and l=%d\n",j,salc->fl,type,bf->element->name,bf->f.sh.n,bf->f.sh.l);
-            printTransform(mss[i].salc[j].d, mss[i].salc[j].fl, mss[i].salc[j].pf);
         }
     }
     
@@ -208,10 +207,7 @@ int example(const char* in_file, msym_thresholds_t *thresholds){
             }
         }
     }
-    
-    printf("salcs = ");
-    printTransform(bfsl, bfsl, coefficients);
-    
+        
     /* Reorder the SALCs */
     for(int i = 0;i < bfsl;i++){
         memcpy(cmem, coefficients[i], sizeof(double[bfsl]));
@@ -219,7 +215,7 @@ int example(const char* in_file, msym_thresholds_t *thresholds){
         memcpy(coefficients[i*i % bfsl], cmem, sizeof(double[bfsl]));
     }
     
-    /* Add some noise
+    /* Add some noise */
     srand((unsigned)time(NULL));
     for(int i = 0;i < bfsl;i++){
         for(int j = 0;j < bfsl;j++){
@@ -227,10 +223,6 @@ int example(const char* in_file, msym_thresholds_t *thresholds){
             coefficients[i][j] += r*1.0e-5;
         }
     }
-    printf("noise = ");
-    printTransform(bfsl, bfsl, coefficients);
-
-    */
     
     /* Symmetrize wavefunctions */
     if(MSYM_SUCCESS != (ret = msymSymmetrizeWavefunctions(ctx, bfsl, coefficients))) goto err;

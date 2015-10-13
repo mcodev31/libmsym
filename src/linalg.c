@@ -153,6 +153,18 @@ int vperpendicular(const double v1[3], const double v2[3], double t){
     return fabs(vdot(tv1,tv2)) <= t;
 }
 
+double vlsum(int l, double v[l]){
+    double sum = 0.0;
+    for(int i = 0;i < l;i++) sum += v[i];
+    return sum;
+}
+
+double vlsumsqr(int l, double v[l]){
+    double sum = 0.0;
+    for(int i = 0;i < l;i++) sum += SQR(v[i]);
+    return sum;
+}
+
 int vequal(const double v1[3], const double v2[3], double t){
     double vs[3], va[3];
     vsub(v1,v2,vs);

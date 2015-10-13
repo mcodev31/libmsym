@@ -253,8 +253,7 @@ class Context(object):
     @staticmethod
     def _assert_success(error, _func=libmsym.msymGetErrorDetails):
         if not error.value == _ReturnCode.SUCCESS:
-            details = _func().decode()
-            raise Error(error, details=details)
+            raise Error(error, details = _func().decode())
         
     def _update_elements(self, _func=libmsym.msymGetElements):
         celements = POINTER(Element)()

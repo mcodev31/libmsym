@@ -46,6 +46,7 @@ with msym.Context(elements = elements, basis_functions = basis_functions) as ctx
     write_xyz(args.outfile, selements, comment + " symmetrized by libmsym according to point group " + point_group)
     sops = ctx.symmetry_operations
     ctx.generate_salc_subspaces()
+    print(sops)
 
 #with msym.Context(elements = elements, point_group = "T") as ctx:
 #    point_group = ctx.point_group
