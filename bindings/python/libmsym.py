@@ -309,6 +309,9 @@ class Context(object):
     libmsym.msymSetElements.restype = _ReturnCode
     libmsym.msymSetElements.argtypes = [_Context, c_int, POINTER(Element)]
 
+    libmsym.msymGenerateElements.restype = _ReturnCode
+    libmsym.msymGenerateElements.argtypes = [_Context, c_int, POINTER(Element)]
+
     libmsym.msymGetElements.restype = _ReturnCode
     libmsym.msymGetElements.argtypes = [_Context, POINTER(c_int), POINTER(POINTER(Element))]
 
@@ -394,6 +397,7 @@ class Context(object):
         self._subrepresentation_spaces = None
         self._character_table = None
         self._salcs = None
+        self._basis_functions = []
         size = len(elements)
         element_array = (Element*size)(*elements)
         self._assert_success(_func(self._ctx, size, element_array))
@@ -556,6 +560,21 @@ class Context(object):
         species = np.zeros((csize),dtype=np.int32)
         self._assert_success(_func(self._ctx,csize,m,species,partner_functions))
         return (m, species, partner_functions[0:csize])
+
+    def generate_elements(self, elements, _func=libmsym.msymGenerateElements):
+        if not self._ctx:
+            raise RuntimeError
+        self._subrepresentation_spaces = None
+        self._character_table = None
+        self._salcs = None
+        self._element_array = None
+        self._basis_functions = []
+        self._elements = []
+        size = len(elements)
+        element_array = (Element*size)(*elements)
+        self._assert_success(_func(self._ctx, size, element_array))
+        self._update_elements()
+        return self._elements
         
         
 

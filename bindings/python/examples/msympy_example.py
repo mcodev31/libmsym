@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import libmsym as msym, argparse, random
+import libmsym as msym, numpy as np, argparse, random, sys
 
 
 
@@ -55,6 +55,8 @@ with msym.Context(elements = elements, basis_functions = basis_functions) as ctx
     ctx.character_table.symmetry_species # symmetry species
     ctx.character_table.symmetry_species[0].dim  # dimensionality of symmetry species
     ctx.character_table.symmetry_species[0].name # name of symmetry species e.g. A2g
+
+    #matrix version of the above, as well as wave function symmetrization
     (matrix, species, partners) = ctx.salcs
     (d,d) = matrix.shape
     print(matrix)
@@ -69,6 +71,17 @@ with msym.Context(elements = elements, basis_functions = basis_functions) as ctx
     print(matrix)
     print(species)
     print([(p.index, p.dim) for p in partners])
+
+    #generating elements
+    ctx.point_group = "D6h"
+    gen_elements = [msym.Element(name = "C", coordinates = [1.443524, 0.0,0.0]), msym.Element(name = "H", coordinates = [2.568381, 0.0, 0.0])]
+    benzene = ctx.generate_elements(gen_elements)
+    maxcomp = max([max(e.coordinates) for e in benzene])
+    print(len(benzene),"benzene\n")
+    for e in benzene:
+        vec = np.asarray(e.coordinates)
+        vec[vec < maxcomp*sys.float_info.epsilon] = 0
+        print(e.name, vec[0],vec[1],vec[2])
     
 
 #with msym.Context(elements = elements, point_group = "T") as ctx:

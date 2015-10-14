@@ -78,7 +78,7 @@ extern "C" {
         int order;
         msym_symmetry_operation_t *primary;
         msym_symmetry_operation_t **sops;
-        struct _msym_subgroup *subgroup[2];
+        struct _msym_subgroup *generators[2];
         char name[8];
     } msym_subgroup_t;
     
