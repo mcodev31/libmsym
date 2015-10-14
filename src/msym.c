@@ -527,7 +527,7 @@ msym_error_t msymGetSALCs(msym_context ctx, int l, double c[l][l], int species[l
         if(MSYM_SUCCESS != (ret = ctxGetSubrepresentationSpaces(ctx, &srsl, &srs, &span))) goto err;
     }
     
-    
+    memset(c,0,sizeof(double[basisl][basisl]));
     int wf = 0;
     for(int i = 0;i < srsl;i++){
         int s = srs[i].s;
