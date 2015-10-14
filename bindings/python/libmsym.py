@@ -156,32 +156,29 @@ class SALC(Structure):
     _fields_ = [("_d", c_int),
                 ("_fl", c_int),
                 ("_pf", POINTER(c_double)),
-                ("_f", POINTER(POINTER(RealSphericalHarmonic)))]
+                ("_f", POINTER(POINTER(BasisFunction)))]
 
     _pf_array = None
-    _npf_array = None
     basis_functions = []
-
-    
 
     def _update_basis_functions(self, basis_function_addresses, basis):
         self.basis_functions = [basis[basis_function_addresses.index(addressof(p.contents))] for p in self._f[0:self._fl]]
     
-    @property
-    def partner_functions(self):
-        if self._pf_array is None:
-            pf = cast(self._pf,POINTER(c_double*self._fl))
-            self._pf_array = [f[0:self._fl] for f in pf[0:self._d]]
-            
-        return self._pf_array
+    #@property
+    #def partner_functions(self):
+    #    if self._pf_array is None:
+    #        pf = cast(self._pf,POINTER(c_double*self._fl))
+    #        self._pf_array = [f[0:self._fl] for f in pf[0:self._d]]
+    #        
+    #    return self._pf_array
 
     @property
-    def np_partner_functions(self):
+    def partner_functions(self):
         if np is None:
             raise ImportError("numpy is not available.")
         
-        if self._npf_array is None:
-            self._npf_array = np.ctypeslib.as_array(self._pf, shape = (self._d,self._fl))
+        if self._pf_array is None:
+            self._pf_array = np.ctypeslib.as_array(self._pf, shape = (self._d,self._fl))
 
         
 
@@ -219,27 +216,18 @@ class CharacterTable(Structure):
                 ("_table", POINTER(c_double))]
 
     _table_array = None
-    _np_table_array = None
     _class_count_array = None
     _symmetry_species = None
-                
-    @property
-    def table(self):
-        if self._table_array is None:
-            pf = cast(self._table,POINTER(c_double*self._d))
-            self._table_array = [f[0:self._d] for f in pf[0:self._d]]
-            
-        return self._table_array
 
     @property
-    def np_table(self):
+    def table(self):
         if np is None:
             raise ImportError("numpy is not available.")
         
-        if self._np_table_array is None:
-            self._np_table_array = np.ctypeslib.as_array(self._table, shape = (self._d,self._d))
+        if self._table_array is None:
+            self._table_array = np.ctypeslib.as_array(self._table, shape = (self._d,self._d))
 
-        return self._np_table_array
+        return self._table_array
 
     @property
     def class_count(self):
@@ -379,7 +367,6 @@ class Context(object):
         cbfs = POINTER(BasisFunction)()
         csize = c_int(0)
         self._assert_success(_func(self._ctx,byref(csize),byref(cbfs)))
-        print(cbfs[0])
         return [addressof(bf) for bf in cbfs[0:csize.value]]
 
     def _set_elements(self, elements, _func=libmsym.msymSetElements):

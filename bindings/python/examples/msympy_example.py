@@ -48,12 +48,9 @@ with msym.Context(elements = elements, basis_functions = basis_functions) as ctx
     ctx.subrepresentation_spaces # subspace
     ctx.subrepresentation_spaces[0].symmetry_species #symmetry species of space (index into character table)
     ctx.subrepresentation_spaces[0].salcs # salcs that span space
-    ctx.subrepresentation_spaces[0].salcs[0].basis_functions # basis functions for salc
-    ctx.subrepresentation_spaces[0].salcs[0].partner_functions # array of partner functions expressed in terms of basis_functions coefficients
-    ctx.subrepresentation_spaces[0].salcs[0].np_partner_functions # same as above, but as numpy array (raises exception if numpy not available)
-    
-    ctx.character_table.table # table as array of arrays
-    ctx.character_table.np_table # table as numpy array (raises exception if numpy not available)
+    ctx.subrepresentation_spaces[0].salcs[0].basis_functions # basis functions for salc    
+    ctx.subrepresentation_spaces[0].salcs[0].partner_functions # numpy array of partner functions expressed in terms of basis_functions coefficients
+    ctx.character_table.table # table as numpy array
     ctx.character_table.symmetry_operations # representative symmetry operations
     ctx.character_table.symmetry_species # symmetry species
     ctx.character_table.symmetry_species[0].dim  # dimensionality of symmetry species
