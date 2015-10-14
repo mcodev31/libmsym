@@ -173,12 +173,11 @@ msym_error_t symmetrizeWavefunctions(msym_point_group_t *pg, int srsl, msym_subr
                 double (*space)[salc->fl] = (double (*)[salc->fl]) salc->pf;
                 double psalcabs = 0.0;
                 for(int d = 0;d < salc->d;d++){
-                    memset(mem[0], 0, sizeof(double[basisl]));
                     for(int j = 0; j < salc->fl;j++){
-                        mem[0][salc->f[j] - basis] = space[d][j];
+                        mem[0][j] = wf[o][salc->f[j] - basis];
                     }
-                    vlproj(basisl, wf[o], mem[0], mem[1]);
-                    double pabssqr = vlsumsqr(basisl, mem[1]);
+                    vlproj(salc->fl, mem[0], space[d], mem[1]);
+                    double pabssqr = vlsumsqr(salc->fl, mem[1]);
                     mabs += pabssqr;
                     psalcabs += pabssqr;
                     bfd[o][d] += pabssqr;

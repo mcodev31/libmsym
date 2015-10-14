@@ -689,7 +689,7 @@ msym_error_t generateSubrepresentationSpaces(msym_point_group_t *pg, int sgl, ms
                         double (*sbasis)[dd] = mbasis;
                         double (*sdec)[dd] = mdec;
                         if(ct->s[sk].d > 1){
-                            printf("multi-dimensional partitioning required\n");
+                            //printf("multi-dimensional partitioning required\n");
                             double (*dproj)[dd] = mproj; // projection operator for direct product
                             double (*dscal)[dd] = mscal;
                         
@@ -698,7 +698,7 @@ msym_error_t generateSubrepresentationSpaces(msym_point_group_t *pg, int sgl, ms
 
                             msym_subgroup_t *rsg = NULL;
                             if(MSYM_SUCCESS != (ret = findSplittingFieldSubgroup(pg, sk, sgl, sg, thresholds, &rsg))) goto err;
-                            printf("using subgroup %s\n",rsg->name);
+                            //printf("using subgroup %s\n",rsg->name);
                             
                             if(MSYM_SUCCESS != (ret = getSplittingFieldCharacters(pg, rsg, sgc))) goto err;
                             
@@ -820,7 +820,7 @@ msym_error_t generateSubrepresentationSpaces(msym_point_group_t *pg, int sgl, ms
         */
     }
     
-    printNewSubspace(ct,ct->d,srs);
+    //printNewSubspace(ct,ct->d,srs);
     *ospan = ispan;
     *osrsl = ct->d;
     *osrs = srs;

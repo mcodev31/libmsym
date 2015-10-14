@@ -287,6 +287,10 @@ int read_xyz(const char *name, msym_element_t **ratoms) {
     msym_element_t *a;
     int l;
     char buf[1024];
+    if(NULL == fp){
+        fprintf(stderr, "could not open file: %s\n",name);
+        return -1;
+    }
     if (NULL == fgets(buf, sizeof(buf), fp) || sscanf(buf," %d ",&l) != 1){
         fprintf(stderr,"Unable to read file %s\n",name);
         return -1;
