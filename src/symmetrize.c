@@ -142,7 +142,6 @@ msym_error_t symmetrizeWavefunctions(msym_point_group_t *pg, int srsl, msym_subr
     
     int *ispan = calloc(pg->ct->d,sizeof(*ispan));
     
-    memset(symwf,0,sizeof(double[basisl][basisl]));
     memset(species,0,sizeof(int[basisl]));
     memset(pfo,0,sizeof(msym_partner_function_t[basisl]));
     
@@ -289,6 +288,8 @@ msym_error_t symmetrizeWavefunctions(msym_point_group_t *pg, int srsl, msym_subr
         printf("\n");
         
     }
+    
+    memset(symwf,0,sizeof(double[basisl][basisl]));
     
     for(int o = 0;o < basisl;o++){
         int k = species[o];

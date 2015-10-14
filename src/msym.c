@@ -509,89 +509,59 @@ err:
     return ret;
 }
 
-/*
-msym_error_t msymGenerateDisplacementSubspaces(msym_context ctx){
+msym_error_t msymGetSALCs(msym_context ctx, int l, double c[l][l], int species[l], msym_partner_function_t pf[l]){
     msym_error_t ret = MSYM_SUCCESS;
     
-    msym_point_group_t *pg = NULL;
-    msym_equivalence_set_t *es = NULL;
-    msym_permutation_t **perm = NULL;
-    msym_thresholds_t *t = NULL;
-    msym_subspace_t *ss = NULL;
+    
+    msym_subrepresentation_space_t *srs = NULL;
+    msym_basis_function_t *basis = NULL;
+    
     int *span = NULL;
     
-    clock_t start = clock();
-    int esl = 0, perml = 0, sopsl = 0, ssl = 0;
+    int srsl = 0, basisl = 0;
     
-    if(MSYM_SUCCESS != (ret = ctxGetThresholds(ctx, &t))) goto err;
-    if(MSYM_SUCCESS != (ret = ctxGetPointGroup(ctx, &pg))) goto err;
-    if(pg->ct == NULL){
-        if(MSYM_SUCCESS != (ret = generateCharacterTable(pg->type, pg->n, pg->order, pg->sops, &pg->ct))) goto err;
+    if(MSYM_SUCCESS != (ret = ctxGetBasisFunctions(ctx, &basisl, &basis))) goto err;
+    
+    if(MSYM_SUCCESS != (ret = ctxGetSubrepresentationSpaces(ctx, &srsl, &srs, &span))){
+        if(MSYM_SUCCESS != (ret = msymGenerateSubrepresentationSpaces(ctx))) goto err;
+        if(MSYM_SUCCESS != (ret = ctxGetSubrepresentationSpaces(ctx, &srsl, &srs, &span))) goto err;
     }
-    if(MSYM_SUCCESS != (ret = ctxGetEquivalenceSets(ctx, &esl, &es))) goto err;
-    if(MSYM_SUCCESS != (ret = ctxGetEquivalenceSetPermutations(ctx, &perml, &sopsl, &perm))) goto err;
-    if(sopsl != pg->order || perml != esl) {ret = MSYM_INVALID_PERMUTATION; goto err;}
     
-    msymSetErrorDetails("Funciton NYI");
-    goto err;
-    //if(MSYM_SUCCESS != (ret = generateDisplacementSubspaces(pg, esl, es, perm, t, &ssl, &ss, &span))) goto err;
     
-    clock_t end = clock();
-    double time = (double)(end - start) / CLOCKS_PER_SEC;
-    printf("time: %lf seconds to generate %d root vibrational subspaces from\n",time,ssl);
-    
-    //for(int i = 0;i < ssl;i++) printSubspace(pg->ct, &ss[i]);
-    
-    if(MSYM_SUCCESS != (ret = ctxSetDisplacementSubspaces(ctx, ssl, ss, span))) goto err;
-    
-    return ret;
-err:
-    for(int i = 0;i < ssl;i++){
-        freeSubspace(&ss[i]);
+    int wf = 0;
+    for(int i = 0;i < srsl;i++){
+        int s = srs[i].s;
+        for(int j = 0;j < srs[i].salcl;j++){
+            int pwf = wf;
+            double (*mpf)[srs[i].salc[j].fl] = srs[i].salc[j].pf;
+            for(int d = 0;d < srs[i].salc[j].d;d++){
+                if(wf >= basisl){
+                    ret = MSYM_INVALID_SUBSPACE;
+                    msymSetErrorDetails("Generated more SALCs than the number of basis functions (%d)", basisl);
+                    goto err;
+                }
+                for(int f = 0;f < srs[i].salc[j].fl;f++){
+                    int index = (int)(srs[i].salc[j].f[f] - basis);
+                    c[wf][index] = mpf[d][f];
+                }
+                pf[wf].i = pwf;
+                pf[wf].d = d;
+                species[wf] = s;
+                wf++;
+            }
+        }
     }
-    free(ss);
-    free(span);
-    return ret;
-}*/
-
-/*
-msym_error_t msymGetDisplacementSubspaces(msym_context ctx, int l, double c[l][l]){
-    msym_error_t ret = MSYM_SUCCESS;
-    msym_subspace_t *ss = NULL;
-    msym_orbital_t *basis = NULL;
-    int *span = NULL;
-    int ssl = 0, basisl = 0;
     
-    if(MSYM_SUCCESS != (ret = ctxGetOrbitals(ctx, &basisl, &basis))) goto err;
-    
-    if(basisl != l) {
+    if(wf != basisl){
         ret = MSYM_INVALID_ORBITALS;
-        msymSetErrorDetails("Number of orbital coefficients (%d) do not match orbital basis (%d)",l,basisl);
+        msymSetErrorDetails("Number of salc wavefunctions (%d) do not match orbital basis (%d)",wf,basisl);
         goto err;
     }
     
-    if(MSYM_SUCCESS != (ret = ctxGetDisplacementSubspaces(ctx, &ssl, &ss,&span))){
-        if(MSYM_SUCCESS != (ret = msymGenerateDisplacementSubspaces(ctx))) goto err;
-        if(MSYM_SUCCESS != (ret = ctxGetDisplacementSubspaces(ctx, &ssl, &ss,&span))) goto err;
-    }
-    
-    //printf("getting orbital subspaces\n");
-    
-    if(MSYM_SUCCESS != (ret = getOrbitalSubspaces(ssl, ss, basisl, basis, c))) goto err;
-    
-    //msym_point_group_t *pg = NULL;
-    //if(MSYM_SUCCESS != (ret = ctxGetPointGroup(ctx, &pg))) goto err;
-    //for(int i = 0;i < ssl;i++) printSubspace(pg->ct, &ss[i]);
-    //printTransform(l,l,c);
-    
-    //printf("get ok\n");
-    
-    return ret;
 err:
     return ret;
     
-}*/
-
+}
 
 msym_error_t msymSymmetrizeWavefunctions(msym_context ctx, int l, double c[l][l], int species[l], msym_partner_function_t pf[l]){
     msym_error_t ret = MSYM_SUCCESS;
@@ -600,10 +570,7 @@ msym_error_t msymSymmetrizeWavefunctions(msym_context ctx, int l, double c[l][l]
     msym_basis_function_t *basis = NULL;
     int *span = NULL;
     
-    double (*symc)[l] = NULL;
-    
     int srsl = 0, basisl = 0;
-    
     
     clock_t start;
     clock_t end;
@@ -629,30 +596,18 @@ msym_error_t msymSymmetrizeWavefunctions(msym_context ctx, int l, double c[l][l]
     }
     
     
-    symc = malloc(sizeof(double[l][l]));
     
     start = clock();
-
-    //msymSetErrorDetails("Function NYI");
-    //goto err;
     
-    if(MSYM_SUCCESS != (ret = symmetrizeWavefunctions(pg, srsl, srs, span, basisl, basis, c , symc, species, pf))) goto err;
-
-    /*printf("Pre symmetrization\n");
-    printTransform(l,l,c);
-    printf("Posr symmetrization\n");
-    printTransform(l,l,symc);*/
+    if(MSYM_SUCCESS != (ret = symmetrizeWavefunctions(pg, srsl, srs, span, basisl, basis, c , c, species, pf))) goto err;
     
     end = clock();
-    
-    memcpy(c,symc,sizeof(double[l][l]));
     
     time = (double)(end - start) / CLOCKS_PER_SEC;
     
     printf("time: %lf seconds to symmetrize %d wave functions\n",time,basisl);
     
 err:
-    free(symc);
     return ret;
 }
 

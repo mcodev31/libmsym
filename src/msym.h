@@ -212,8 +212,11 @@ extern "C" {
     msym_error_t msymApplyTranslation(msym_context ctx, msym_element_t *element, double v[3]);
 #ifdef __cplusplus
     msym_error_t msymSymmetrizeWavefunctions(msym_context ctx, int l, void *c, int *species, msym_partner_function_t *pf);
+    msym_error_t msymGetSALCs(msym_context ctx, int l, void *c, int *species, msym_partner_function_t *pf);
+    
 #else
     msym_error_t msymSymmetrizeWavefunctions(msym_context ctx, int l, double c[l][l], int species[l], msym_partner_function_t pf[l]);
+    msym_error_t msymGetSALCs(msym_context ctx, int l, double c[l][l], int species[l], msym_partner_function_t pf[l]);
 #endif
     msym_error_t msymGenerateElements(msym_context ctx, int length, msym_element_t *elements);
     msym_error_t msymGenerateSubrepresentationSpaces(msym_context ctx);

@@ -54,7 +54,7 @@ int example(const char* in_file, msym_thresholds_t *thresholds){
     orbitalsl = sizeof(orbitals)/sizeof(char*);
     bfsl = orbitalsl*length;
     bfs = calloc(bfsl, sizeof(msym_basis_function_t));
-    double (*coefficients)[bfsl] = calloc(bfsl, sizeof(*coefficients)); // SALCs in matrix form, and input for symmetrization
+    double (*salcs)[bfsl] = calloc(bfsl, sizeof(*salcs)); // SALCs in matrix form, and input for symmetrization
     double *cmem = calloc(bfsl, sizeof(double)); // Some temporary memory
     int *species = calloc(bfsl, sizeof(*species));
     msym_partner_function_t *pf = calloc(bfsl, sizeof(*pf));
@@ -189,34 +189,13 @@ int example(const char* in_file, msym_thresholds_t *thresholds){
         }
     }
     
-
-    for(int i = 0, ci = 0;i < msrsl;i++){
-        for(int j = 0;j < msrs[i].salcl;j++){
-            msym_salc_t *salc = &msrs[i].salc[j];
-            double (*c)[salc->fl] = salc->pf;
-            for(int k = 0;k < salc->d;k++){
-                if(ci >= bfsl){
-                    //Used for convenience, this error should be handled seprately, but the function is exported for this reason
-                    msymSetErrorDetails("There seems to be more SALCs than the number of basis functions (%d)", bfsl);
-                    goto err;
-                }
-                for(int l = 0;l < salc->fl;l++){
-                    /* Use pointer arithmetics to get the index of the basis function.
-                     * Be sure to use mbfs as returned from msymGetBasisFunctions, not bfs allocated above,
-                     * these are always in the same order, but not necessarily the same memory */
-                    coefficients[ci][salc->f[l] - mbfs] = c[k][l];
-                }
-                
-                ci++;
-            }
-        }
-    }
-        
+    if(MSYM_SUCCESS != (ret = msymGetSALCs(ctx, bfsl, salcs, species, pf))) goto err;
+    
     /* Reorder the SALCs */
     for(int i = 0;i < bfsl;i++){
-        memcpy(cmem, coefficients[i], sizeof(double[bfsl]));
-        memcpy(coefficients[i], coefficients[i*i % bfsl], sizeof(double[bfsl]));
-        memcpy(coefficients[i*i % bfsl], cmem, sizeof(double[bfsl]));
+        memcpy(cmem, salcs[i], sizeof(double[bfsl]));
+        memcpy(salcs[i], salcs[i*i % bfsl], sizeof(double[bfsl]));
+        memcpy(salcs[i*i % bfsl], cmem, sizeof(double[bfsl]));
     }
     
     /* Add some noise */
@@ -224,13 +203,12 @@ int example(const char* in_file, msym_thresholds_t *thresholds){
     for(int i = 0;i < bfsl;i++){
         for(int j = 0;j < bfsl;j++){
             double r = ((double) (rand() - (RAND_MAX >> 1)))/RAND_MAX;
-            coefficients[i][j] += r*1.0e-5;
+            salcs[i][j] += r*1.0e-5;
         }
     }
     
     /* Symmetrize wavefunctions */
-    if(MSYM_SUCCESS != (ret = msymSymmetrizeWavefunctions(ctx, bfsl, coefficients, species, pf))) goto err;
-    
+    if(MSYM_SUCCESS != (ret = msymSymmetrizeWavefunctions(ctx, bfsl, salcs, species, pf))) goto err;
     
     printf("Wave function symmetrization returned new linear combinations:\n");
     for(int i = 0;i < bfsl;i++){
