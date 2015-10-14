@@ -374,6 +374,8 @@ class Context(object):
             raise Error(error, details = _func().decode())
 
     def _get_basis_function_addresses(self, _func=libmsym.msymGetBasisFunctions):
+        if not self._ctx:
+            raise RuntimeError
         cbfs = POINTER(BasisFunction)()
         csize = c_int(0)
         self._assert_success(_func(self._ctx,byref(csize),byref(cbfs)))
@@ -392,6 +394,8 @@ class Context(object):
         self._elements = elements
 
     def _set_point_group(self, point_group, _func=libmsym.msymSetPointGroupByName):
+        if not self._ctx:
+            raise RuntimeError
         self._subrepresentation_spaces = None
         self._character_table = None
         cname = c_char_p(point_group.encode('ascii'))
@@ -410,6 +414,8 @@ class Context(object):
         self._basis_functions = basis_functions
         
     def _update_elements(self, _func=libmsym.msymGetElements):
+        if not self._ctx:
+            raise RuntimeError
         celements = POINTER(Element)()
         csize = c_int(0)
         self._assert_success(_func(self._ctx,byref(csize),byref(celements)))
@@ -417,17 +423,23 @@ class Context(object):
         self._elements = celements[0:csize.value]
 
     def _update_symmetry_operations(self, _func=libmsym.msymGetSymmetryOperations):
+        if not self._ctx:
+            raise RuntimeError
         csops = POINTER(SymmetryOperation)()
         csize = c_int(0)
         self._assert_success(_func(self._ctx,byref(csize),byref(csops)))
         self._symmetry_operations = csops[0:csize.value]
 
     def _update_point_group(self, _func=libmsym.msymGetPointGroupName):
+        if not self._ctx:
+            raise RuntimeError
         cname = (c_char*8)()
         self._assert_success(_func(self._ctx,sizeof(cname),cname))
         self._point_group = cname.value.decode()
         
     def _update_subrepresentation_spaces(self, _func=libmsym.msymGetSubrepresentationSpaces):
+        if not self._ctx:
+            raise RuntimeError
         basis_function_addresses = self._get_basis_function_addresses()
         csrs = POINTER(SubrepresentationSpace)()
         csize = c_int(0)
@@ -439,6 +451,8 @@ class Context(object):
         self._subrepresentation_spaces = srs
 
     def _update_character_table(self, _func=libmsym.msymGetCharacterTable):
+        if not self._ctx:
+            raise RuntimeError
         cct = POINTER(CharacterTable)()
         self._assert_success(_func(self._ctx,byref(cct)))
         self._character_table = cct.contents

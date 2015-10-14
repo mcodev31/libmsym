@@ -388,7 +388,7 @@ err:
 
 
 
-msym_error_t generateSubrepresentationSpaces(msym_point_group_t *pg, int sgl, msym_subgroup_t sg[sgl], int esl, msym_equivalence_set_t *es, msym_permutation_t **perm, int basisl, msym_basis_function_t basis[basisl], msym_element_t *elements, msym_equivalence_set_t **esmap, msym_thresholds_t *thresholds, int *osrsl, msym_subrepresentation_space_t **osrs, int **ospan){
+msym_error_t generateSubrepresentationSpaces(msym_point_group_t *pg, int sgl, msym_subgroup_t sg[sgl], int esl, msym_equivalence_set_t *es, msym_permutation_t **perm, int basisl, msym_basis_function_t basis[basisl], msym_element_t *elements, msym_equivalence_set_t **esmap, msym_thresholds_t *thresholds, int *osrsl, msym_subrepresentation_space_t **osrs, msym_basis_function_t ***osrsbf, int **ospan){
     msym_error_t ret = MSYM_SUCCESS;
     msym_character_table_t *ct = pg->ct;
     int lmax = -1, nmax = 0;
@@ -412,21 +412,21 @@ msym_error_t generateSubrepresentationSpaces(msym_point_group_t *pg, int sgl, ms
     
     int projm = (2*lmax+1)*pg->order;
     
-    double (*bspan)[ct->d] = calloc(lmax+1, sizeof(double[ct->d]));   // span of individual basis functions
-    double (*pspan)[ct->d] = calloc(esl, sizeof(double[ct->d]));      // span of permutation operators
+    double (*bspan)[ct->d] = calloc(lmax+1, sizeof(*bspan));        // span of individual basis functions
+    double (*pspan)[ct->d] = calloc(esl, sizeof(*pspan));               // span of permutation operators
     
-    double (*lspan)[ct->d] = calloc(esl, sizeof(double[ct->d]));        // total span of basis function on each ES
-    double *rspan = calloc(ct->d, sizeof(double));                          // total direct product symmetrized basis
-    double *dspan = calloc(ct->d, sizeof(double));                          // decoposed total span of symmetrized basis (double)
+    double (*lspan)[ct->d] = calloc(esl, sizeof(*lspan));           // total span of basis function on each ES
+    double *rspan = calloc(ct->d, sizeof(*rspan));                  // total direct product symmetrized basis
+    double *dspan = calloc(ct->d, sizeof(*dspan));                  // decoposed total span of symmetrized basis (double)
     
-    double *mspan = calloc(ct->d, sizeof(double));                          // span decomposition memory
-    double (*mproj)[projm] = calloc(projm, sizeof(double[projm]));              // projection operator memory
-    double (*mscal)[projm] = calloc(projm, sizeof(double[projm]));              // projection scaling memory
-    double (*mperm)[pg->order] = calloc(pg->order, sizeof(double[pg->order]));  // permutation memory
-    double (*morth)[pg->order] = calloc(pg->order, sizeof(double[pg->order]));  // permutation orthoginalization memory
-    double (*mbasis)[projm] = calloc(basisl, sizeof(double[projm]));            // basis function coefficients
-    double (*mdec)[projm] = calloc(basisl, sizeof(double[projm]));              // directo product decomposition memory
-    double (*sgc)[pg->order] = calloc(5,sizeof(double[pg->order]));
+    double *mspan = calloc(ct->d, sizeof(double));                  // span decomposition memory
+    double (*mproj)[projm] = calloc(projm, sizeof(*mproj));         // projection operator memory
+    double (*mscal)[projm] = calloc(projm, sizeof(*mscal));         // projection scaling memory
+    double (*mperm)[pg->order] = calloc(pg->order, sizeof(*mperm)); // permutation memory
+    double (*morth)[pg->order] = calloc(pg->order, sizeof(*morth)); // permutation orthoginalization memory
+    double (*mbasis)[projm] = calloc(basisl, sizeof(*mbasis));      // basis function coefficients
+    double (*mdec)[projm] = calloc(basisl, sizeof(*mdec));          // directo product decomposition memory
+    double (*sgc)[pg->order] = calloc(5,sizeof(*sgc));
     
     double *mdcomp = NULL;
     double *mdproj = NULL;
@@ -436,16 +436,21 @@ msym_error_t generateSubrepresentationSpaces(msym_point_group_t *pg, int sgl, ms
     int *isalc = calloc(ct->d, sizeof(int));                               // number of added salcs to irrep
     int *esnmax = calloc(esl, sizeof(int));                                     // max n in eqset
     
-    msym_basis_function_t *(*esbfmap)[pg->order][nmax+1][lmax+1][2*lmax+1] = calloc(esl,sizeof(msym_basis_function_t *[pg->order][nmax+1][lmax+1][2*lmax+1]));
+    msym_basis_function_t *(*esbfmap)[pg->order][nmax+1][lmax+1][2*lmax+1] = calloc(esl,sizeof(*esbfmap));
     
-    struct _ltransforms {int d; void *t;} *lts = calloc(lmax+1,sizeof(struct _ltransforms)); // transformation matrices for basis functions
     
-    int (*les)[lmax+1] = calloc(esl, sizeof(int[lmax+1]));                      // number of l-type basis functions in each ES
+    
+    msym_basis_function_t *(*srsbf) = calloc(basisl, sizeof(*srsbf));
+    int (*srsbfmap)[nmax+1][lmax+1] = calloc(esl,sizeof(*srsbfmap));
+    
+    struct _ltransforms {int d; void *t;} *lts = calloc(lmax+1,sizeof(*lts)); // transformation matrices for basis functions
+    
+    int (*les)[lmax+1] = calloc(esl, sizeof(*les));                      // number of l-type basis functions in each ES
     
     msym_basis_function_t dbf = {.type = ftype};
     double (*ctable)[ct->d] = ct->table;
     
-    msym_subrepresentation_space_t *srs = calloc(ct->d, sizeof(msym_subrepresentation_space_t));
+    msym_subrepresentation_space_t *srs = calloc(ct->d, sizeof(*srs));
     
     /* determine number of l-type basis functions in each ES */
     for(int o = 0;o < basisl;o++){
@@ -464,6 +469,30 @@ msym_error_t generateSubrepresentationSpaces(msym_point_group_t *pg, int sgl, ms
         }
         if(bf->f.sh.n > esnmax[e - es]) esnmax[e - es] = bf->f.sh.n;
         esbfmap[e - es][esi][bf->f.sh.n][bf->f.sh.l][bf->f.sh.m+bf->f.sh.l] = bf;
+    }
+    
+    int srsbfi = 0;
+    
+    for(int i = 0;i < esl;i++){
+        for(int n = 0;n <= nmax;n++){
+            for(int l = 0;l <= lmax;l++){
+                srsbfmap[i][n][l] = srsbfi;
+                for(int e = 0;e < es[i].length;e++){
+                    for(int m = -l;m <= l;m++){
+                        msym_basis_function_t *bf = esbfmap[i][e][n][l][m+l];
+                        if(NULL == bf) break;
+                            srsbf[srsbfi] = bf;
+                            srsbfi++;
+                    }
+                }
+            }
+        }
+    }
+    
+    if(srsbfi != basisl){
+        ret = MSYM_SUBSPACE_ERROR;
+        msymSetErrorDetails("Unexpected number of basis functions in subrepresentation map (expected %d, got %d)",basisl, srsbfi);
+        goto err;
     }
 
     /* calculate span of irreducible representations for basis functions and permutations */
@@ -715,7 +744,6 @@ msym_error_t generateSubrepresentationSpaces(msym_point_group_t *pg, int sgl, ms
                             double (*mt)[mdim] = (double (*)[mdim]) mdproj;
                             
                             memset(found,0,sizeof(int[ct->s[sk].d][mdim]));
-                            //printf("mdim = %d\n",mdim);
                             for(int s = 0;s < pg->order ;s++){
                                 permutationMatrix(&perm[i][s], mperm);
                                 kron(d, mperm, ld, lst[s], dd, dscal);
@@ -724,16 +752,11 @@ msym_error_t generateSubrepresentationSpaces(msym_point_group_t *pg, int sgl, ms
                                         if(found[sg][dim]) continue;
                                         mmtlmul(dd, dd, dscal, mdim, &sdec[sg*mdim], mt);
                                         mmlmul(1,dd,&sdec[dim], mdim, mt, &g[sg][dim]);
-                                        //printf("v = sdec[%d]'*Sops[%d]*sdec[%d-%d] = ",dim,s,mdim,2*mdim-1);
-                                        //printTransform(1, mdim, &g[sg][dim]);
                                         if(vlabs(mdim, g[sg][dim]) > thresholds->zero) found[sg][dim] = 1;
                                     }
                                 }
                             }
-                            //printf("projected vectors before\n");
-                            //printTransform(svspan, dd, &sbasis[si]);
                             
-                            //just 2 dimensions at the moment
                             for(int cdim = 0;cdim < mdim;cdim++){
                                 vlnorm2(dd, sdec[cdim], sbasis[si+ct->s[sk].d*cdim]);
                             }
@@ -744,12 +767,6 @@ msym_error_t generateSubrepresentationSpaces(msym_point_group_t *pg, int sgl, ms
                                     vlnorm2(dd, dproj[cdim], sbasis[si+dim+ct->s[sk].d*cdim]);
                                 }
                             }
-                            
-                            //for i=1:3 nv[:,2i-1] = S1[:,i];nv[:,2i] = Tmp[:,i]/norm(Tmp[:,i])
-                            
-                            //printf("projected vectors after\n");
-                            //printTransform(svspan, dd, &sbasis[si]);
-                            //exit(1);
                         }
                         for(int ir = 0;ir < svspan;ir += ct->s[sk].d){
                             for(int n = l+1; n <= esnmax[i];n++){
@@ -762,27 +779,27 @@ msym_error_t generateSubrepresentationSpaces(msym_point_group_t *pg, int sgl, ms
                                 //printf("adding salc %d of %d %d\n",isalc[sk],ispan[sk],sk);
                                 msym_salc_t *salc = &srs[sk].salc[isalc[sk]];
                                 salc->d = ct->s[sk].d;
+                                
                                 double (*pf)[dd] = calloc(salc->d,sizeof(double[dd]));
-                                //this will be incorrect since we have calculated that there should be partitioning of multidimensional spaces
+                                
                                 for(int dim = 0; dim < salc->d;dim++){
                                     vlnorm2(dd, sbasis[si+dim+ir], pf[dim]);
                                 }
-                                //printTransform(ct->s[sk].d, dd, pf);
                                 salc->pf = (double*) pf;
-                                salc->fl = 0;
+                                salc->fl = dd;
+                                salc->f = &srsbf[srsbfmap[i][n][l]];
+                                /*salc->fl = 0;
                                 salc->f = calloc(dd,sizeof(msym_basis_function_t *));
                                 for(int e = 0;e < es[i].length;e++){
                                     for(int m = -l;m <= l;m++){
-                                        /*if(salc->fl >= dd){
-                                            printf("added too many salcs %d\n",dd);
-                                        }*/
                                         if(NULL == (salc->f[salc->fl++] = esbfmap[i][e][n][l][m+l])){
                                             ret = MSYM_SUBSPACE_ERROR;
                                             msymSetErrorDetails("Missing expected basis function for n = %d, l = %d, m = %d on atom %d when generating subspaces",n,l,m,e);
                                             goto err;
                                         }
                                     }
-                                }
+                                }*/
+                                
                                 isalc[sk]++;
                                 //printf("added %d functions\n",salc->fl);
                             }
@@ -807,6 +824,7 @@ msym_error_t generateSubrepresentationSpaces(msym_point_group_t *pg, int sgl, ms
     *ospan = ispan;
     *osrsl = ct->d;
     *osrs = srs;
+    *osrsbf = srsbf;
     
     
 
@@ -836,6 +854,7 @@ msym_error_t generateSubrepresentationSpaces(msym_point_group_t *pg, int sgl, ms
     }
     free(lts);
     free(les);
+    free(srsbfmap);
     //free(ss); used
     
     return ret;
@@ -866,6 +885,7 @@ err:
     }
     free(lts);
     free(les);
+    free(srsbfmap);
     for(int k = 0;k < ct->d;k++){
         for(int i = 0;i < srs[k].salcl;i++){
             free(srs[k].salc[i].f);
@@ -874,6 +894,8 @@ err:
         free(srs[k].salc);
     }
     free(srs);
+    free(srsbf);
+
     return ret;
 }
 

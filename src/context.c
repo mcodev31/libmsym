@@ -39,7 +39,8 @@ struct _msym_context {
     msym_equivalence_set_t *es;
     msym_permutation_t **es_perm;
     msym_subrepresentation_space_t *srs;
-    int *salc_span;
+    msym_basis_function_t **srsbf;
+    int *srs_span;
     unsigned long int flags;
     int elementsl;
     int basisl;
@@ -657,17 +658,18 @@ msym_error_t ctxGetSubrepresentationSpaces(msym_context ctx, int *srsl, msym_sub
     if(ctx->srs == NULL) {ret = MSYM_INVALID_SUBSPACE; goto err;}
     *srsl = ctx->srsl;
     *srs = ctx->srs;
-    *span = ctx->salc_span;
+    *span = ctx->srs_span;
 err:
     return ret;
 }
 
-msym_error_t ctxSetSubrepresentationSpaces(msym_context ctx, int srsl, msym_subrepresentation_space_t *srs, int *span){
+msym_error_t ctxSetSubrepresentationSpaces(msym_context ctx, int srsl, msym_subrepresentation_space_t *srs, msym_basis_function_t **srsbf, int *span){
     msym_error_t ret = MSYM_SUCCESS;
     if(MSYM_SUCCESS != (ret = ctxDestroySubrepresentationSpaces(ctx))) goto err;
     ctx->srsl = srsl;
     ctx->srs = srs;
-    ctx->salc_span = span;
+    ctx->srsbf = srsbf;
+    ctx->srs_span = span;
 err:
     return ret;
 }
@@ -786,9 +788,11 @@ msym_error_t ctxDestroySubrepresentationSpaces(msym_context ctx){
     msym_error_t ret = MSYM_SUCCESS;
     if(ctx == NULL) {ret = MSYM_INVALID_CONTEXT; goto err;}
     freeSubrepresentationSpaces(ctx->srsl, ctx->srs);
-    free(ctx->salc_span);
+    free(ctx->srsbf);
+    free(ctx->srs_span);
     ctx->srs = NULL;
-    ctx->salc_span = NULL;
+    ctx->srsbf = NULL;
+    ctx->srs_span = NULL;
     ctx->srsl = 0;
 err:
     return ret;

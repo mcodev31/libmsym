@@ -452,6 +452,7 @@ msym_error_t msymGenerateSubrepresentationSpaces(msym_context ctx){
     msym_permutation_t **perm = NULL;
     msym_thresholds_t *t = NULL;
     msym_subrepresentation_space_t *srs = NULL;
+    msym_basis_function_t **srsbf = NULL;
     msym_element_t *elements = NULL;
     msym_subgroup_t *sg = NULL;
     int *span = NULL;
@@ -486,9 +487,9 @@ msym_error_t msymGenerateSubrepresentationSpaces(msym_context ctx){
         }
     }
     
-    if(MSYM_SUCCESS != (ret = generateSubrepresentationSpaces(pg, sgl, sg, esl, es, perm, basisl, basis, elements, eesmap, t, &srsl, &srs, &span))) goto err;
+    if(MSYM_SUCCESS != (ret = generateSubrepresentationSpaces(pg, sgl, sg, esl, es, perm, basisl, basis, elements, eesmap, t, &srsl, &srs, &srsbf, &span))) goto err;
     
-    if(MSYM_SUCCESS != (ret = ctxSetSubrepresentationSpaces(ctx,srsl,srs,span))) goto err;
+    if(MSYM_SUCCESS != (ret = ctxSetSubrepresentationSpaces(ctx,srsl,srs,srsbf,span))) goto err;
     
     
     clock_t end = clock();

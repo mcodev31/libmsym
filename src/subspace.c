@@ -23,7 +23,6 @@ void tabPrintTransform(int r, int c, double M[r][c],int indent);
 void freeSubrepresentationSpaces(int srsl, msym_subrepresentation_space_t *srs){
     for(int i = 0;i < srsl && NULL != srs;i++){
         for(int j = 0;j < srs[i].salcl;j++){
-            free(srs[i].salc[j].f);
             free(srs[i].salc[j].pf);
         }
         free(srs[i].salc);

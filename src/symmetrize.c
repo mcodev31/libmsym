@@ -204,18 +204,34 @@ msym_error_t symmetrizeWavefunctions(msym_point_group_t *pg, int srsl, msym_subr
     
     /* Find parner functions */
     for(int o = 0;o < basisl;o++){
-        int ko = species[o], dim = pg->ct->s[ko].d, found = 0;
+        int ko = species[o], dim = pg->ct->s[ko].d;
+        
+        struct _fpf {int i; int j;} fpf = {.i = 0, .j = 0};
         
         for(int i = 1;i < md;i++){
             pf[o][i] = -1;
             pf[basisl][i] = -1;
         };
         
-        for(int i = 0;i < o && !found;i++){
-            for(int j = 1;j < md && !found;j++) found = pf[i][j] == o;
+        if(dim <= 1) continue;
+        
+        for(int i = 0;i < o && !fpf.j;i++){
+            for(int j = 1;j < md;j++){
+                if(pf[i][j] == o){
+                    fpf.i = i;
+                    fpf.j = j;
+                    break;
+                }
+            }
         }
         
-        if(found || dim <= 1) continue;
+        if(fpf.j){
+            for(int i = 1; i < fpf.j;i++){
+                pf[pf[fpf.i][i]][0]--;
+            }            
+            pf[o][0] -= fpf.j;
+            continue;
+        }
         
         for(int i = 0;i < md;i++){dmpf[i] = DBL_MAX;}
         
@@ -239,11 +255,12 @@ msym_error_t symmetrizeWavefunctions(msym_point_group_t *pg, int srsl, msym_subr
         }
         
         for(int i = 1;i < dim;i++){
-            int index = pf[basisl][i];
-            if(index > 0) {
+            //int index = pf[basisl][i];
+            pf[o][0] += pf[basisl][i] > 0;
+            /*if(index > 0) {
                 pf[o][0]++;
                 pf[index][0]--;
-            }
+            }*/
         }
     }
     
@@ -252,7 +269,8 @@ msym_error_t symmetrizeWavefunctions(msym_point_group_t *pg, int srsl, msym_subr
     for(int o = 0;o < basisl;o++){
         int dim = pg->ct->s[species[o]].d;
         if(abs(pf[o][0])+1 != dim){
-            msymSetErrorDetails("Unexpected number of partner functions for wave function %d (expected %d got %d)", o,dim,abs(pf[o][0])+1);
+            for(int i = 0;i < md;i++) printf("%d = %d\n",i,pf[o][i]);
+            msymSetErrorDetails("Unexpected number of partner functions for wave function %d in %s (expected %d got %d)", o, pg->ct->s[species[o]].name, dim, abs(pf[o][0])+1);
             ret = MSYM_SYMMETRIZATION_ERROR;
             goto err;
         }
