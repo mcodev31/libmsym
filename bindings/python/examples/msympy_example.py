@@ -55,6 +55,9 @@ with msym.Context(elements = elements, basis_functions = basis_functions) as ctx
     ctx.character_table.symmetry_species # symmetry species
     ctx.character_table.symmetry_species[0].dim  # dimensionality of symmetry species
     ctx.character_table.symmetry_species[0].name # name of symmetry species e.g. A2g
+    print(ctx.salc_matrix)
+    print(ctx.species_array)
+    print([(p.index, p.dim) for p in ctx.partner_function_array])
     
 
 #with msym.Context(elements = elements, point_group = "T") as ctx:

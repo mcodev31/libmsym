@@ -195,6 +195,12 @@ class SubrepresentationSpace(Structure):
             self._salcarray = self._salcs[0:self._salc_length]
         return self._salcarray
 
+class PartnerFunction(Structure):
+    _fields_ = [("index", c_int),
+                ("dim",c_int)]
+
+
+    
 
 class SymmetrySpecies(Structure):
     _fields_ = [("_d", c_int),
@@ -324,6 +330,16 @@ class Context(object):
     libmsym.msymGetCharacterTable.restype = _ReturnCode
     libmsym.msymGetCharacterTable.argtypes = [_Context, POINTER(POINTER(CharacterTable))]
 
+    if np is None:
+        _SALCsMatrix = c_void_p
+        _SALCsSpecies = POINTER(c_int)
+    else:
+        _SALCsMatrix = np.ctypeslib.ndpointer(dtype=np.float64, ndim=2, flags='C_CONTIGUOUS')
+        _SALCsSpecies = np.ctypeslib.ndpointer(dtype=np.int32, ndim=1, flags='C_CONTIGUOUS')
+    
+    libmsym.msymGetSALCs.restype = _ReturnCode
+    libmsym.msymGetSALCs.argtypes = [_Context, c_int, _SALCsMatrix, _SALCsSpecies, POINTER(PartnerFunction)]
+
 
     def __init__(self, elements=[], basis_functions=[], point_group="", _func=libmsym.msymCreateContext):
         self._elements = []
@@ -374,6 +390,9 @@ class Context(object):
             raise RuntimeError
         self._subrepresentation_spaces = None
         self._character_table = None
+        self._salcs = None
+        self._species = None
+        self._partner_functions = None
         size = len(elements)
         element_array = (Element*size)(*elements)
         self._assert_success(_func(self._ctx, size, element_array))
@@ -385,6 +404,9 @@ class Context(object):
             raise RuntimeError
         self._subrepresentation_spaces = None
         self._character_table = None
+        self._salcs = None
+        self._species = None
+        self._partner_functions = None
         cname = c_char_p(point_group.encode('ascii'))
         self._assert_success(_func(self._ctx, cname))
         self._update_symmetry_operations()
@@ -393,6 +415,9 @@ class Context(object):
         if not self._ctx:
             raise RuntimeError
         self._subrepresentation_spaces = None
+        self._salcs = None
+        self._species = None
+        self._partner_functions = None
         size = len(basis_functions)
         for bf in basis_functions:
             bf._set_element_pointer(self._element_array[self._elements.index(bf.element)])
@@ -444,6 +469,20 @@ class Context(object):
         self._assert_success(_func(self._ctx,byref(cct)))
         self._character_table = cct.contents
         self._character_table._update_symmetry_operations(self._symmetry_operations)
+
+    def _update_salcs(self, _func=libmsym.msymGetSALCs):
+        if not self._ctx:
+            raise RuntimeError
+        if np is None:
+            raise ImportError("numpy is not available.")
+        csize = len(self._basis_functions)
+        partner_functions = (PartnerFunction*csize)()
+        salcs = np.zeros((csize,csize),dtype=np.float64)
+        species = np.zeros((csize),dtype=np.int32)
+        self._assert_success(_func(self._ctx,csize,salcs,species,partner_functions))
+        self._salcs = salcs
+        self._species = species
+        self._partner_functions = partner_functions[0:csize]
         
     @property
     def elements(self):
@@ -501,6 +540,27 @@ class Context(object):
             self._update_character_table()
          
         return self._character_table
+
+    @property
+    def salc_matrix(self):
+        if self._salcs is None:
+            self._update_salcs()
+
+        return self._salcs
+
+    @property
+    def species_array(self):
+        if self._salcs is None:
+            self._update_salcs()
+
+        return self._species
+
+    @property
+    def partner_function_array(self):
+        if self._salcs is None:
+            self._update_salcs()
+
+        return self._partner_functions
         
         
 
