@@ -23,7 +23,7 @@
 #include "subspace.h"
 
 void printTransform(int r, int c, double M[r][c]);
-void printNewSubspace(msym_character_table_t *ct, int l, msym_subspace_t ss[l]);
+void printNewSubspace(msym_character_table_t *ct, int l, msym_subrepresentation_space_t srs[l]);
 void tabPrintTransform(int r, int c, double M[r][c],int indent);
 void tabprintf(char *format, int indent, ...);
 
@@ -178,10 +178,11 @@ err:
 }
 
 /* move this */
-msym_error_t findDecentSubgroup(msym_point_group_t *pg, int irrep, int sgl, msym_subgroup_t sg[sgl], msym_thresholds_t *thresholds, msym_subgroup_t **osg){
+msym_error_t findSplittingFieldSubgroup(msym_point_group_t *pg, int irrep, int sgl, msym_subgroup_t sg[sgl], msym_thresholds_t *thresholds, msym_subgroup_t **osg){
     msym_error_t ret = MSYM_SUCCESS;
     *osg = NULL;
     msym_character_table_t *ct = pg->ct;
+    printf("WARNING: Using splitting low symmetry splitting field\n");
     switch(pg->type){
         case MSYM_POINT_GROUP_TYPE_Cn :
         {
@@ -239,7 +240,6 @@ msym_error_t findDecentSubgroup(msym_point_group_t *pg, int irrep, int sgl, msym
                         msym_symmetry_operation_t *sop = sg[i].sops[j];
                         if(sop->type == PROPER_ROTATION && sop->order == 2 && sop->orientation == MSYM_SYMMETRY_OPERATION_ORIENTATION_HORIZONTAL){
                             h = 1;
-                            printf("skipping h C2 subgroup\n");
                             break;
                         }
                     }
@@ -260,12 +260,12 @@ msym_error_t findDecentSubgroup(msym_point_group_t *pg, int irrep, int sgl, msym
             for(int i = 0;i < sgl;i++){
             
                 if(sg[i].type == MSYM_POINT_GROUP_TYPE_Cs){
+                    printf("WARNING: Using splitting field group Cs, should be C2v or D2h\n");
                     int h = 0;
                     for(int j = 0;j < sg[i].order;j++){
                         msym_symmetry_operation_t *sop = sg[i].sops[j];
                         if(sop->type == REFLECTION && sop->orientation == MSYM_SYMMETRY_OPERATION_ORIENTATION_HORIZONTAL){
                             h = 1;
-                            printf("skipping h Cs subgroup\n");
                             break;
                         }
                     }
@@ -329,7 +329,7 @@ err:
     return ret;
 }
 
-msym_error_t getDecentSubgroupCharacters(msym_point_group_t *pg, msym_subgroup_t *sg, double (*c)[pg->order]){
+msym_error_t getSplittingFieldCharacters(msym_point_group_t *pg, msym_subgroup_t *sg, double (*c)[pg->order]){
     msym_error_t ret = MSYM_SUCCESS;
     int e = 0;
     if(sg->type == MSYM_POINT_GROUP_TYPE_Dn && sg->n == 2){
@@ -388,7 +388,7 @@ err:
 
 
 
-msym_error_t generateSALCSubspaces(msym_point_group_t *pg, int sgl, msym_subgroup_t sg[sgl], int esl, msym_equivalence_set_t *es, msym_permutation_t **perm, int basisl, msym_basis_function_t basis[basisl], msym_element_t *elements, msym_equivalence_set_t **esmap, msym_thresholds_t *thresholds, int *ossl, msym_subspace_t **oss, int **ospan){
+msym_error_t generateSubrepresentationSpaces(msym_point_group_t *pg, int sgl, msym_subgroup_t sg[sgl], int esl, msym_equivalence_set_t *es, msym_permutation_t **perm, int basisl, msym_basis_function_t basis[basisl], msym_element_t *elements, msym_equivalence_set_t **esmap, msym_thresholds_t *thresholds, int *osrsl, msym_subrepresentation_space_t **osrs, int **ospan){
     msym_error_t ret = MSYM_SUCCESS;
     msym_character_table_t *ct = pg->ct;
     int lmax = -1, nmax = 0;
@@ -445,7 +445,7 @@ msym_error_t generateSALCSubspaces(msym_point_group_t *pg, int sgl, msym_subgrou
     msym_basis_function_t dbf = {.type = ftype};
     double (*ctable)[ct->d] = ct->table;
     
-    msym_subspace_t *ss = calloc(ct->d, sizeof(msym_subspace_t));
+    msym_subrepresentation_space_t *srs = calloc(ct->d, sizeof(msym_subrepresentation_space_t));
     
     /* determine number of l-type basis functions in each ES */
     for(int o = 0;o < basisl;o++){
@@ -561,9 +561,9 @@ msym_error_t generateSALCSubspaces(msym_point_group_t *pg, int sgl, msym_subgrou
     for(int k = 0;k < ct->d;k++){
         ispan[k] = (int)round(dspan[k]);
         ddim_max = ddim_max > ispan[k] ? ddim_max : ispan[k];
-        ss[k].s = k;
-        ss[k].salcl = ispan[k];
-        ss[k].salc = calloc(ss[k].salcl, sizeof(msym_salc_t));
+        srs[k].s = k;
+        srs[k].salcl = ispan[k];
+        srs[k].salc = calloc(srs[k].salcl, sizeof(msym_salc_t));
     }
     
     //printf("ddim_max = %d\n",ddim_max);
@@ -668,10 +668,10 @@ msym_error_t generateSALCSubspaces(msym_point_group_t *pg, int sgl, msym_subgrou
                             memset(mdec, 0, sizeof(double[vspan*lvspan][dd]));
 
                             msym_subgroup_t *rsg = NULL;
-                            if(MSYM_SUCCESS != (ret = findDecentSubgroup(pg, sk, sgl, sg, thresholds, &rsg))) goto err;
+                            if(MSYM_SUCCESS != (ret = findSplittingFieldSubgroup(pg, sk, sgl, sg, thresholds, &rsg))) goto err;
                             printf("using subgroup %s\n",rsg->name);
                             
-                            if(MSYM_SUCCESS != (ret = getDecentSubgroupCharacters(pg, rsg, sgc))) goto err;
+                            if(MSYM_SUCCESS != (ret = getSplittingFieldCharacters(pg, rsg, sgc))) goto err;
                             
                             //printTransform(5, pg->order, sgc);
 
@@ -760,7 +760,7 @@ msym_error_t generateSALCSubspaces(msym_point_group_t *pg, int sgl, msym_subgrou
                                     goto err;
                                 }
                                 //printf("adding salc %d of %d %d\n",isalc[sk],ispan[sk],sk);
-                                msym_salc_t *salc = &ss[sk].salc[isalc[sk]];
+                                msym_salc_t *salc = &srs[sk].salc[isalc[sk]];
                                 salc->d = ct->s[sk].d;
                                 double (*pf)[dd] = calloc(salc->d,sizeof(double[dd]));
                                 //this will be incorrect since we have calculated that there should be partitioning of multidimensional spaces
@@ -803,10 +803,10 @@ msym_error_t generateSALCSubspaces(msym_point_group_t *pg, int sgl, msym_subgrou
         */
     }
     
-    printNewSubspace(ct,ct->d,ss);
+    printNewSubspace(ct,ct->d,srs);
     *ospan = ispan;
-    *ossl = ct->d;
-    *oss = ss;
+    *osrsl = ct->d;
+    *osrs = srs;
     
     
 
@@ -867,13 +867,13 @@ err:
     free(lts);
     free(les);
     for(int k = 0;k < ct->d;k++){
-        for(int i = 0;i < ss[k].salcl;i++){
-            free(ss[k].salc[i].f);
-            free(ss[k].salc[i].pf);
+        for(int i = 0;i < srs[k].salcl;i++){
+            free(srs[k].salc[i].f);
+            free(srs[k].salc[i].pf);
         }
-        free(ss[k].salc);
+        free(srs[k].salc);
     }
-    free(ss);
+    free(srs);
     return ret;
 }
 
@@ -1147,12 +1147,12 @@ void densityMatrix(int l, double M[l][l], double D[l][l]){
     }
 }
 
-void printNewSubspace(msym_character_table_t *ct, int l, msym_subspace_t ss[l]){
+void printNewSubspace(msym_character_table_t *ct, int l, msym_subrepresentation_space_t srs[l]){
     for(int k = 0;k < l;k++){
-        printf("Subspace %d %s\n",k,ct->s[ss[k].s].name);
-        for(int i = 0;i < ss[k].salcl;i++){
-            for(int j = 0;j < ss[k].salc[i].fl;j++){
-                msym_basis_function_t *bf = ss[k].salc[i].f[j];
+        printf("Subspace %d %s\n",k,ct->s[srs[k].s].name);
+        for(int i = 0;i < srs[k].salcl;i++){
+            for(int j = 0;j < srs[k].salc[i].fl;j++){
+                msym_basis_function_t *bf = srs[k].salc[i].f[j];
                 if(bf == NULL){
                     printf("error bf\n");
                     exit(1);
@@ -1161,12 +1161,12 @@ void printNewSubspace(msym_character_table_t *ct, int l, msym_subspace_t ss[l]){
             }
             printf("\n");
 
-            double (*space)[ss[k].salc[i].fl] = (double (*)[ss[k].salc[i].fl]) ss[k].salc[i].pf;
+            double (*space)[srs[k].salc[i].fl] = (double (*)[srs[k].salc[i].fl]) srs[k].salc[i].pf;
             if(space == NULL){
                 printf("error space\n");
                 exit(1);
             }
-            tabPrintTransform(ss[k].salc[i].d,ss[k].salc[i].fl,space,1);
+            tabPrintTransform(srs[k].salc[i].d,srs[k].salc[i].fl,space,1);
         }
     }
 }

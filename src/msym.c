@@ -442,7 +442,7 @@ err:
     return ret;
 }
 
-msym_error_t msymGenerateSALCSubspaces(msym_context ctx){
+msym_error_t msymGenerateSubrepresentationSpaces(msym_context ctx){
     msym_error_t ret = MSYM_SUCCESS;
     
     msym_point_group_t *pg = NULL;
@@ -451,13 +451,13 @@ msym_error_t msymGenerateSALCSubspaces(msym_context ctx){
     msym_equivalence_set_t **eesmap = NULL;
     msym_permutation_t **perm = NULL;
     msym_thresholds_t *t = NULL;
-    msym_subspace_t *ss = NULL;
+    msym_subrepresentation_space_t *srs = NULL;
     msym_element_t *elements = NULL;
     msym_subgroup_t *sg = NULL;
     int *span = NULL;
     
     clock_t start = clock();
-    int basisl = 0, esl = 0, perml = 0, sopsl = 0, ssl = 0, elementsl = 0, sgl = 0;
+    int basisl = 0, esl = 0, perml = 0, sopsl = 0, srsl = 0, elementsl = 0, sgl = 0;
     
     if(MSYM_SUCCESS != (ret = ctxGetThresholds(ctx, &t))) goto err;
     if(MSYM_SUCCESS != (ret = ctxGetExternalElements(ctx, &elementsl, &elements))) goto err;
@@ -486,14 +486,14 @@ msym_error_t msymGenerateSALCSubspaces(msym_context ctx){
         }
     }
     
-    if(MSYM_SUCCESS != (ret = generateSALCSubspaces(pg, sgl, sg, esl, es, perm, basisl, basis, elements, eesmap, t, &ssl, &ss, &span))) goto err;
+    if(MSYM_SUCCESS != (ret = generateSubrepresentationSpaces(pg, sgl, sg, esl, es, perm, basisl, basis, elements, eesmap, t, &srsl, &srs, &span))) goto err;
     
-    if(MSYM_SUCCESS != (ret = ctxSetSALCSubspaces(ctx,ssl,ss,span))) goto err;
+    if(MSYM_SUCCESS != (ret = ctxSetSubrepresentationSpaces(ctx,srsl,srs,span))) goto err;
     
     
     clock_t end = clock();
     double time = (double)(end - start) / CLOCKS_PER_SEC;
-    printf("time: %lf seconds to generate %d root basis function subspaces from %d basis functions\n",time,ssl,basisl);
+    printf("time: %lf seconds to generate %d representation spaces from %d basis functions\n",time,srsl,basisl);
     
     //for(int i = 0;i < ssl;i++) printSubspace(pg->ct, &ss[i]);
     
@@ -503,7 +503,7 @@ msym_error_t msymGenerateSALCSubspaces(msym_context ctx){
 err:
     printf("free subspace mem leak\n");
     //exit(1);
-    free(ss);
+    free(srs);
     free(span);
     return ret;
 }
@@ -592,16 +592,16 @@ err:
 }*/
 
 
-msym_error_t msymSymmetrizeWavefunctions(msym_context ctx, int l, double c[l][l]){
+msym_error_t msymSymmetrizeWavefunctions(msym_context ctx, int l, double c[l][l], int species[l], msym_partner_function_t pf[l]){
     msym_error_t ret = MSYM_SUCCESS;
     msym_point_group_t *pg = NULL;
-    msym_subspace_t *ss = NULL;
+    msym_subrepresentation_space_t *srs = NULL;
     msym_basis_function_t *basis = NULL;
     int *span = NULL;
     
     double (*symc)[l] = NULL;
     
-    int ssl = 0, basisl = 0;
+    int srsl = 0, basisl = 0;
     
     
     clock_t start;
@@ -622,9 +622,9 @@ msym_error_t msymSymmetrizeWavefunctions(msym_context ctx, int l, double c[l][l]
         goto err;
     }
     
-    if(MSYM_SUCCESS != (ret = ctxGetSALCSubspaces(ctx, &ssl, &ss, &span))){
-        if(MSYM_SUCCESS != (ret = msymGenerateSALCSubspaces(ctx))) goto err;
-        if(MSYM_SUCCESS != (ret = ctxGetSALCSubspaces(ctx, &ssl, &ss, &span))) goto err;
+    if(MSYM_SUCCESS != (ret = ctxGetSubrepresentationSpaces(ctx, &srsl, &srs, &span))){
+        if(MSYM_SUCCESS != (ret = msymGenerateSubrepresentationSpaces(ctx))) goto err;
+        if(MSYM_SUCCESS != (ret = ctxGetSubrepresentationSpaces(ctx, &srsl, &srs, &span))) goto err;
     }
     
     
@@ -635,7 +635,7 @@ msym_error_t msymSymmetrizeWavefunctions(msym_context ctx, int l, double c[l][l]
     //msymSetErrorDetails("Function NYI");
     //goto err;
     
-    if(MSYM_SUCCESS != (ret = symmetrizeWavefunctions(pg, ssl, ss, span, basisl, basis, c , symc))) goto err;
+    if(MSYM_SUCCESS != (ret = symmetrizeWavefunctions(pg, srsl, srs, span, basisl, basis, c , symc, species, pf))) goto err;
 
     /*printf("Pre symmetrization\n");
     printTransform(l,l,c);

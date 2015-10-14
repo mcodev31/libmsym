@@ -79,7 +79,7 @@ extern "C" {
         msym_symmetry_operation_t *primary;
         msym_symmetry_operation_t **sops;
         struct _msym_subgroup *subgroup[2];
-        char name[6];
+        char name[8];
     } msym_subgroup_t;
     
     typedef struct _msym_thresholds {
@@ -127,17 +127,23 @@ extern "C" {
     
     } msym_basis_function_t;
     
+    typedef struct _msym_partner_function {
+        int i;
+        int d;
+    } msym_partner_function_t;
+    
     typedef struct _msym_salc {
-        void *pf;         // partner functions double[d][fl]
-        int fl;             // number of basis functions
         int d;              // dimension of space (same as msym_character_table_t.s[msym_subspace_t.s].d)
+        int fl;             // number of basis functions
+        void *pf;           // partner functions double[d][fl]
         msym_basis_function_t **f;
     } msym_salc_t;
     
-    typedef struct _msym_subspace {
-        int s, salcl; //symmetry species, irreps
+    typedef struct _msym_subrepresentation_space {
+        int s;      // symmetry species
+        int salcl;  // nr of SALCs
         msym_salc_t *salc;
-    } msym_subspace_t;
+    } msym_subrepresentation_space_t;
     
     //rename representation? we need info on wheather or not it's irreducible
     typedef struct _msym_symmetry_species {
@@ -196,7 +202,7 @@ extern "C" {
     msym_error_t msymSelectSubgroup(msym_context ctx, const msym_subgroup_t *subgroup);
     msym_error_t msymGetSymmetryOperations(msym_context ctx, int *sopsl, const msym_symmetry_operation_t **sops);
     msym_error_t msymGetEquivalenceSets(msym_context ctx, int *l, const msym_equivalence_set_t **es);
-    msym_error_t msymGetSALCSubspaces(msym_context ctx, int *l, const msym_subspace_t **ss);
+    msym_error_t msymGetSubrepresentationSpaces(msym_context ctx, int *l, const msym_subrepresentation_space_t **srs);
     msym_error_t msymGetCharacterTable(msym_context ctx, const msym_character_table_t **ct);
     
     msym_error_t msymFindEquivalenceSets(msym_context ctx);
@@ -205,12 +211,12 @@ extern "C" {
     msym_error_t msymSymmetrizeElements(msym_context context, double *err);
     msym_error_t msymApplyTranslation(msym_context ctx, msym_element_t *element, double v[3]);
 #ifdef __cplusplus
-    msym_error_t msymSymmetrizeWavefunctions(msym_context ctx, int l, void *c);
+    msym_error_t msymSymmetrizeWavefunctions(msym_context ctx, int l, void *c, int *species, msym_partner_function_t *pf);
 #else
-    msym_error_t msymSymmetrizeWavefunctions(msym_context ctx, int l, double c[l][l]);
+    msym_error_t msymSymmetrizeWavefunctions(msym_context ctx, int l, double c[l][l], int species[l], msym_partner_function_t pf[l]);
 #endif
     msym_error_t msymGenerateElements(msym_context ctx, int length, msym_element_t *elements);
-    msym_error_t msymGenerateSALCSubspaces(msym_context ctx);
+    msym_error_t msymGenerateSubrepresentationSpaces(msym_context ctx);
     msym_error_t msymAlignAxes(msym_context ctx);
     
     msym_error_t msymGetCenterOfMass(msym_context ctx, double v[3]);

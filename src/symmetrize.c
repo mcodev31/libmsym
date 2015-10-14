@@ -137,13 +137,14 @@ err:
 }
 
 
-msym_error_t symmetrizeWavefunctions(msym_point_group_t *pg, int ssl, msym_subspace_t *ss, int *span, int basisl, msym_basis_function_t basis[basisl], double wf[basisl][basisl], double symwf[basisl][basisl]){
+msym_error_t symmetrizeWavefunctions(msym_point_group_t *pg, int srsl, msym_subrepresentation_space_t *srs, int *span, int basisl, msym_basis_function_t basis[basisl], double wf[basisl][basisl], double symwf[basisl][basisl], int species[basisl], msym_partner_function_t pfo[basisl]){
     msym_error_t ret = MSYM_SUCCESS;
     
-    int *icomp = calloc(basisl,sizeof(*icomp));
     int *ispan = calloc(pg->ct->d,sizeof(*ispan));
     
     memset(symwf,0,sizeof(double[basisl][basisl]));
+    memset(species,0,sizeof(int[basisl]));
+    memset(pfo,0,sizeof(msym_partner_function_t[basisl]));
     
     int md = 1;
     //could deduce from pg type but can't be bothered
@@ -154,7 +155,7 @@ msym_error_t symmetrizeWavefunctions(msym_point_group_t *pg, int ssl, msym_subsp
     
     int psalcl = 0;
     
-    for(int i = 0;i < ssl;i++) psalcl += ss[i].salcl;
+    for(int i = 0;i < srsl;i++) psalcl += srs[i].salcl;
     
     double (*psalc)[psalcl] = calloc(basisl,sizeof(*psalc));
     double (*bfd)[md] = calloc(basisl, sizeof(*bfd));
@@ -167,8 +168,8 @@ msym_error_t symmetrizeWavefunctions(msym_point_group_t *pg, int ssl, msym_subsp
         for(int k = 0;k < pg->ct->d;k++){
             double mabs = 0.0;
             psalck[k] = psalci;
-            for(int s = 0;s < ss[k].salcl;s++){
-                msym_salc_t *salc = &ss[k].salc[s];
+            for(int s = 0;s < srs[k].salcl;s++){
+                msym_salc_t *salc = &srs[k].salc[s];
                 double (*space)[salc->fl] = (double (*)[salc->fl]) salc->pf;
                 double psalcabs = 0.0;
                 for(int d = 0;d < salc->d;d++){
@@ -186,11 +187,11 @@ msym_error_t symmetrizeWavefunctions(msym_point_group_t *pg, int ssl, msym_subsp
                 psalci++;
             }
             if(mabs > mcomp){
-                icomp[o] = k;
+                species[o] = k;
                 mcomp = mabs;
             }
         }
-        ispan[icomp[o]]++;
+        ispan[species[o]]++;
     }
     
     for(int k = 0;k < pg->ct->d;k++){
@@ -203,7 +204,7 @@ msym_error_t symmetrizeWavefunctions(msym_point_group_t *pg, int ssl, msym_subsp
     
     /* Find parner functions */
     for(int o = 0;o < basisl;o++){
-        int ko = icomp[o], dim = pg->ct->s[ko].d, found = 0;
+        int ko = species[o], dim = pg->ct->s[ko].d, found = 0;
         
         for(int i = 1;i < md;i++){
             pf[o][i] = -1;
@@ -219,7 +220,7 @@ msym_error_t symmetrizeWavefunctions(msym_point_group_t *pg, int ssl, msym_subsp
         for(int i = 0;i < md;i++){dmpf[i] = DBL_MAX;}
         
         for(int po = 0; po < basisl;po++){
-            if(icomp[po] != ko || o == po) continue;
+            if(species[po] != ko || o == po) continue;
             vlsub(psalcl,psalc[o],psalc[po],mem[0]); //don't use mem[1], dmpf is an alias,
             double c = vlabs(psalcl, mem[0]), mc = 0.0;
             int mic = 0;
@@ -249,7 +250,7 @@ msym_error_t symmetrizeWavefunctions(msym_point_group_t *pg, int ssl, msym_subsp
     
     /* verify that we have partners for everything */
     for(int o = 0;o < basisl;o++){
-        int dim = pg->ct->s[icomp[o]].d;
+        int dim = pg->ct->s[species[o]].d;
         if(abs(pf[o][0])+1 != dim){
             msymSetErrorDetails("Unexpected number of partner functions for wave function %d (expected %d got %d)", o,dim,abs(pf[o][0])+1);
             ret = MSYM_SYMMETRIZATION_ERROR;
@@ -264,7 +265,7 @@ msym_error_t symmetrizeWavefunctions(msym_point_group_t *pg, int ssl, msym_subsp
             }
         }
         
-        printf("basis %d (%s) partner functions = %d",o,pg->ct->s[icomp[o]].name,o);
+        printf("basis %d (%s) partner functions = %d",o,pg->ct->s[species[o]].name,o);
         for(int i = 1;i < dim;i++){
             printf(",%d",pf[o][i]);
         }
@@ -273,7 +274,7 @@ msym_error_t symmetrizeWavefunctions(msym_point_group_t *pg, int ssl, msym_subsp
     }
     
     for(int o = 0;o < basisl;o++){
-        int k = icomp[o];
+        int k = species[o];
         int dim = pg->ct->s[k].d;
         
         if(pf[o][0] < 0) continue;
@@ -310,17 +311,22 @@ msym_error_t symmetrizeWavefunctions(msym_point_group_t *pg, int ssl, msym_subsp
         }*/
         
         /* calculate average component in each salc subspace and rotate onto the partner functions with largest component */
-        for(int s = 0;s < ss[k].salcl;s++){
-            int psalci = psalck[k] + s;
+        for(int s = 0;s < srs[k].salcl;s++){
+            int psalci = psalck[k] + s, pfmin = 0;
             double avg = 0;
             
             
-            for(int d = 0;d < dim;d++) avg += psalc[pf[o][d]][psalci]; //
+            for(int d = 0;d < dim;d++){
+                int wfi = pf[o][d];
+                avg += psalc[wfi][psalci];
+                if(pf[basisl][d] == 0) pfmin = wfi;
+            }
+            
             avg /= dim;
             
             //printf("average component in salc %d(%s) for wf %d = %lf\n",psalci,pg->ct->s[k].name,o,avg);
             
-            msym_salc_t *salc = &ss[k].salc[s];
+            msym_salc_t *salc = &srs[k].salc[s];
             double (*space)[salc->fl] = (double (*)[salc->fl]) salc->pf;
             
             for(int d = 0; d < dim;d++){
@@ -329,6 +335,8 @@ msym_error_t symmetrizeWavefunctions(msym_point_group_t *pg, int ssl, msym_subsp
                 for(int j = 0; j < salc->fl;j++){
                     mem[0][salc->f[j] - basis] = avg*space[di][j];
                 }
+                pfo[wfi].d = di;
+                pfo[wfi].i = pfmin;
                 vladd(basisl, mem[0], symwf[wfi], symwf[wfi]);
             }
         }
@@ -337,7 +345,6 @@ msym_error_t symmetrizeWavefunctions(msym_point_group_t *pg, int ssl, msym_subsp
 err:
     
     free(ispan);
-    free(icomp);
     free(mem);
     free(pf);
     free(psalc);

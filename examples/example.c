@@ -31,13 +31,15 @@ int example(const char* in_file, msym_thresholds_t *thresholds){
     /* these are not mutable */
     const msym_symmetry_operation_t *msops = NULL;
     const msym_subgroup_t *msg = NULL;
-    const msym_subspace_t *mss = NULL;
+    const msym_subrepresentation_space_t *msrs = NULL;
     const msym_character_table_t *mct = NULL;
+    
+    
     
     
     msym_basis_function_t *bfs = NULL;
     
-    int msgl = 0, msopsl = 0, mlength = 0, mssl = 0, mbfsl = 0;
+    int msgl = 0, msopsl = 0, mlength = 0, msrsl = 0, mbfsl = 0;
     int orbitalsl = 0, bfsl = 0;
     
     char *orbitals[8] = {"2px", "2py", "2pz", "3d2-", "3d1-", "3d0", "3d1+", "3d2+"};
@@ -54,6 +56,8 @@ int example(const char* in_file, msym_thresholds_t *thresholds){
     bfs = calloc(bfsl, sizeof(msym_basis_function_t));
     double (*coefficients)[bfsl] = calloc(bfsl, sizeof(*coefficients)); // SALCs in matrix form, and input for symmetrization
     double *cmem = calloc(bfsl, sizeof(double)); // Some temporary memory
+    int *species = calloc(bfsl, sizeof(*species));
+    msym_partner_function_t *pf = calloc(bfsl, sizeof(*pf));
     
     /* Create a context */
     msym_context ctx = msymCreateContext();
@@ -171,14 +175,14 @@ int example(const char* in_file, msym_thresholds_t *thresholds){
     }
     
     if(MSYM_SUCCESS != (ret = msymGetBasisFunctions(ctx, &mbfsl, &mbfs))) goto err;
-    if(MSYM_SUCCESS != (ret = msymGetSALCSubspaces(ctx, &mssl, &mss))) goto err;
+    if(MSYM_SUCCESS != (ret = msymGetSubrepresentationSpaces(ctx, &msrsl, &msrs))) goto err;
     if(MSYM_SUCCESS != (ret = msymGetCharacterTable(ctx, &mct))) goto err;
     
-    for(int i = 0; i < mssl;i++){
-        printf("Got %d SALCs with %d partner functions of symmetry species %s\n",mss[i].salcl,mct->s[mss[i].s].d, mct->s[mss[i].s].name);
-        for(int j = 0;j < mss[i].salcl;j++){
+    for(int i = 0; i < msrsl;i++){
+        printf("Got %d SALCs with %d partner functions of symmetry species %s\n",msrs[i].salcl,mct->s[msrs[i].s].d, mct->s[msrs[i].s].name);
+        for(int j = 0;j < msrs[i].salcl;j++){
             char *type = "";
-            msym_salc_t *salc = &mss[i].salc[j];
+            msym_salc_t *salc = &msrs[i].salc[j];
             msym_basis_function_t *bf = salc->f[0];
             if(bf->type == MSYM_BASIS_TYPE_REAL_SPHERICAL_HARMONIC) type = "real spherical harmonic ";
             printf("\tSALC %d was constructed from %d %sbasis functions on %s with quantum numbers n=%d and l=%d\n",j,salc->fl,type,bf->element->name,bf->f.sh.n,bf->f.sh.l);
@@ -186,9 +190,9 @@ int example(const char* in_file, msym_thresholds_t *thresholds){
     }
     
 
-    for(int i = 0, ci = 0;i < mssl;i++){
-        for(int j = 0;j < mss[i].salcl;j++){
-            msym_salc_t *salc = &mss[i].salc[j];
+    for(int i = 0, ci = 0;i < msrsl;i++){
+        for(int j = 0;j < msrs[i].salcl;j++){
+            msym_salc_t *salc = &msrs[i].salc[j];
             double (*c)[salc->fl] = salc->pf;
             for(int k = 0;k < salc->d;k++){
                 if(ci >= bfsl){
@@ -225,7 +229,18 @@ int example(const char* in_file, msym_thresholds_t *thresholds){
     }
     
     /* Symmetrize wavefunctions */
-    if(MSYM_SUCCESS != (ret = msymSymmetrizeWavefunctions(ctx, bfsl, coefficients))) goto err;
+    if(MSYM_SUCCESS != (ret = msymSymmetrizeWavefunctions(ctx, bfsl, coefficients, species, pf))) goto err;
+    
+    
+    printf("Wave function symmetrization returned new linear combinations:\n");
+    for(int i = 0;i < bfsl;i++){
+        int s = species[i];
+        printf("\t wf:%d is of symmetry species %s",i,mct->s[s].name);
+        if(mct->s[s].d > 1){
+            printf(" partner function %d to wf:%d",pf[i].d, pf[i].i);
+        }
+        printf("\n");
+    }
     
     /* Make a new element with the same type as the first one we read */
     msym_element_t myelement;

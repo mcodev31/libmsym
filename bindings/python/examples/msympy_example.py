@@ -44,9 +44,21 @@ with msym.Context(elements = elements, basis_functions = basis_functions) as ctx
     point_group = ctx.find_symmetry()
     selements = ctx.symmetrize_elements()
     write_xyz(args.outfile, selements, comment + " symmetrized by libmsym according to point group " + point_group)
-    sops = ctx.symmetry_operations
-    ctx.generate_salc_subspaces()
-    print(sops)
+    ctx.symmetry_operations #symmetry operations
+    ctx.subrepresentation_spaces # subspace
+    ctx.subrepresentation_spaces[0].symmetry_species #symmetry species of space (index into character table)
+    ctx.subrepresentation_spaces[0].salcs # salcs that span space
+    ctx.subrepresentation_spaces[0].salcs[0].basis_functions # basis functions for salc
+    ctx.subrepresentation_spaces[0].salcs[0].partner_functions # array of partner functions expressed in terms of basis_functions coefficients
+    ctx.subrepresentation_spaces[0].salcs[0].np_partner_functions # same as above, but as numpy array (raises exception if numpy not available)
+    
+    ctx.character_table.table # table as array of arrays
+    ctx.character_table.np_table # table as numpy array (raises exception if numpy not available)
+    ctx.character_table.symmetry_operations # representative symmetry operations
+    ctx.character_table.symmetry_species # symmetry species
+    ctx.character_table.symmetry_species[0].dim  # dimensionality of symmetry species
+    ctx.character_table.symmetry_species[0].name # name of symmetry species e.g. A2g
+    
 
 #with msym.Context(elements = elements, point_group = "T") as ctx:
 #    point_group = ctx.point_group

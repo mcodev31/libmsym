@@ -2,6 +2,11 @@ from ctypes import *
 from ctypes.util import find_library
 from enum import Enum
 
+try:
+    import numpy as np
+except ImportError:
+    np = None
+
 
 class Error(Exception):
     def __init__(self, value, details=""):
@@ -146,12 +151,117 @@ class RealSphericalHarmonic(BasisFunction):
     @m.setter
     def m(self, n):
         self._f._sh.n = m
+
+class SALC(Structure):
+    _fields_ = [("_d", c_int),
+                ("_fl", c_int),
+                ("_pf", POINTER(c_double)),
+                ("_f", POINTER(POINTER(RealSphericalHarmonic)))]
+
+    _pf_array = None
+    _npf_array = None
+    basis_functions = []
+
     
+
+    def _update_basis_functions(self, basis_function_addresses, basis):
+        self.basis_functions = [basis[basis_function_addresses.index(addressof(p.contents))] for p in self._f[0:self._fl]]
+    
+    @property
+    def partner_functions(self):
+        if self._pf_array is None:
+            pf = cast(self._pf,POINTER(c_double*self._fl))
+            self._pf_array = [f[0:self._fl] for f in pf[0:self._d]]
+            
+        return self._pf_array
+
+    @property
+    def np_partner_functions(self):
+        if np is None:
+            raise ImportError("numpy is not available.")
+        
+        if self._npf_array is None:
+            self._npf_array = np.ctypeslib.as_array(self._pf, shape = (self._d,self._fl))
+
+        
+
+class SubrepresentationSpace(Structure):
+    _fields_ = [("symmetry_species", c_int),
+                ("_salc_length", c_int),
+                ("_salcs", POINTER(SALC))]
+    
+    _salcarray = None
+
+    @property
+    def salcs(self):
+        if self._salcarray is None:
+            self._salcarray = self._salcs[0:self._salc_length]
+        return self._salcarray
+
+
+class SymmetrySpecies(Structure):
+    _fields_ = [("_d", c_int),
+                ("_name",c_char*8)]
+
+    @property
+    def dim(self):
+        return self._d
+    
+    @property
+    def name(self):
+        return self._name.decode()
+    
+class CharacterTable(Structure):
+    _fields_ = [("_d", c_int),
+                ("_classc", POINTER(c_int)),
+                ("_sops", POINTER(POINTER(SymmetryOperation))),
+                ("_s", POINTER(SymmetrySpecies)),
+                ("_table", POINTER(c_double))]
+
+    _table_array = None
+    _np_table_array = None
+    _class_count_array = None
+    _symmetry_species = None
+                
+    @property
+    def table(self):
+        if self._table_array is None:
+            pf = cast(self._table,POINTER(c_double*self._d))
+            self._table_array = [f[0:self._d] for f in pf[0:self._d]]
+            
+        return self._table_array
+
+    @property
+    def np_table(self):
+        if np is None:
+            raise ImportError("numpy is not available.")
+        
+        if self._np_table_array is None:
+            self._np_table_array = np.ctypeslib.as_array(self._table, shape = (self._d,self._d))
+
+        return self._np_table_array
+
+    @property
+    def class_count(self):
+        if self._class_count_array is None:
+            self._class_count_array = self._classc[0:self._d]
+        return self._class_count_array
+
+    def _update_symmetry_operations(self, symmetry_operations):
+        addresses = [addressof(sop) for sop in symmetry_operations]
+        self.symmetry_operations = [symmetry_operations[addresses.index(addressof(sop.contents))] for sop in self._sops[0:self._d]]
+
+    @property
+    def symmetry_species(self):
+        if self._symmetry_species is None:
+            self._symmetry_species = self._s[0:self._d]
+            
+        return self._symmetry_species
+
+        
 libmsym = CDLL(find_library('libmsym'))
 
 class _ReturnCode(c_int):
-
-#    _type_ = c_int._type_
     
     libmsym.msymErrorString.argtypes = [c_int]
     libmsym.msymErrorString.restype = c_char_p
@@ -217,14 +327,22 @@ class Context(object):
     libmsym.msymSetBasisFunctions.restype = _ReturnCode
     libmsym.msymSetBasisFunctions.argtypes = [_Context, c_int, POINTER(BasisFunction)]
 
-    libmsym.msymGenerateSALCSubspaces.restype = _ReturnCode
-    libmsym.msymGenerateSALCSubspaces.argtypes = [_Context]
+    libmsym.msymGetBasisFunctions.restype = _ReturnCode
+    libmsym.msymGetBasisFunctions.argtypes = [_Context, POINTER(c_int), POINTER(POINTER(BasisFunction))]
+
+    libmsym.msymGetSubrepresentationSpaces.restype = _ReturnCode
+    libmsym.msymGetSubrepresentationSpaces.argtypes = [_Context, POINTER(c_int), POINTER(POINTER(SubrepresentationSpace))]
+
+    libmsym.msymGetCharacterTable.restype = _ReturnCode
+    libmsym.msymGetCharacterTable.argtypes = [_Context, POINTER(POINTER(CharacterTable))]
 
 
     def __init__(self, elements=[], basis_functions=[], point_group="", _func=libmsym.msymCreateContext):
         self._elements = []
         self._basis_functions = []
         self._point_group = None
+        self._subrepresentation_spaces = None
+        self._character_table = None
         self._ctx = _func()
         if not self._ctx:
             raise RuntimeError
@@ -254,6 +372,42 @@ class Context(object):
     def _assert_success(error, _func=libmsym.msymGetErrorDetails):
         if not error.value == _ReturnCode.SUCCESS:
             raise Error(error, details = _func().decode())
+
+    def _get_basis_function_addresses(self, _func=libmsym.msymGetBasisFunctions):
+        cbfs = POINTER(BasisFunction)()
+        csize = c_int(0)
+        self._assert_success(_func(self._ctx,byref(csize),byref(cbfs)))
+        print(cbfs[0])
+        return [addressof(bf) for bf in cbfs[0:csize.value]]
+
+    def _set_elements(self, elements, _func=libmsym.msymSetElements):
+        if not self._ctx:
+            raise RuntimeError
+        self._subrepresentation_spaces = None
+        self._character_table = None
+        size = len(elements)
+        element_array = (Element*size)(*elements)
+        self._assert_success(_func(self._ctx, size, element_array))
+        self._element_array = element_array
+        self._elements = elements
+
+    def _set_point_group(self, point_group, _func=libmsym.msymSetPointGroupByName):
+        self._subrepresentation_spaces = None
+        self._character_table = None
+        cname = c_char_p(point_group.encode('ascii'))
+        self._assert_success(_func(self._ctx, cname))
+        self._update_symmetry_operations()
+
+    def _set_basis_functions(self, basis_functions,_func=libmsym.msymSetBasisFunctions):
+        if not self._ctx:
+            raise RuntimeError
+        self._subrepresentation_spaces = None
+        size = len(basis_functions)
+        for bf in basis_functions:
+            bf._set_element_pointer(self._element_array[self._elements.index(bf.element)])
+            
+        self._assert_success(_func(self._ctx, size, (BasisFunction*size)(*basis_functions)))
+        self._basis_functions = basis_functions
         
     def _update_elements(self, _func=libmsym.msymGetElements):
         celements = POINTER(Element)()
@@ -272,30 +426,23 @@ class Context(object):
         cname = (c_char*8)()
         self._assert_success(_func(self._ctx,sizeof(cname),cname))
         self._point_group = cname.value.decode()
+        
+    def _update_subrepresentation_spaces(self, _func=libmsym.msymGetSubrepresentationSpaces):
+        basis_function_addresses = self._get_basis_function_addresses()
+        csrs = POINTER(SubrepresentationSpace)()
+        csize = c_int(0)
+        self._assert_success(_func(self._ctx,byref(csize),byref(csrs)))
+        srs = csrs[0:csize.value]
+        for s in srs:
+            for salc in s.salcs:
+                salc._update_basis_functions(basis_function_addresses, self._basis_functions)
+        self._subrepresentation_spaces = srs
 
-    def _set_elements(self, elements, _func=libmsym.msymSetElements):
-        if not self._ctx:
-            raise RuntimeError
-        size = len(elements)
-        element_array = (Element*size)(*elements)
-        self._assert_success(_func(self._ctx, size, element_array))
-        self._element_array = element_array
-        self._elements = elements
-
-    def _set_point_group(self, point_group, _func=libmsym.msymSetPointGroupByName):
-        cname = c_char_p(point_group.encode('ascii'))
-        self._assert_success(_func(self._ctx, cname))
-        self._update_symmetry_operations()
-
-    def _set_basis_functions(self, basis_functions,_func=libmsym.msymSetBasisFunctions):
-        if not self._ctx:
-            raise RuntimeError
-        size = len(basis_functions)
-        for bf in basis_functions:
-            bf._set_element_pointer(self._element_array[self._elements.index(bf.element)])
-            
-        self._assert_success(_func(self._ctx, size, (BasisFunction*size)(*basis_functions)))
-        self._basis_functions = basis_functions
+    def _update_character_table(self, _func=libmsym.msymGetCharacterTable):
+        cct = POINTER(CharacterTable)()
+        self._assert_success(_func(self._ctx,byref(cct)))
+        self._character_table = cct.contents
+        self._character_table._update_symmetry_operations(self._symmetry_operations)
         
     @property
     def elements(self):
@@ -340,10 +487,21 @@ class Context(object):
         self._update_elements()
         return self._elements
 
-    def generate_salc_subspaces(self, _func=libmsym.msymGenerateSALCSubspaces):
-        if not self._ctx:
-            raise RuntimeError
-        self._assert_success(_func(self._ctx))
+    @property
+    def subrepresentation_spaces(self):
+        if self._subrepresentation_spaces is None:
+            self._update_subrepresentation_spaces()
+         
+        return self._subrepresentation_spaces
+
+    @property
+    def character_table(self):
+        if self._character_table is None:
+            self._update_character_table()
+         
+        return self._character_table
+        
+        
 
 
 

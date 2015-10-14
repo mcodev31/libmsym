@@ -44,8 +44,8 @@ msym_error_t ctxGetExternalElementEquivalenceSetMap(msym_context ctx, msym_equiv
 msym_error_t ctxSetEquivalenceSetPermutations(msym_context ctx, int r, int c, msym_permutation_t **perm);
 msym_error_t ctxGetEquivalenceSetPermutations(msym_context ctx, int *r, int *c, msym_permutation_t ***perm);
 msym_error_t ctxGetBasisFunctions(msym_context ctx, int *l, msym_basis_function_t **basis);
-msym_error_t ctxGetSALCSubspaces(msym_context ctx, int *ssl, msym_subspace_t **ss, int **span);
-msym_error_t ctxSetSALCSubspaces(msym_context ctx, int ssl, msym_subspace_t *ss, int *span);
+msym_error_t ctxGetSubrepresentationSpaces(msym_context ctx, int *srsl, msym_subrepresentation_space_t **srs, int **span);
+msym_error_t ctxSetSubrepresentationSpaces(msym_context ctx, int srsl, msym_subrepresentation_space_t *srs, int *span);
 msym_error_t ctxGetGeometry(msym_context ctx, msym_geometry_t *g, double eigval[3], double eigvec[3][3]);
 
 msym_error_t ctxDestroyElements(msym_context ctx);
@@ -56,7 +56,7 @@ msym_error_t ctxDestroySubgroups(msym_context ctx);
 msym_error_t ctxDestroyBasisFunctions(msym_context ctx);
 msym_error_t ctxDestroyOrbitalSubspaces(msym_context ctx);
 msym_error_t ctxDestroyDisplacementSubspaces(msym_context ctx);
-msym_error_t ctxDestroySALCSubspaces(msym_context ctx);
+msym_error_t ctxDestroySubrepresentationSpaces(msym_context ctx);
 
 
 

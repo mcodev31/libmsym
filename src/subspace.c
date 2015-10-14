@@ -20,15 +20,15 @@
 void tabprintf(char *format, int indent, ...);
 void tabPrintTransform(int r, int c, double M[r][c],int indent);
 
-void freeSALCSubspaces(int ssl, msym_subspace_t *ss){
-    for(int i = 0;i < ssl && NULL != ss;i++){
-        for(int j = 0;j < ss[i].salcl;j++){
-            free(ss[i].salc[j].f);
-            free(ss[i].salc[j].pf);
+void freeSubrepresentationSpaces(int srsl, msym_subrepresentation_space_t *srs){
+    for(int i = 0;i < srsl && NULL != srs;i++){
+        for(int j = 0;j < srs[i].salcl;j++){
+            free(srs[i].salc[j].f);
+            free(srs[i].salc[j].pf);
         }
-        free(ss[i].salc);
+        free(srs[i].salc);
     }
-    free(ss);
+    free(srs);
 }
 
 

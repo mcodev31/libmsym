@@ -38,15 +38,13 @@ struct _msym_context {
     msym_basis_function_t *basis;
     msym_equivalence_set_t *es;
     msym_permutation_t **es_perm;
-    msym_subspace_t *salc_ss;
-    int *oss_span;
-    int *dss_span;
+    msym_subrepresentation_space_t *srs;
     int *salc_span;
     unsigned long int flags;
     int elementsl;
     int basisl;
     int esl;
-    int salc_ssl;
+    int srsl;
     int es_perml;
     int sgl;
     msym_point_group_t *pg;
@@ -249,16 +247,16 @@ err:
     
 }
 
-msym_error_t msymGetSALCSubspaces(msym_context ctx, int *l, const msym_subspace_t **ss){
+msym_error_t msymGetSubrepresentationSpaces(msym_context ctx, int *l, const msym_subrepresentation_space_t **srs){
     msym_error_t ret = MSYM_SUCCESS;
     if(NULL == ctx) {ret = MSYM_INVALID_CONTEXT;goto err;}
-    if(NULL == ctx->salc_ss){
-        if(MSYM_SUCCESS != (ret = msymGenerateSALCSubspaces(ctx))) goto err;
-        if(NULL == ctx->salc_ss){ret = MSYM_INVALID_ORBITALS;goto err;}
+    if(NULL == ctx->srs){
+        if(MSYM_SUCCESS != (ret = msymGenerateSubrepresentationSpaces(ctx))) goto err;
+        if(NULL == ctx->srs){ret = MSYM_INVALID_ORBITALS;goto err;}
     }
     
-    *ss = ctx->salc_ss;
-    *l = ctx->salc_ssl;
+    *srs = ctx->srs;
+    *l = ctx->srsl;
     
     return ret;
 err:
@@ -653,22 +651,22 @@ err:
     return ret;
 }
 
-msym_error_t ctxGetSALCSubspaces(msym_context ctx, int *ssl, msym_subspace_t **ss, int **span){
+msym_error_t ctxGetSubrepresentationSpaces(msym_context ctx, int *srsl, msym_subrepresentation_space_t **srs, int **span){
     msym_error_t ret = MSYM_SUCCESS;
     if(ctx == NULL) {ret = MSYM_INVALID_CONTEXT; goto err;}
-    if(ctx->salc_ss == NULL) {ret = MSYM_INVALID_SUBSPACE; goto err;}
-    *ssl = ctx->salc_ssl;
-    *ss = ctx->salc_ss;
+    if(ctx->srs == NULL) {ret = MSYM_INVALID_SUBSPACE; goto err;}
+    *srsl = ctx->srsl;
+    *srs = ctx->srs;
     *span = ctx->salc_span;
 err:
     return ret;
 }
 
-msym_error_t ctxSetSALCSubspaces(msym_context ctx, int ssl, msym_subspace_t *ss, int *span){
+msym_error_t ctxSetSubrepresentationSpaces(msym_context ctx, int srsl, msym_subrepresentation_space_t *srs, int *span){
     msym_error_t ret = MSYM_SUCCESS;
-    if(MSYM_SUCCESS != (ret = ctxDestroySALCSubspaces(ctx))) goto err;
-    ctx->salc_ssl = ssl;
-    ctx->salc_ss = ss;
+    if(MSYM_SUCCESS != (ret = ctxDestroySubrepresentationSpaces(ctx))) goto err;
+    ctx->srsl = srsl;
+    ctx->srs = srs;
     ctx->salc_span = span;
 err:
     return ret;
@@ -690,7 +688,7 @@ msym_error_t ctxDestroyElements(msym_context ctx){
     msym_error_t ret = MSYM_SUCCESS;
     if(ctx == NULL) {ret = MSYM_INVALID_CONTEXT; goto err;}
     ctxDestroyEquivalcenceSets(ctx);
-    ctxDestroySALCSubspaces(ctx);
+    ctxDestroySubrepresentationSpaces(ctx);
     ctxDestroyBasisFunctions(ctx);
     free(ctx->elements);
     free(ctx->pelements);
@@ -776,7 +774,7 @@ err:
 msym_error_t ctxDestroyBasisFunctions(msym_context ctx){
     msym_error_t ret = MSYM_SUCCESS;
     if(ctx == NULL) {ret = MSYM_INVALID_CONTEXT; goto err;}
-    ctxDestroySALCSubspaces(ctx);
+    ctxDestroySubrepresentationSpaces(ctx);
     free(ctx->basis);
     ctx->basis = NULL;
     ctx->basisl = 0;
@@ -784,14 +782,14 @@ err:
     return ret;
 }
 
-msym_error_t ctxDestroySALCSubspaces(msym_context ctx){
+msym_error_t ctxDestroySubrepresentationSpaces(msym_context ctx){
     msym_error_t ret = MSYM_SUCCESS;
     if(ctx == NULL) {ret = MSYM_INVALID_CONTEXT; goto err;}
-    freeSALCSubspaces(ctx->salc_ssl, ctx->salc_ss);
+    freeSubrepresentationSpaces(ctx->srsl, ctx->srs);
     free(ctx->salc_span);
-    ctx->salc_ss = NULL;
+    ctx->srs = NULL;
     ctx->salc_span = NULL;
-    ctx->salc_ssl = 0;
+    ctx->srsl = 0;
 err:
     return ret;
 }
