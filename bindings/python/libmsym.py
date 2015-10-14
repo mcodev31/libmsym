@@ -340,6 +340,9 @@ class Context(object):
     libmsym.msymGetSALCs.restype = _ReturnCode
     libmsym.msymGetSALCs.argtypes = [_Context, c_int, _SALCsMatrix, _SALCsSpecies, POINTER(PartnerFunction)]
 
+    libmsym.msymSymmetrizeWavefunctions.restype = _ReturnCode
+    libmsym.msymSymmetrizeWavefunctions.argtypes = [_Context, c_int, _SALCsMatrix, _SALCsSpecies, POINTER(PartnerFunction)]
+
 
     def __init__(self, elements=[], basis_functions=[], point_group="", _func=libmsym.msymCreateContext):
         self._elements = []
@@ -391,8 +394,6 @@ class Context(object):
         self._subrepresentation_spaces = None
         self._character_table = None
         self._salcs = None
-        self._species = None
-        self._partner_functions = None
         size = len(elements)
         element_array = (Element*size)(*elements)
         self._assert_success(_func(self._ctx, size, element_array))
@@ -405,8 +406,6 @@ class Context(object):
         self._subrepresentation_spaces = None
         self._character_table = None
         self._salcs = None
-        self._species = None
-        self._partner_functions = None
         cname = c_char_p(point_group.encode('ascii'))
         self._assert_success(_func(self._ctx, cname))
         self._update_symmetry_operations()
@@ -416,8 +415,6 @@ class Context(object):
             raise RuntimeError
         self._subrepresentation_spaces = None
         self._salcs = None
-        self._species = None
-        self._partner_functions = None
         size = len(basis_functions)
         for bf in basis_functions:
             bf._set_element_pointer(self._element_array[self._elements.index(bf.element)])
@@ -480,9 +477,7 @@ class Context(object):
         salcs = np.zeros((csize,csize),dtype=np.float64)
         species = np.zeros((csize),dtype=np.int32)
         self._assert_success(_func(self._ctx,csize,salcs,species,partner_functions))
-        self._salcs = salcs
-        self._species = species
-        self._partner_functions = partner_functions[0:csize]
+        self._salcs = (salcs, species, partner_functions[0:csize])
         
     @property
     def elements(self):
@@ -542,25 +537,25 @@ class Context(object):
         return self._character_table
 
     @property
-    def salc_matrix(self):
+    def salcs(self):
         if self._salcs is None:
             self._update_salcs()
 
         return self._salcs
 
-    @property
-    def species_array(self):
-        if self._salcs is None:
-            self._update_salcs()
-
-        return self._species
-
-    @property
-    def partner_function_array(self):
-        if self._salcs is None:
-            self._update_salcs()
-
-        return self._partner_functions
+    def symmetrize_wavefunctions(self,m,_func=libmsym.msymSymmetrizeWavefunctions):
+        if not self._ctx:
+            raise RuntimeError
+        if np is None:
+            raise ImportError("numpy is not available.")
+        csize = len(self._basis_functions)
+        (d1,d2) = m.shape
+        if not (d1 == csize and d2 == csize and m.dtype == np.float64):
+            raise ValueError("Must provide a " + str(csize) + "x" + str(csize) + " numpy.float64 array")
+        partner_functions = (PartnerFunction*csize)()
+        species = np.zeros((csize),dtype=np.int32)
+        self._assert_success(_func(self._ctx,csize,m,species,partner_functions))
+        return (m, species, partner_functions[0:csize])
         
         
 

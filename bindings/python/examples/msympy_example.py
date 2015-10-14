@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import libmsym as msym, argparse
+import libmsym as msym, argparse, random
 
 
 
@@ -55,9 +55,20 @@ with msym.Context(elements = elements, basis_functions = basis_functions) as ctx
     ctx.character_table.symmetry_species # symmetry species
     ctx.character_table.symmetry_species[0].dim  # dimensionality of symmetry species
     ctx.character_table.symmetry_species[0].name # name of symmetry species e.g. A2g
-    print(ctx.salc_matrix)
-    print(ctx.species_array)
-    print([(p.index, p.dim) for p in ctx.partner_function_array])
+    (matrix, species, partners) = ctx.salcs
+    (d,d) = matrix.shape
+    print(matrix)
+    print(species)
+    print([(p.index, p.dim) for p in partners])
+    indexes = [x for x in range(0,d)]
+    random.shuffle(indexes)
+    matrix = matrix[indexes,:]
+    matrix += 0.01
+    print(matrix)
+    (_same_matrix, species,partners) = ctx.symmetrize_wavefunctions(matrix)
+    print(matrix)
+    print(species)
+    print([(p.index, p.dim) for p in partners])
     
 
 #with msym.Context(elements = elements, point_group = "T") as ctx:
