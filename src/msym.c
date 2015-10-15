@@ -351,14 +351,14 @@ err:
     return ret;
 }
 
-msym_error_t msymSymmetrizeElements(msym_context ctx, double *err){
+msym_error_t msymSymmetrizeElements(msym_context ctx, double *oerr){
     msym_error_t ret = MSYM_SUCCESS;
     
-    msym_point_group_t *pg;
-    msym_equivalence_set_t *es;
-    msym_element_t *elements;
+    msym_point_group_t *pg = NULL;
+    msym_equivalence_set_t *es = NULL;
+    msym_element_t *elements = NULL;
     
-    msym_permutation_t **perm;
+    msym_permutation_t **perm = NULL;
     msym_thresholds_t *t = NULL;
     double error = 0.0;
     int perml = 0, esl = 0, elementsl = 0, sopsl = 0;
@@ -388,7 +388,7 @@ msym_error_t msymSymmetrizeElements(msym_context ctx, double *err){
     double time = (double)(end - start) / CLOCKS_PER_SEC;
     printf("time: %lf seconds to symmetrize %d equivalence sets in %d element molecule\n",time,esl,elementsl);
         
-    *err = error;
+    *oerr = error;
 err:
     return ret;
 }

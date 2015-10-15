@@ -523,7 +523,8 @@ class Context(object):
     def symmetrize_elements(self, _func=libmsym.msymSymmetrizeElements):
         if not self._ctx:
             raise RuntimeError
-        self._assert_success(_func(self._ctx))
+        cerror = c_double(0)
+        self._assert_success(_func(self._ctx, byref(cerror)))
         self._update_elements()
         return self._elements
 
