@@ -224,14 +224,21 @@ err:
 
 msym_error_t msymGetSubgroups(msym_context ctx, int *sgl, const msym_subgroup_t **sg){
     msym_error_t ret = MSYM_SUCCESS;
+    
+    msym_subgroup_t *gsg = NULL;
+    int gsgl = 0;
+    
     if(ctx == NULL) {ret = MSYM_INVALID_CONTEXT;goto err;}
     if(ctx->pg == NULL) {ret = MSYM_INVALID_POINT_GROUP;goto err;}
     if(ctx->pg->perm == NULL) {ret = MSYM_INVALID_PERMUTATION;goto err;}
     
     if(ctx->sg == NULL){
         int sgmax = numberOfSubgroups(ctx->pg);
-        if(MSYM_SUCCESS != (ret = findPermutationSubgroups(ctx->pg->order, ctx->pg->perm, sgmax, ctx->pg->sops, &ctx->sgl, &ctx->sg))) goto err;
-
+        if(MSYM_SUCCESS != (ret = findPermutationSubgroups(ctx->pg->order, ctx->pg->perm, sgmax, ctx->pg->sops, &gsgl, &gsg))) goto err;
+        
+        ctx->sg = gsg;
+        ctx->sgl = gsgl;
+        
         for(int i = 0;i < ctx->sgl;i++){
             if(MSYM_SUCCESS != (ret = findSubgroup(&ctx->sg[i], ctx->thresholds))) goto err;
         }
@@ -242,6 +249,10 @@ msym_error_t msymGetSubgroups(msym_context ctx, int *sgl, const msym_subgroup_t 
     return ret;
     
 err:
+    for(int i = 0;NULL != gsg && i < gsgl;i++){
+        free(gsg[i].sops);
+    }
+    free(gsg);
     return ret;
     
     

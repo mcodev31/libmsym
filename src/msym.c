@@ -21,6 +21,7 @@
 #include "orbital.h"
 #include "vibration.h"
 #include "linalg.h"
+#include "subspace.h"
 
 msym_error_t msymFindSymmetry(msym_context ctx){
     msym_error_t ret = MSYM_SUCCESS;
@@ -454,7 +455,7 @@ msym_error_t msymGenerateSubrepresentationSpaces(msym_context ctx){
     msym_subrepresentation_space_t *srs = NULL;
     msym_basis_function_t **srsbf = NULL;
     msym_element_t *elements = NULL;
-    msym_subgroup_t *sg = NULL;
+    const msym_subgroup_t *sg = NULL;
     int *span = NULL;
     
     clock_t start = clock();
@@ -472,20 +473,7 @@ msym_error_t msymGenerateSubrepresentationSpaces(msym_context ctx){
     if(MSYM_SUCCESS != (ret = ctxGetEquivalenceSetPermutations(ctx, &perml, &sopsl, &perm))) goto err;
     if(sopsl != pg->order || perml != esl) {ret = MSYM_INVALID_PERMUTATION; goto err;}
     
-    
-    //convertNewCharacterTable(pg);
-    
-    if(MSYM_SUCCESS != (ret = ctxGetSubgroups(ctx, &sgl, &sg))){
-        int sgmax = numberOfSubgroups(pg);
-        if(MSYM_SUCCESS != (ret = findPermutationSubgroups(pg->order, pg->perm, sgmax, pg->sops, &sgl, &sg))) goto err;
-        
-        for(int i = 0;i < sgl;i++){
-            if(MSYM_SUCCESS != (ret = findSubgroup(&sg[i], t))) goto err;
-        }
-        if(sgl > 0){
-            ctxSetSubgroups(ctx, sgl, sg);
-        }
-    }
+    if(MSYM_SUCCESS != (ret = msymGetSubgroups(ctx, &sgl, &sg))) goto err;
     
     if(MSYM_SUCCESS != (ret = generateSubrepresentationSpaces(pg, sgl, sg, esl, es, perm, basisl, basis, elements, eesmap, t, &srsl, &srs, &srsbf, &span))) goto err;
     
@@ -502,8 +490,7 @@ msym_error_t msymGenerateSubrepresentationSpaces(msym_context ctx){
     
     return ret;
 err:
-    printf("free subspace mem leak\n");
-    //exit(1);
+    freeSubrepresentationSpaces(srsl, srs);
     free(srs);
     free(span);
     return ret;

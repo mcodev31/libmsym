@@ -280,6 +280,7 @@ int read_xyz(const char *name, msym_element_t **ratoms) {
     }
     if (NULL == fgets(buf, sizeof(buf), fp) || sscanf(buf," %d ",&l) != 1){
         fprintf(stderr,"Unable to read file %s\n",name);
+        fclose(fp);
         return -1;
     }
     if(l < 300000) {
@@ -287,6 +288,7 @@ int read_xyz(const char *name, msym_element_t **ratoms) {
         memset(a,0,l*sizeof(msym_element_t));
     } else {
         fprintf(stderr, "Too many elements in file %d\n",l);
+        fclose(fp);
         return -1;
     }
     
@@ -297,6 +299,7 @@ int read_xyz(const char *name, msym_element_t **ratoms) {
     
     for (int i = 0; fgets(buf, sizeof(buf), fp) && sscanf(buf, "%s %lf %lf %lf", a[i].name, &(a[i].v[0]),  &(a[i].v[1]),  &(a[i].v[2])) == 4 && i < l; i++) {}
     *ratoms = a;
+    fclose(fp);
     return l;
     
 }

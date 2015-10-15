@@ -178,7 +178,7 @@ err:
 }
 
 /* move this */
-msym_error_t findSplittingFieldSubgroup(msym_point_group_t *pg, int irrep, int sgl, msym_subgroup_t sg[sgl], msym_thresholds_t *thresholds, msym_subgroup_t **osg){
+msym_error_t findSplittingFieldSubgroup(msym_point_group_t *pg, int irrep, int sgl, const msym_subgroup_t sg[sgl], msym_thresholds_t *thresholds, const msym_subgroup_t **osg){
     msym_error_t ret = MSYM_SUCCESS;
     *osg = NULL;
     msym_character_table_t *ct = pg->ct;
@@ -329,7 +329,7 @@ err:
     return ret;
 }
 
-msym_error_t getSplittingFieldCharacters(msym_point_group_t *pg, msym_subgroup_t *sg, double (*c)[pg->order]){
+msym_error_t getSplittingFieldCharacters(msym_point_group_t *pg, const msym_subgroup_t *sg, double (*c)[pg->order]){
     msym_error_t ret = MSYM_SUCCESS;
     int e = 0;
     if(sg->type == MSYM_POINT_GROUP_TYPE_Dn && sg->n == 2){
@@ -388,7 +388,7 @@ err:
 
 
 
-msym_error_t generateSubrepresentationSpaces(msym_point_group_t *pg, int sgl, msym_subgroup_t sg[sgl], int esl, msym_equivalence_set_t *es, msym_permutation_t **perm, int basisl, msym_basis_function_t basis[basisl], msym_element_t *elements, msym_equivalence_set_t **esmap, msym_thresholds_t *thresholds, int *osrsl, msym_subrepresentation_space_t **osrs, msym_basis_function_t ***osrsbf, int **ospan){
+msym_error_t generateSubrepresentationSpaces(msym_point_group_t *pg, int sgl, const msym_subgroup_t sg[sgl], int esl, msym_equivalence_set_t *es, msym_permutation_t **perm, int basisl, msym_basis_function_t basis[basisl], msym_element_t *elements, msym_equivalence_set_t **esmap, msym_thresholds_t *thresholds, int *osrsl, msym_subrepresentation_space_t **osrs, msym_basis_function_t ***osrsbf, int **ospan){
     msym_error_t ret = MSYM_SUCCESS;
     msym_character_table_t *ct = pg->ct;
     int lmax = -1, nmax = 0;
@@ -696,7 +696,7 @@ msym_error_t generateSubrepresentationSpaces(msym_point_group_t *pg, int sgl, ms
                             memset(dproj, 0, sizeof(double[dd][dd]));
                             memset(mdec, 0, sizeof(double[vspan*lvspan][dd]));
 
-                            msym_subgroup_t *rsg = NULL;
+                            const msym_subgroup_t *rsg = NULL;
                             if(MSYM_SUCCESS != (ret = findSplittingFieldSubgroup(pg, sk, sgl, sg, thresholds, &rsg))) goto err;
                             //printf("using subgroup %s\n",rsg->name);
                             

@@ -173,6 +173,8 @@ msym_error_t symmetrizeWavefunctions(msym_point_group_t *pg, int srsl, msym_subr
                 double psalcabs = 0.0;
                 for(int d = 0;d < salc->d;d++){
                     for(int j = 0; j < salc->fl;j++){
+                        //space[d] is normalized, optimize away
+                        
                         mem[0][j] = wf[o][salc->f[j] - basis];
                     }
                     vlproj(salc->fl, mem[0], space[d], mem[1]);
@@ -349,13 +351,14 @@ msym_error_t symmetrizeWavefunctions(msym_point_group_t *pg, int srsl, msym_subr
             
             for(int d = 0; d < dim;d++){
                 int wfi = pf[o][d], di = pf[basisl][d];
-                memset(mem[0], 0, sizeof(double[basisl]));
+                //memset(mem[0], 0, sizeof(double[basisl]));
                 for(int j = 0; j < salc->fl;j++){
-                    mem[0][salc->f[j] - basis] = avg*space[di][j];
+                    symwf[wfi][salc->f[j] - basis] += avg*space[di][j];
+                    //mem[0][salc->f[j] - basis] = avg*space[di][j];
                 }
                 pfo[wfi].d = di;
                 pfo[wfi].i = pfmin;
-                vladd(basisl, mem[0], symwf[wfi], symwf[wfi]);
+                //vladd(basisl, mem[0], symwf[wfi], symwf[wfi]);
             }
         }
     }
