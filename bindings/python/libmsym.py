@@ -17,7 +17,7 @@ try:
 except ImportError:
     np = None
 
-libmsym = CDLL(find_library('libmsym'))
+libmsym = CDLL(find_library('msym'))
 
 if libmsym is None:
     raise Error("Cannot load libmsym shared library")
