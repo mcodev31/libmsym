@@ -174,8 +174,8 @@ void symmetryOperationToTex(FILE *fp, msym_symmetry_operation_t *sop, int l, cha
             if(sop->order == 2){
                 char *sup = NULL;
                 switch(sop->orientation){
-                    case VERTICAL : sup = "^{\\prime}"; break;
-                    case DIHEDRAL : sup = "^{\\prime\\prime}"; break;
+                    case MSYM_SYMMETRY_OPERATION_ORIENTATION_VERTICAL : sup = "^{\\prime}"; break;
+                    case MSYM_SYMMETRY_OPERATION_ORIENTATION_DIHEDRAL : sup = "^{\\prime\\prime}"; break;
                     default : sup = ""; break;
                 }
                 snprintf(buf,l,"\\hat{C}_{%d}%s",sop->order,sup);
@@ -196,9 +196,9 @@ void symmetryOperationToTex(FILE *fp, msym_symmetry_operation_t *sop, int l, cha
         case MSYM_SYMMETRY_OPERATION_TYPE_REFLECTION : {
             char *sub = NULL;
             switch(sop->orientation){
-                case HORIZONTAL : sub = "_{h}"; break;
-                case VERTICAL : sub = "_{v}"; break;
-                case DIHEDRAL : sub = "_{d}"; break;
+                case MSYM_SYMMETRY_OPERATION_ORIENTATION_HORIZONTAL : sub = "_{h}"; break;
+                case MSYM_SYMMETRY_OPERATION_ORIENTATION_VERTICAL : sub = "_{v}"; break;
+                case MSYM_SYMMETRY_OPERATION_ORIENTATION_DIHEDRAL : sub = "_{d}"; break;
                 default : sub = ""; break;
             }
             snprintf(buf,l,"\\hat{\\sigma}%s",sub); break;

@@ -77,7 +77,7 @@ with msym.Context(elements = elements, basis_functions = basis_functions) as ctx
     gen_elements = [msym.Element(name = "C", coordinates = [1.443524, 0.0,0.0]), msym.Element(name = "H", coordinates = [2.568381, 0.0, 0.0])]
     benzene = ctx.generate_elements(gen_elements)
     maxcomp = max([max(e.coordinates) for e in benzene])
-    print(len(benzene),"benzene\n")
+    print(len(benzene),"\nbenzene")
     for e in benzene:
         vec = np.asarray(e.coordinates)
         vec[vec < maxcomp*sys.float_info.epsilon] = 0
