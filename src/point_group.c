@@ -453,7 +453,7 @@ msym_error_t determinePointGroup(int sopsl, msym_symmetry_operation_t *sops, msy
             }
         }
         
-        pg->n = primary->order;
+        pg->n = NULL == primary ? 1 : primary->order;
         pg->primary = primary;
         
         if(nC[3] >= 2) {
