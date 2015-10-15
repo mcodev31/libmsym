@@ -840,6 +840,10 @@ msym_error_t getRepresentationName(msym_point_group_type_t type, int n, msym_rep
             eindex[1] = 0;
             break;
         case MSYM_POINT_GROUP_TYPE_Dnh :
+            if(n == 2 && eindex[0]+eindex[2] == 0){
+                eindex[0] = eindex[0]*eindex[2];
+                eindex[2] = ((eindex[2] + 1) >> 1) + 1;
+            }
             if(n & 1){eindex[3] = 0;}
             else {eindex[1] = 0;}
             break;
@@ -847,7 +851,7 @@ msym_error_t getRepresentationName(msym_point_group_type_t type, int n, msym_rep
             break;
     }
     
-    char types[] = {'A','B','E','T','G','H'}, *si[] = {"u","","g"}, *sv[] = {"2", "", "1"}, *sh[] = {"''", "", "'"};
+    char types[] = {'A','B','E','T','G','H'}, *si[] = {"u","","g"}, *sv[] = {"2", "", "1", "3"}, *sh[] = {"''", "", "'"};
     char rtype = rep->d == 1 ? types[(1 - eindex[0]) >> 1] : types[rep->d];
     if(rep->d == 1){
         snprintf(name,sizeof(char[l]),"%c%s%s%s",rtype,sv[eindex[2]+1],si[eindex[3]+1],sh[eindex[1]+1]);
