@@ -93,6 +93,7 @@ msym_error_t generatePointGroupFromName(const char *name, msym_thresholds_t *thr
     msym_error_t ret = MSYM_SUCCESS;
     msym_point_group_t *pg = calloc(1,sizeof(msym_point_group_t));
     if(MSYM_SUCCESS != (ret = pointGroupFromName(name,pg))) goto err;
+
     if(MSYM_SUCCESS != (ret = generateSymmetryOperations(pg->type, pg->n, pg->order, &pg->sops))) goto err;
     
     if((pg->type == MSYM_POINT_GROUP_TYPE_Cnv && pg->n == 0) || (pg->type == MSYM_POINT_GROUP_TYPE_Dnh && pg->n == 0)){
@@ -234,6 +235,7 @@ msym_error_t pointGroupFromName(const char *name, msym_point_group_t *pg){
         case MSYM_POINT_GROUP_TYPE_Cs:
         case MSYM_POINT_GROUP_TYPE_Ci:
             n = 1;
+            break;
         case MSYM_POINT_GROUP_TYPE_T:
         case MSYM_POINT_GROUP_TYPE_Td:
         case MSYM_POINT_GROUP_TYPE_Th:
