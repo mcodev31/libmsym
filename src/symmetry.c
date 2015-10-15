@@ -372,7 +372,7 @@ msym_error_t findSymmetrySymmetricPolyhedron(msym_equivalence_set_t *es, double 
     msym_symmetry_operation_t *sops = NULL;
     
     int sigma_h = 0, staggered = 0, split = 0, order = es->length/2, even, inversion, div_len;
-    int *div;
+    int *div = NULL;
     
     int n = 0;
     double v0[3], v0_proj[3], v_init[3], dot0, theta, theta_C2 = 0.0, theta_sigma = 0.0;
@@ -534,11 +534,14 @@ msym_error_t findSymmetrySymmetricPolyhedron(msym_equivalence_set_t *es, double 
         goto err;
     }
     
+    free(div);
+    
     *rsopsl = sopsl;
     *rsops = sops;
     return ret;
     
 err:
+    free(div);
     free(sops);
     *rsops = NULL;
     *rsopsl = 0;
