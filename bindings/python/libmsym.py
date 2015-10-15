@@ -2,12 +2,6 @@ from ctypes import *
 from ctypes.util import find_library
 from enum import Enum
 
-try:
-    import numpy as np
-except ImportError:
-    np = None
-
-
 class Error(Exception):
     def __init__(self, value, details=""):
         super().__init__(value)
@@ -17,6 +11,16 @@ class Error(Exception):
         return repr(self.value) + ": " + repr(self.details)
     def __repr__(self):
         return self.__str__()
+
+try:
+    import numpy as np
+except ImportError:
+    np = None
+
+libmsym = CDLL(find_library('libmsym'))
+
+if libmsym is None:
+    raise Error("Cannot load libmsym shared library")
 
 class SymmetryOperation(Structure):
 
@@ -251,9 +255,6 @@ class CharacterTable(Structure):
             self._symmetry_species = self._s[0:self._d]
             
         return self._symmetry_species
-
-        
-libmsym = CDLL(find_library('libmsym'))
 
 class _ReturnCode(c_int):
     

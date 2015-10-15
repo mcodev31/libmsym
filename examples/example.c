@@ -247,10 +247,19 @@ int example(const char* in_file, msym_thresholds_t *thresholds){
     msymReleaseContext(ctx);
     printf("We're done!\n");
     
+    free(salcs);
+    free(cmem);
+    free(species);
+    free(pf);
     free(bfs);
+    free(elements);
     
     return ret;
 err:
+    free(salcs);
+    free(cmem);
+    free(species);
+    free(pf);
     free(bfs);
     free(elements);
     error = msymErrorString(ret);
