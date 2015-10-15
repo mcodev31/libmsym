@@ -832,6 +832,10 @@ msym_error_t getRepresentationName(msym_point_group_type_t type, int n, msym_rep
             eindex[2] = 0;
             break;
         case MSYM_POINT_GROUP_TYPE_Dn  :
+            if(n == 2 && eindex[0]+eindex[2] == 0){
+                eindex[0] = eindex[0]*eindex[2];
+                eindex[2] = ((eindex[2] + 1) >> 1) + 1;
+            }
             eindex[1] = 0;
             eindex[3] = 0;
             break;

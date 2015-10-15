@@ -75,6 +75,9 @@ void generateSymmetryOperationsOhOld(msym_point_group_t *pg);
 void generateSymmetryOperationsIOld(msym_point_group_t *pg);
 void generateSymmetryOperationsIhOld(msym_point_group_t *pg);
 
+
+msym_error_t generateSymmetryOperationsCs(int n, int l, msym_symmetry_operation_t sops[l], int *pk, int *pcla);
+msym_error_t generateSymmetryOperationsCi(int n, int l, msym_symmetry_operation_t sops[l], int *pk, int *pcla);
 msym_error_t generateSymmetryOperationsDn(int n, int l, msym_symmetry_operation_t sops[l], int *pk, int *pcla);
 msym_error_t generateSymmetryOperationsDnd(int n, int l, msym_symmetry_operation_t sops[l], int *pk, int *pcla);
 msym_error_t generateSymmetryOperationsDnh(int n, int l, msym_symmetry_operation_t sops[l], int *pk, int *pcla);
@@ -1056,8 +1059,8 @@ msym_error_t generateSymmetryOperations(msym_point_group_type_t type, int n, int
         msym_error_t (*f)(int, int, msym_symmetry_operation_t *, int *, int *);
     } fmap[18] = {
         
-        [ 0] = {MSYM_POINT_GROUP_TYPE_Ci,  generateSymmetryOperationsUnknown},
-        [ 1] = {MSYM_POINT_GROUP_TYPE_Cs,  generateSymmetryOperationsUnknown},
+        [ 0] = {MSYM_POINT_GROUP_TYPE_Ci,  generateSymmetryOperationsCi},
+        [ 1] = {MSYM_POINT_GROUP_TYPE_Cs,  generateSymmetryOperationsCs},
         [ 2] = {MSYM_POINT_GROUP_TYPE_Cn,  generateSymmetryOperationsCn},
         [ 3] = {MSYM_POINT_GROUP_TYPE_Cnh, generateSymmetryOperationsCnh},
         [ 4] = {MSYM_POINT_GROUP_TYPE_Cnv, generateSymmetryOperationsCnv},
@@ -1151,6 +1154,52 @@ msym_error_t generateSymmetryOperationsSn(int n, int l, msym_symmetry_operation_
     return ret;
 err:
     return ret;
+}
+
+msym_error_t generateSymmetryOperationsCs(int n, int l, msym_symmetry_operation_t sops[l], int *pk, int *pcla){
+    msym_error_t ret = MSYM_SUCCESS;
+    int k = *pk, cla = *pcla;
+    
+    if(k > l){ret = MSYM_POINT_GROUP_ERROR; msymSetErrorDetails("Too many operations when generating Cs symmetry operations"); goto err;}
+    
+    
+    msym_symmetry_operation_t sigma = {.type = REFLECTION, .orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_HORIZONTAL, .order = 1, .power = 1, .cla = cla, .v = {0,0,1}};
+    
+    memcpy(&(sops[k]), &sigma, sizeof(msym_symmetry_operation_t));
+    
+    k++;
+    cla++;
+    
+    printf("------ Cs %d operations %d classes------\n",k-*pk, cla-*pcla);
+    *pk = k; *pcla = cla;
+    
+    return ret;
+err:
+    return ret;
+
+}
+
+msym_error_t generateSymmetryOperationsCi(int n, int l, msym_symmetry_operation_t sops[l], int *pk, int *pcla){
+    msym_error_t ret = MSYM_SUCCESS;
+    int k = *pk, cla = *pcla;
+    
+    if(k > l){ret = MSYM_POINT_GROUP_ERROR; msymSetErrorDetails("Too many operations when generating Ci symmetry operations"); goto err;}
+    
+    
+    msym_symmetry_operation_t inv = {.type = INVERSION, .orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_NONE, .order = 1, .power = 1, .cla = cla, .v = {0,0,0}};
+    
+    memcpy(&(sops[k]), &inv, sizeof(msym_symmetry_operation_t));
+    
+    k++;
+    cla++;
+    
+    printf("------ Ci %d operations %d classes------\n",k-*pk, cla-*pcla);
+    *pk = k; *pcla = cla;
+    
+    return ret;
+err:
+    return ret;
+    
 }
 
 msym_error_t generateSymmetryOperationsCn(int n, int l, msym_symmetry_operation_t sops[l], int *pk, int *pcla){
