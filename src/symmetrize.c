@@ -136,7 +136,6 @@ err:
     return ret;
 }
 
-
 msym_error_t symmetrizeWavefunctions(msym_point_group_t *pg, int srsl, msym_subrepresentation_space_t *srs, int *span, int basisl, msym_basis_function_t basis[basisl], double wf[basisl][basisl], double symwf[basisl][basisl], int species[basisl], msym_partner_function_t pfo[basisl]){
     msym_error_t ret = MSYM_SUCCESS;
     
@@ -154,9 +153,7 @@ msym_error_t symmetrizeWavefunctions(msym_point_group_t *pg, int srsl, msym_subr
     int md = 1;
     //could deduce from pg type but can't be bothered
     for(int k = 0;k < pg->ct->d;k++) md = (md > pg->ct->s[k].d ? md : pg->ct->s[k].d);
-    double (*mem)[basisl] = malloc(sizeof(double[2][basisl > md ? basisl : md]));
     int (*pf)[md] = calloc(basisl+1,sizeof(*pf));
-    double *dmpf = mem[1];
     
     int psalcl = 0;
     
@@ -166,9 +163,14 @@ msym_error_t symmetrizeWavefunctions(msym_point_group_t *pg, int srsl, msym_subr
         psalck[i] = psalcl;
         psalcl += srs[i].salcl;
     }
-    
-    double (*psalc)[psalcl] = calloc(basisl,sizeof(*psalc));
-    double (*bfd)[md] = calloc(basisl, sizeof(*bfd));
+    /* This is a bit of overkill since we only need the sign of the component
+     * We could just as well have used a basis change, but the sign in degenerate
+     * representations can't be used for partner function determination,
+     * and this is a sparce matrix
+     */
+    double (*psalc)[basisl][psalcl] = calloc(md+1,sizeof(*psalc));
+    double (*bfd)[md] = calloc(basisl+1, sizeof(*bfd));
+    double *dmpf = bfd[basisl];
     
     /* Determine salc components, and build information vectors (e.g. indexing/offsets/irreps) */
     for(int o = 0;o < basisl;o++){
@@ -186,14 +188,12 @@ msym_error_t symmetrizeWavefunctions(msym_point_group_t *pg, int srsl, msym_subr
                         c += wf[o][salc->f[j] - basis]*space[d][j];
                     }
                     double c2 = SQR(c);
-                    
-                    //pf[o][d] = -1 + ((c > 0) << 1);
-                    //mabs += c2;
+                    psalc[d][o][psalci] = c; //Won't thrash the cache too bad since d is small
                     psalcabs += c2;
                     bfd[o][d] += c2;
                 }
                 mabs += psalcabs;
-                psalc[o][psalci] = sqrt(psalcabs);
+                psalc[md][o][psalci] = sqrt(psalcabs);
                 psalci++;
             }
             if(mabs > mcomp){
@@ -201,16 +201,8 @@ msym_error_t symmetrizeWavefunctions(msym_point_group_t *pg, int srsl, msym_subr
                 mcomp = mabs;
             }
         }
-        
         ispan[species[o]]++;
-        
-        
     }
-    
-    printf("psalc=\n");
-    printTransform(basisl,psalcl,psalc);
-    
-    
     
     for(int k = 0;k < pg->ct->d;k++){
         if(ispan[k] != span[k]*pg->ct->s[k].d){
@@ -233,6 +225,7 @@ msym_error_t symmetrizeWavefunctions(msym_point_group_t *pg, int srsl, msym_subr
         
         if(dim <= 1) continue;
         
+        /* check if this functions has alredy been assigned partners */
         for(int i = 0;i < o && !fpf.j;i++){
             for(int j = 1;j < md;j++){
                 if(pf[i][j] == o){
@@ -255,8 +248,15 @@ msym_error_t symmetrizeWavefunctions(msym_point_group_t *pg, int srsl, msym_subr
         
         for(int po = 0; po < basisl;po++){
             if(species[po] != ko || o == po || abs(pf[po][0]) == dim - 1) continue;
-            vlsub(psalcl,psalc[o],psalc[po],mem[0]); //don't use mem[1], dmpf is an alias,
-            double c = vlabs(psalcl, mem[0]), mc = 0.0;
+            double c = 0, mc = 0;
+            /* length of v1-v2 */
+            for(int i = 0;i < psalcl;i++){
+                double sub = psalc[md][o][i] - psalc[md][po][i];
+                c += SQR(sub);
+            }
+            c = sqrt(c);
+            
+            /* find the <dim> smallest diffs */
             int mic = 0;
             for(int i = 1;i < dim;i++){
                 double diff = fabs(dmpf[i] - c);
@@ -277,7 +277,6 @@ msym_error_t symmetrizeWavefunctions(msym_point_group_t *pg, int srsl, msym_subr
         }
     }
     
-    
     /* verify that we have partners for everything */
     for(int o = 0;o < basisl;o++){
         int dim = pg->ct->s[species[o]].d;
@@ -296,13 +295,14 @@ msym_error_t symmetrizeWavefunctions(msym_point_group_t *pg, int srsl, msym_subr
             }
         }
         
-        printf("basis %d (%s) partner functions = %d",o,pg->ct->s[species[o]].name,o);
+        /*printf("basis %d (%s) partner functions = %d",o,pg->ct->s[species[o]].name,o);
         for(int i = 1;i < dim;i++){
             printf(",%d",pf[o][i]);
         }
-        printf("\n");
+        printf("\n");*/
         
     }
+    
     
     memset(symwf,0,sizeof(double[basisl][basisl]));
     
@@ -351,7 +351,7 @@ msym_error_t symmetrizeWavefunctions(msym_point_group_t *pg, int srsl, msym_subr
             
             for(int d = 0;d < dim;d++){
                 int wfi = pf[o][d];
-                avg += psalc[wfi][psalci];
+                avg += psalc[md][wfi][psalci];
                 if(pf[basisl][d] == 0) pfmin = wfi;
             }
             
@@ -364,14 +364,13 @@ msym_error_t symmetrizeWavefunctions(msym_point_group_t *pg, int srsl, msym_subr
             
             for(int d = 0; d < dim;d++){
                 int wfi = pf[o][d], di = pf[basisl][d];
-                //memset(mem[0], 0, sizeof(double[basisl]));
+                /* use the sign of the projection onto the largest component */
+                double c = copysign(avg,psalc[di][wfi][psalci]);
                 for(int j = 0; j < salc->fl;j++){
-                    symwf[wfi][salc->f[j] - basis] += avg*space[di][j];
-                    //mem[0][salc->f[j] - basis] = avg*space[di][j];
+                    symwf[wfi][salc->f[j] - basis] += c*space[di][j];
                 }
                 pfo[wfi].d = di;
                 pfo[wfi].i = pfmin;
-                //vladd(basisl, mem[0], symwf[wfi], symwf[wfi]);
             }
         }
     }
@@ -379,7 +378,6 @@ msym_error_t symmetrizeWavefunctions(msym_point_group_t *pg, int srsl, msym_subr
 err:
     
     free(ispan);
-    free(mem);
     free(pf);
     free(psalc);
     free(bfd);
