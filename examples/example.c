@@ -193,11 +193,11 @@ int example(const char* in_file, msym_thresholds_t *thresholds){
     
     /* Reorder the SALCs */
     for(int i = 0;i < bfsl;i++){
-        int ni = i*i;
+        int ni = i*i % bfsl;
         if(ni != i){
             memcpy(cmem, salcs[i], sizeof(double[bfsl]));
-            memcpy(salcs[i], salcs[ni % bfsl], sizeof(double[bfsl]));
-            memcpy(salcs[ni % bfsl], cmem, sizeof(double[bfsl]));
+            memcpy(salcs[i], salcs[ni], sizeof(double[bfsl]));
+            memcpy(salcs[ni], cmem, sizeof(double[bfsl]));
         }
     }
     
