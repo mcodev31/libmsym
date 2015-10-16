@@ -203,12 +203,19 @@ int example(const char* in_file, msym_thresholds_t *thresholds){
     for(int i = 0;i < bfsl;i++){
         for(int j = 0;j < bfsl;j++){
             double r = ((double) (rand() - (RAND_MAX >> 1)))/RAND_MAX;
+            double x = i % 2 == 0 ? -1.0 : 1.0;
             salcs[i][j] += r*1.0e-5;
+            salcs[i][j] *= x;
         }
     }
     
+    printf("in=\n");
+    printTransform(bfsl,bfsl,salcs);
     /* Symmetrize wavefunctions */
     if(MSYM_SUCCESS != (ret = msymSymmetrizeWavefunctions(ctx, bfsl, salcs, species, pf))) goto err;
+    
+    printf("out=\n");
+    printTransform(bfsl,bfsl,salcs);
     
     printf("Wave function symmetrization returned new linear combinations:\n");
     for(int i = 0;i < bfsl;i++){

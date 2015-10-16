@@ -140,6 +140,12 @@ err:
 msym_error_t symmetrizeWavefunctions(msym_point_group_t *pg, int srsl, msym_subrepresentation_space_t *srs, int *span, int basisl, msym_basis_function_t basis[basisl], double wf[basisl][basisl], double symwf[basisl][basisl], int species[basisl], msym_partner_function_t pfo[basisl]){
     msym_error_t ret = MSYM_SUCCESS;
     
+    if(srsl != pg->ct->d){
+        ret = MSYM_SYMMETRIZATION_ERROR;
+        msymSetErrorDetails("Unexpected subspace length (expected %d got %d)",pg->ct->d, srsl);
+        return ret;
+    }
+    
     int *ispan = calloc(pg->ct->d,sizeof(*ispan));
     
     memset(species,0,sizeof(int[basisl]));
@@ -154,11 +160,15 @@ msym_error_t symmetrizeWavefunctions(msym_point_group_t *pg, int srsl, msym_subr
     
     int psalcl = 0;
     
-    for(int i = 0;i < srsl;i++) psalcl += srs[i].salcl;
+    int *psalck = calloc(pg->ct->d, sizeof(*psalck));
+    
+    for(int i = 0;i < srsl;i++){
+        psalck[i] = psalcl;
+        psalcl += srs[i].salcl;
+    }
     
     double (*psalc)[psalcl] = calloc(basisl,sizeof(*psalc));
     double (*bfd)[md] = calloc(basisl, sizeof(*bfd));
-    int *psalck = calloc(pg->ct->d, sizeof(*psalck));
     
     /* Determine salc components, and build information vectors (e.g. indexing/offsets/irreps) */
     for(int o = 0;o < basisl;o++){
@@ -166,23 +176,23 @@ msym_error_t symmetrizeWavefunctions(msym_point_group_t *pg, int srsl, msym_subr
         int psalci = 0;
         for(int k = 0;k < pg->ct->d;k++){
             double mabs = 0.0;
-            psalck[k] = psalci;
             for(int s = 0;s < srs[k].salcl;s++){
                 msym_salc_t *salc = &srs[k].salc[s];
                 double (*space)[salc->fl] = (double (*)[salc->fl]) salc->pf;
                 double psalcabs = 0.0;
                 for(int d = 0;d < salc->d;d++){
+                    double c = 0.0;
                     for(int j = 0; j < salc->fl;j++){
-                        //space[d] is normalized, optimize away
-                        
-                        mem[0][j] = wf[o][salc->f[j] - basis];
+                        c += wf[o][salc->f[j] - basis]*space[d][j];
                     }
-                    vlproj(salc->fl, mem[0], space[d], mem[1]);
-                    double pabssqr = vlsumsqr(salc->fl, mem[1]);
-                    mabs += pabssqr;
-                    psalcabs += pabssqr;
-                    bfd[o][d] += pabssqr;
+                    double c2 = SQR(c);
+                    
+                    //pf[o][d] = -1 + ((c > 0) << 1);
+                    //mabs += c2;
+                    psalcabs += c2;
+                    bfd[o][d] += c2;
                 }
+                mabs += psalcabs;
                 psalc[o][psalci] = sqrt(psalcabs);
                 psalci++;
             }
@@ -191,8 +201,16 @@ msym_error_t symmetrizeWavefunctions(msym_point_group_t *pg, int srsl, msym_subr
                 mcomp = mabs;
             }
         }
+        
         ispan[species[o]]++;
+        
+        
     }
+    
+    printf("psalc=\n");
+    printTransform(basisl,psalcl,psalc);
+    
+    
     
     for(int k = 0;k < pg->ct->d;k++){
         if(ispan[k] != span[k]*pg->ct->s[k].d){
@@ -236,7 +254,7 @@ msym_error_t symmetrizeWavefunctions(msym_point_group_t *pg, int srsl, msym_subr
         for(int i = 0;i < md;i++){dmpf[i] = DBL_MAX;}
         
         for(int po = 0; po < basisl;po++){
-            if(species[po] != ko || o == po) continue;
+            if(species[po] != ko || o == po || abs(pf[po][0]) == dim - 1) continue;
             vlsub(psalcl,psalc[o],psalc[po],mem[0]); //don't use mem[1], dmpf is an alias,
             double c = vlabs(psalcl, mem[0]), mc = 0.0;
             int mic = 0;
@@ -255,12 +273,7 @@ msym_error_t symmetrizeWavefunctions(msym_point_group_t *pg, int srsl, msym_subr
         }
         
         for(int i = 1;i < dim;i++){
-            //int index = pf[basisl][i];
             pf[o][0] += pf[basisl][i] > 0;
-            /*if(index > 0) {
-                pf[o][0]++;
-                pf[index][0]--;
-            }*/
         }
     }
     
