@@ -76,14 +76,17 @@ msym_error_t findPermutationSubgroups(int l, msym_permutation_t perm[l], int sgm
     
     int *isops = malloc(sizeof(int[l]));
     int *msops = malloc(sizeof(int[l]));
-    int gl = 0;
+    int gl = 0, glm = 0;
     
     for(int i = 0;i < l;i++){
         if((sops[i].power == 1 && (sops[i].type == PROPER_ROTATION || sops[i].type == IMPROPER_ROTATION)) || sops[i].type == INVERSION || sops[i].type == REFLECTION){
             msym_permutation_cycle_t* c = perm[i].c;
+            glm = gl;
             memset(msops, 0, sizeof(int[l]));
             group[gl].sopsl = c->l;
-            group[gl].sops = calloc(c->l, sizeof(int));
+            group[gl].sops = realloc(group[gl].sops, sizeof(int[c->l]));
+            memset(group[gl].sops,0,sizeof(int[c->l]));
+            //group[gl].sops = calloc(c->l, sizeof(int));
             group[gl].subgroup[0] = group[gl].subgroup[1] = -1;
             for(int next = c->s, j = 0;j < c->l;j++){
                 msops[next] = 1;
@@ -100,6 +103,10 @@ msym_error_t findPermutationSubgroups(int l, msym_permutation_t perm[l], int sgm
             }
             gl += n < l;
         }
+    }
+    
+    if(glm == gl){
+        free(group[gl].sops);
     }
         
     for(int i = 0;i < gl && gl < sgmax;i++){
