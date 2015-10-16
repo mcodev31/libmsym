@@ -354,7 +354,7 @@ msym_symmetry_operation_t *findSymmetryOperation(msym_symmetry_operation_t *sop,
             break;
         }
         
-        else if(vparallel(s->v, sop->v,thresholds->angle) && s->type == sop->type && ((sop->type != PROPER_ROTATION && sop->type != IMPROPER_ROTATION) || (s->order == sop->order && s->power == sop->power))){
+        else if(s->type == sop->type && ((sop->type != PROPER_ROTATION && sop->type != IMPROPER_ROTATION) || (s->order == sop->order && s->power == sop->power)) && vparallel(s->v, sop->v,thresholds->angle)){
             fsop = s;
             break;
         }
