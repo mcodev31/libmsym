@@ -115,7 +115,7 @@ extern "C" {
     
     typedef struct _msym_basis_function {
         void *id;                               // custom identifier
-        enum _msym_basis_type_t {
+        enum _msym_basis_type {
             MSYM_BASIS_TYPE_REAL_SPHERICAL_HARMONIC = 0,
             MSYM_BASIS_TYPE_CARTESIAN = 1
         } type;
@@ -148,6 +148,7 @@ extern "C" {
     //rename representation? we need info on wheather or not it's irreducible
     typedef struct _msym_symmetry_species {
         int d;
+        int r;
         char name[8];
     } msym_symmetry_species_t;
     

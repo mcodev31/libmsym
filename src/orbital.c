@@ -392,7 +392,7 @@ msym_error_t generateSubrepresentationSpaces(msym_point_group_t *pg, int sgl, co
     msym_error_t ret = MSYM_SUCCESS;
     msym_character_table_t *ct = pg->ct;
     int lmax = -1, nmax = 0;
-    enum _msym_basis_type_t ftype = basis[0].type;
+    enum _msym_basis_type ftype = basis[0].type;
     for(int i = 0;i < basisl;i++){
         if(basis[i].type != ftype) {nmax = -1; break;}
         lmax = basis[i].f.sh.l > lmax ? basis[i].f.sh.l : lmax;

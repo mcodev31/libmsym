@@ -8,7 +8,7 @@
 void characterTableToTex(FILE *fp, msym_point_group_t *pg, const msym_character_table_t *ct);
 void pointGroupToTex(FILE *fp, msym_point_group_t *pg, int l, char buf[l]);
 void symmetryOperationToTex(FILE *fp, msym_symmetry_operation_t *sop, int l, char buf[l]);
-void symmetrySpeciesToTex(FILE *fp, char *name);
+void symmetrySpeciesToTex(FILE *fp, msym_symmetry_species_t *s);
 void characterToTex(FILE *fp,int n, const msym_character_table_t *ct, int i, int j, int mode);
 
 int main(int argc, const char * argv[]) {
@@ -65,7 +65,7 @@ void characterTableToTex(FILE *fp, msym_point_group_t *pg, const msym_character_
     fprintf(fp,"\\\\ \\hline\n");
     
     for(int i = 0;i < ct->d;i++){
-        symmetrySpeciesToTex(fp,ct->s[i].name);
+        symmetrySpeciesToTex(fp,&ct->s[i]);
         for(int j = 0;j < ct->d;j++){
             characterToTex(fp,pg->n,ct,i,j,2);
         }
@@ -121,17 +121,17 @@ void characterToTex(FILE *fp,int n, const msym_character_table_t *ct, int i, int
     fprintf(fp,"& $%.3lf$ ",c);
 }
 
-void symmetrySpeciesToTex(FILE *fp, char *name){
-    int prim = 0, start = 0;
+void symmetrySpeciesToTex(FILE *fp, msym_symmetry_species_t *s){
+    char *name = s->name;
+    int prim = 0;
     fprintf(fp,"$");
-    if(name[0] == '*'){
+    if(s->r > 1){
         fprintf(fp,"^{*}");
-        start = 1;
     }
-    fprintf(fp,"%c",name[start]);
-    int sub = name[start+1] != '\0' && name[start+1] != '\'';
+    fprintf(fp,"%c",name[0]);
+    int sub = name[1] != '\0' && name[1] != '\'';
     if(sub) fprintf(fp,"_{");
-    for(int i = start+1;name[i] != '\0';i++){
+    for(int i = 1;name[i] != '\0';i++){
         if(name[i] == '\'') prim++;
         else fprintf(fp,"%c",name[i]);
     }

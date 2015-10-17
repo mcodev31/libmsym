@@ -21,7 +21,7 @@
 #endif
 
 typedef struct _msym_representation {
-    enum {IRREDUCIBLE, REDUCIBLE} type;
+    enum {IRREDUCIBLE = 1, REDUCIBLE = 2} type;
     int d;
     struct {
         int p, v, h, i, l;
@@ -55,7 +55,7 @@ msym_error_t getCharacterTableIh(int sopsl, msym_symmetry_operation_t sops[sopsl
 msym_error_t getCharacterTableUnknown(int sopsl, msym_symmetry_operation_t sops[sopsl], msym_character_table_t *ct);
 
 
-msym_error_t getPredefinedCharacterTable(int sopsl, msym_symmetry_operation_t sops[sopsl], int l, const msym_symmetry_operation_t tsops[l], const char *tname[l], const int tdim[l], const double (*table)[l], msym_character_table_t *ct);
+msym_error_t getPredefinedCharacterTable(int sopsl, msym_symmetry_operation_t sops[sopsl], int l, const msym_symmetry_operation_t tsops[l], const char *tname[l], const int tdim[l], const int tred[l], const double (*table)[l], msym_character_table_t *ct);
 
 msym_error_t getRepresentationName(msym_point_group_type_t type, int n, msym_representation_t *rep, int l, char name[l]);
 
@@ -141,15 +141,17 @@ msym_error_t generateCharacterTable(msym_point_group_type_t type, int n, int sop
         ct->classc[sops[i].cla]++;
     }
     
-    for(int i = 0;i < ct->d && fmap[fi].c == REP;i++){
-        //snprintf(ct->s[i].name, sizeof(ct->s[i].name), "%s",rep[i].name);
-        if(MSYM_SUCCESS != (ret = getRepresentationName(type, n, &rep[i], sizeof(ct->s[i].name), ct->s[i].name))) goto err;
-        ct->s[i].d = rep[i].d;
-        int nc = -1;
-        for(int j = 0;j < sopsl;j++){
-            if(nc < sops[j].cla){
-                nc = sops[j].cla;
-                if(MSYM_SUCCESS != (ret = representationCharacter(n,&sops[j],&rep[i],&table[i][nc]))) goto err;
+    if(fmap[fi].c == REP){
+        for(int i = 0;i < ct->d;i++){
+            if(MSYM_SUCCESS != (ret = getRepresentationName(type, n, &rep[i], sizeof(ct->s[i].name), ct->s[i].name))) goto err;
+            ct->s[i].d = rep[i].d;
+            ct->s[i].r = rep[i].type;
+            int nc = -1;
+            for(int j = 0;j < sopsl;j++){
+                if(nc < sops[j].cla){
+                    nc = sops[j].cla;
+                    if(MSYM_SUCCESS != (ret = representationCharacter(n,&sops[j],&rep[i],&table[i][nc]))) goto err;
+                }
             }
         }
     }
@@ -697,8 +699,9 @@ msym_error_t getCharacterTableT(int sopsl, msym_symmetry_operation_t sops[sopsl]
         [2] = {.type = PROPER_ROTATION, .order = 2, .power = 1, .orientation = HORIZONTAL}
     };
     
-    const char *tname[3] = {"A","*E","T"};
+    const char *tname[3] = {"A","E","T"};
     const int tdim[3] = {1,2,3};
+    const int tred[3] = {1,2,1};
     
     const double table[][3] = {
         [0] = {1,  1,  1},
@@ -706,7 +709,7 @@ msym_error_t getCharacterTableT(int sopsl, msym_symmetry_operation_t sops[sopsl]
         [2] = {3,  0, -1}
     };
     
-    if(MSYM_SUCCESS != (ret = getPredefinedCharacterTable(sopsl, sops, 3, tsops, tname, tdim, table, ct))) goto err;
+    if(MSYM_SUCCESS != (ret = getPredefinedCharacterTable(sopsl, sops, 3, tsops, tname, tdim, tred, table, ct))) goto err;
     
 err:
     return ret;
@@ -726,6 +729,7 @@ msym_error_t getCharacterTableTd(int sopsl, msym_symmetry_operation_t sops[sopsl
     
     const char *tname[5] = {"A1","A2","E","T1","T2"};
     const int tdim[5] = {1,1,2,3,3};
+    const int tred[5] = {1,1,1,1,1};
     
     const double table[][5] = {
         [0] = {1,  1,  1,  1,  1},
@@ -735,7 +739,7 @@ msym_error_t getCharacterTableTd(int sopsl, msym_symmetry_operation_t sops[sopsl
         [4] = {3, -1,  0, -1,  1}
     };
     
-    if(MSYM_SUCCESS != (ret = getPredefinedCharacterTable(sopsl, sops, 5, tsops, tname, tdim, table, ct))) goto err;
+    if(MSYM_SUCCESS != (ret = getPredefinedCharacterTable(sopsl, sops, 5, tsops, tname, tdim, tred, table, ct))) goto err;
     
 err:
     return ret;
@@ -755,8 +759,9 @@ msym_error_t getCharacterTableTh(int sopsl, msym_symmetry_operation_t sops[sopsl
     };
     
     
-    const char *tname[6] = {"Ag","Au","*Eg","*Eu","Tg","Tu"};
+    const char *tname[6] = {"Ag","Au","Eg","Eu","Tg","Tu"};
     const int tdim[6] = {1,1,2,2,3,3};
+    const int tred[6] = {1,1,2,2,1,1};
     
     const double table[][6] = {
         [0] = {1,  1,  1,  1,  1,  1},
@@ -767,7 +772,7 @@ msym_error_t getCharacterTableTh(int sopsl, msym_symmetry_operation_t sops[sopsl
         [5] = {3,  0, -1, -3,  0,  1}
     };
     
-    if(MSYM_SUCCESS != (ret = getPredefinedCharacterTable(sopsl, sops, 6, tsops, tname, tdim, table, ct))) goto err;
+    if(MSYM_SUCCESS != (ret = getPredefinedCharacterTable(sopsl, sops, 6, tsops, tname, tdim, tred, table, ct))) goto err;
     
 err:
     return ret;
@@ -794,9 +799,10 @@ msym_error_t getCharacterTableO(int sopsl, msym_symmetry_operation_t sops[sopsl]
     
     const char *tname[5] = {"A1","A2","E","T1","T2"};
     const int tdim[5] = {1,1,2,3,3};
+    const int tred[5] = {1,1,1,1,1};
     
     
-    if(MSYM_SUCCESS != (ret = getPredefinedCharacterTable(sopsl, sops, 5, tsops, tname, tdim, table, ct))) goto err;
+    if(MSYM_SUCCESS != (ret = getPredefinedCharacterTable(sopsl, sops, 5, tsops, tname, tdim, tred, table, ct))) goto err;
     
 err:
     return ret;
@@ -834,9 +840,10 @@ msym_error_t getCharacterTableOh(int sopsl, msym_symmetry_operation_t sops[sopsl
     
     const char *tname[10] = {"A1g", "A1u", "A2g", "A2u", "Eg", "Eu", "T1g", "T1u", "T2g", "T2u"};
     const int tdim[10] = {1,1,1,1,2,2,3,3,3,3};
+    const int tred[10] = {1,1,1,1,1,1,1,1,1,1};
 
     
-    if(MSYM_SUCCESS != (ret = getPredefinedCharacterTable(sopsl, sops, 10, tsops, tname, tdim, table, ct))) goto err;
+    if(MSYM_SUCCESS != (ret = getPredefinedCharacterTable(sopsl, sops, 10, tsops, tname, tdim, tred, table, ct))) goto err;
     
 err:
     return ret;
@@ -855,6 +862,7 @@ msym_error_t getCharacterTableI(int sopsl, msym_symmetry_operation_t sops[sopsl]
     
     const char *tname[5] = {"A","T1","T2","G","H"};
     const int tdim[5] = {1,3,3,4,5};
+    const int tred[5] = {1,1,1,1,1};
     
     
     //         E     C2     C3    C5     C52
@@ -866,7 +874,7 @@ msym_error_t getCharacterTableI(int sopsl, msym_symmetry_operation_t sops[sopsl]
         [4] = {5,     1,    -1,    0,     0}
     };
 
-    if(MSYM_SUCCESS != (ret = getPredefinedCharacterTable(sopsl, sops, 5, tsops, tname, tdim, table, ct))) goto err;
+    if(MSYM_SUCCESS != (ret = getPredefinedCharacterTable(sopsl, sops, 5, tsops, tname, tdim, tred, table, ct))) goto err;
     
 err:
     return ret;
@@ -893,6 +901,7 @@ msym_error_t getCharacterTableIh(int sopsl, msym_symmetry_operation_t sops[sopsl
     
     const char *tname[10] = {"Ag","Au","T1g","T1u","T2g","T2u","Gg","Gu","Hg","Hu"};
     const int tdim[10] = {1,1,3,3,3,3,4,4,5,5};
+    const int tred[10] = {1,1,1,1,1,1,1,1,1,1};
     
     //          E    C2   R    S6   C5   S10  C52  i    C3   S103
     static const double table[][10] =
@@ -909,13 +918,13 @@ msym_error_t getCharacterTableIh(int sopsl, msym_symmetry_operation_t sops[sopsl
         [9] = {5,     1,     -1,      1,      0,      0,      0,     -5,     -1,      0     }
     };
     
-    if(MSYM_SUCCESS != (ret = getPredefinedCharacterTable(sopsl, sops, 10, tsops, tname, tdim, table, ct))) goto err;
+    if(MSYM_SUCCESS != (ret = getPredefinedCharacterTable(sopsl, sops, 10, tsops, tname, tdim, tred, table, ct))) goto err;
     
 err:
     return ret;
 }
 
-msym_error_t getPredefinedCharacterTable(int sopsl, msym_symmetry_operation_t sops[sopsl], int l, const msym_symmetry_operation_t tsops[l], const char *tname[l], const int tdim[l], const double (*table)[l], msym_character_table_t *ct){
+msym_error_t getPredefinedCharacterTable(int sopsl, msym_symmetry_operation_t sops[sopsl], int l, const msym_symmetry_operation_t tsops[l], const char *tname[l], const int tdim[l], const int tred[l], const double (*table)[l], msym_character_table_t *ct){
     msym_error_t ret = MSYM_SUCCESS;
     
     double (*ctable)[l] = ct->table;
@@ -928,6 +937,7 @@ msym_error_t getPredefinedCharacterTable(int sopsl, msym_symmetry_operation_t so
     
     for(int i = 0; i < l;i++){
         ct->s[i].d = tdim[i];
+        ct->s[i].r = tred[i];
         snprintf(ct->s[i].name, sizeof(ct->s[i].name), "%s",tname[i]);
         msym_symmetry_operation_t *sop = NULL;
         for(sop = sops;sop < (sops + sopsl);sop++){
@@ -1019,9 +1029,9 @@ msym_error_t getRepresentationName(msym_point_group_type_t type, int n, msym_rep
         snprintf(name,sizeof(char[l]),"%c%s%s%s",rtype,sv[eindex[2]+1],si[eindex[3]+1],sh[eindex[1]+1]);
     }
     else if (rep->eig.l >  0){
-        snprintf(name,sizeof(char[l]),"%s%c%d%s%s",rep->type == IRREDUCIBLE ? "" : "*",rtype,rep->eig.l,si[eindex[3]+1],sh[eindex[1]+1]);
+        snprintf(name,sizeof(char[l]),"%c%d%s%s",rtype,rep->eig.l,si[eindex[3]+1],sh[eindex[1]+1]);
     } else {
-        snprintf(name,sizeof(char[l]),"%s%c%s%s",rep->type == IRREDUCIBLE ? "" : "*",rtype,si[eindex[3]+1],sh[eindex[1]+1]);
+        snprintf(name,sizeof(char[l]),"%c%s%s",rtype,si[eindex[3]+1],sh[eindex[1]+1]);
     }
 err:
     return ret;

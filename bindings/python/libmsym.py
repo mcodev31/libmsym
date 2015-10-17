@@ -208,11 +208,16 @@ class PartnerFunction(Structure):
 
 class SymmetrySpecies(Structure):
     _fields_ = [("_d", c_int),
+                ("_r", c_int),
                 ("_name",c_char*8)]
 
     @property
     def dim(self):
         return self._d
+
+    @property
+    def reducible(self):
+        return self._r > 1
     
     @property
     def name(self):
