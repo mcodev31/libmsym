@@ -1563,9 +1563,9 @@ msym_error_t generateSymmetryOperationsO(int n, int l, msym_symmetry_operation_t
     };
     
     msym_symmetry_operation_t c4[4] = {
-        [0] = {.type = PROPER_ROTATION, .order = 2, .power = 1, .cla = cla+2, .orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_NONE},
-        [1] = {.type = PROPER_ROTATION, .order = 4, .power = 1, .cla = cla+3, .orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_NONE},
-        [2] = {.type = PROPER_ROTATION, .order = 4, .power = 3, .cla = cla+3, .orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_NONE}
+        [0] = {.type = PROPER_ROTATION, .order = 2, .power = 1, .cla = cla+2, .orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_HORIZONTAL},
+        [1] = {.type = PROPER_ROTATION, .order = 4, .power = 1, .cla = cla+3, .orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_HORIZONTAL},
+        [2] = {.type = PROPER_ROTATION, .order = 4, .power = 3, .cla = cla+3, .orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_HORIZONTAL}
     };
     
     if(MSYM_SUCCESS != (ret = generateSymmetryOperationsOctahedral(l,sops, 1, c2, 2, c3, 3, c4, &k))) goto err;
@@ -1597,11 +1597,11 @@ msym_error_t generateSymmetryOperationsOh(int n, int l, msym_symmetry_operation_
     };
     
     msym_symmetry_operation_t c4[6] = {
-        [0] = {.type = PROPER_ROTATION, .order = 2, .power = 1, .cla = cla+4, .orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_NONE},
-        [1] = {.type = PROPER_ROTATION, .order = 4, .power = 1, .cla = cla+5, .orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_NONE},
-        [2] = {.type = PROPER_ROTATION, .order = 4, .power = 3, .cla = cla+5, .orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_NONE},
-        [3] = {.type = IMPROPER_ROTATION, .order = 4, .power = 1, .cla = cla+6, .orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_NONE},
-        [4] = {.type = IMPROPER_ROTATION, .order = 4, .power = 3, .cla = cla+6, .orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_NONE},
+        [0] = {.type = PROPER_ROTATION, .order = 2, .power = 1, .cla = cla+4, .orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_HORIZONTAL},
+        [1] = {.type = PROPER_ROTATION, .order = 4, .power = 1, .cla = cla+5, .orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_HORIZONTAL},
+        [2] = {.type = PROPER_ROTATION, .order = 4, .power = 3, .cla = cla+5, .orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_HORIZONTAL},
+        [3] = {.type = IMPROPER_ROTATION, .order = 4, .power = 1, .cla = cla+6, .orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_HORIZONTAL},
+        [4] = {.type = IMPROPER_ROTATION, .order = 4, .power = 3, .cla = cla+6, .orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_HORIZONTAL},
         [5] = {.type = REFLECTION, .order = 1, .power = 1, .cla = cla+7, .orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_HORIZONTAL}
     };
     
