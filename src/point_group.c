@@ -67,11 +67,13 @@ msym_error_t generateSymmetryOperationsCnv(int n, int l, msym_symmetry_operation
 msym_error_t generateSymmetryOperationsCnh(int n, int l, msym_symmetry_operation_t sops[l], int *pk, int *pcla);
 msym_error_t generateSymmetryOperationsT(int n, int l, msym_symmetry_operation_t sops[l], int *pk, int *pcla);
 msym_error_t generateSymmetryOperationsTd(int n, int l, msym_symmetry_operation_t sops[l], int *pk, int *pcla);
+msym_error_t generateSymmetryOperationsTh(int n, int l, msym_symmetry_operation_t sops[l], int *pk, int *pcla);
 msym_error_t generateSymmetryOperationsO(int n, int l, msym_symmetry_operation_t sops[l], int *pk, int *pcla);
 msym_error_t generateSymmetryOperationsOh(int n, int l, msym_symmetry_operation_t sops[l], int *pk, int *pcla);
 msym_error_t generateSymmetryOperationsI(int n, int l, msym_symmetry_operation_t sops[l], int *pk, int *pcla);
 msym_error_t generateSymmetryOperationsIh(int n, int l, msym_symmetry_operation_t sops[l], int *pk, int *pcla);
 
+msym_error_t generateSymmetryOperationsTetrahedral(int l, msym_symmetry_operation_t sops[l], int c2l, msym_symmetry_operation_t c2[c2l], int csl, msym_symmetry_operation_t cs[csl], int c3l, msym_symmetry_operation_t c3[c3l], int *pk);
 msym_error_t generateSymmetryOperationsOctahedral(int l, msym_symmetry_operation_t sops[l], int c2l, msym_symmetry_operation_t c2[c2l], int c3l, msym_symmetry_operation_t c3[c3l], int c4l, msym_symmetry_operation_t c4[c4l], int *pk);
 msym_error_t generateSymmetryOperationsIcosahedral(int l, msym_symmetry_operation_t sops[l], int c2l, msym_symmetry_operation_t c2[c2l], int c3l, msym_symmetry_operation_t c3[c3l], int c5l, msym_symmetry_operation_t c5[c5l], int *pk);
 msym_error_t generateReflectionPlanes(int n, int l, msym_symmetry_operation_t sops[l], int *pk, int *pcla);
@@ -1091,7 +1093,7 @@ msym_error_t generateSymmetryOperations(msym_point_group_type_t type, int n, int
         [ 8] = {MSYM_POINT_GROUP_TYPE_Sn,  generateSymmetryOperationsSn},
         [ 9] = {MSYM_POINT_GROUP_TYPE_T,   generateSymmetryOperationsT},
         [10] = {MSYM_POINT_GROUP_TYPE_Td,  generateSymmetryOperationsTd},
-        [11] = {MSYM_POINT_GROUP_TYPE_Th,  generateSymmetryOperationsUnknown},
+        [11] = {MSYM_POINT_GROUP_TYPE_Th,  generateSymmetryOperationsTh},
         [12] = {MSYM_POINT_GROUP_TYPE_O,   generateSymmetryOperationsO},
         [13] = {MSYM_POINT_GROUP_TYPE_Oh,  generateSymmetryOperationsOh},
         [14] = {MSYM_POINT_GROUP_TYPE_I,   generateSymmetryOperationsI},
@@ -1461,92 +1463,94 @@ err:
 msym_error_t generateSymmetryOperationsT(int n, int l, msym_symmetry_operation_t sops[l], int *pk, int *pcla){
     msym_error_t ret = MSYM_SUCCESS;
     int k = *pk, cla = *pcla;
-    double v2[3][3] = { {1,0,0}, {0,1,0}, {0,0,1} };
-    double v3[4][3] = { {1,1,1}, {-1,1,1}, {1,-1,1}, {-1,-1,1} };
     
-    if(k + 11 > l){ret = MSYM_POINT_GROUP_ERROR; msymSetErrorDetails("Too many operations when generating T operations %d >= %d",k + 11,l); goto err;}
+    msym_symmetry_operation_t c2[1] = {
+        [0] = {.type = PROPER_ROTATION, .order = 2, .power = 1, .cla = cla, .orientation = HORIZONTAL}
+    };
     
-    for(int i = 0; i < 3; k++,i++){
-        vnorm2(v2[i],sops[k].v);
-        sops[k].type = PROPER_ROTATION;
-        sops[k].order = 2;
-        sops[k].power = 1;
-        sops[k].orientation = NONE;
-        sops[k].cla = cla;
-    }
+    msym_symmetry_operation_t c3[2] = {
+        [0] = {.type = PROPER_ROTATION, .order = 3, .power = 1, .cla = cla+1, .orientation = NONE},
+        [1] = {.type = PROPER_ROTATION, .order = 3, .power = 2, .cla = cla+1, .orientation = NONE}
+    };
     
-    cla += 1;
+    if(MSYM_SUCCESS != (ret = generateSymmetryOperationsTetrahedral(l,sops, 1, c2, 0, NULL, 2, c3, &k))) goto err;
     
-    for(int i = 0; i < 8; k++,i++){
-        vnorm2(v3[i % 4],sops[k].v);
-        sops[k].type = PROPER_ROTATION;
-        sops[k].order = 3;
-        sops[k].power = 1 + (i/4);
-        sops[k].orientation = NONE;
-        sops[k].cla = cla;
-    }
+    cla += 2;
     
-    cla += 1;
-    
-    printf("\n------ T %d operations %d classes------\n",k-*pk, cla-*pcla);
-    
+    printf("------ T %d operations %d classes------\n",k-*pk, cla-*pcla);
     *pk = k; *pcla = cla;
     
     return ret;
 err:
     return ret;
-
 }
 
 msym_error_t generateSymmetryOperationsTd(int n, int l, msym_symmetry_operation_t sops[l], int *pk, int *pcla){
     msym_error_t ret = MSYM_SUCCESS;
     int k = *pk, cla = *pcla;
-    const double v2[3][3] = { {1,0,0}, {0,1,0}, {0,0,1} };
-    const double vs[6][3] = {
-        { 1, 0, 1},
-        { 0, 1, 1},
-        {-1, 0, 1},
-        { 0,-1, 1},
-        { 1, 1, 0},
-        { 1,-1, 0}
+    
+    msym_symmetry_operation_t c2[3] = {
+        [0] = {.type = PROPER_ROTATION, .order = 2, .power = 1, .cla = cla, .orientation = HORIZONTAL},
+        [1] = {.type = IMPROPER_ROTATION, .order = 4, .power = 1, .cla = cla+1, .orientation = HORIZONTAL},
+        [2] = {.type = IMPROPER_ROTATION, .order = 4, .power = 3, .cla = cla+1, .orientation = HORIZONTAL}
     };
     
+    msym_symmetry_operation_t cs[4] = {
+        [0] = {.type = REFLECTION, .order = 1, .power = 1, .cla = cla+2, .orientation = DIHEDRAL},
+    };
     
+    msym_symmetry_operation_t c3[2] = {
+        [0] = {.type = PROPER_ROTATION, .order = 3, .power = 1, .cla = cla+3, .orientation = NONE},
+        [1] = {.type = PROPER_ROTATION, .order = 3, .power = 2, .cla = cla+3, .orientation = NONE}
+    };
     
-    if(MSYM_SUCCESS != (ret = generateSymmetryOperationsT(n,l,sops, &k, &cla))) goto err;
-    if(k + 12 > l){ret = MSYM_POINT_GROUP_ERROR; msymSetErrorDetails("Too many operations when generating Td operations %d >= %d",k + 12, l); goto err;}
+    if(MSYM_SUCCESS != (ret = generateSymmetryOperationsTetrahedral(l,sops, 3, c2, 1, cs, 2, c3, &k))) goto err;
     
-    msym_symmetry_operation_t sigma = {.type = REFLECTION, .order = 1, .power = 1, .cla = cla, .orientation = NONE};
-
-    for(int i = 0; i < 6; i++){
-        memcpy(&sops[k+i], &sigma, sizeof(msym_symmetry_operation_t));
-        vnorm2(vs[i],sops[k+i].v);
-    }
+    cla += 4;
     
-    k += 6;
-    cla += 1;
-    
-    msym_symmetry_operation_t s4 = {.type = IMPROPER_ROTATION, .order = 4, .power = 1, .cla = cla, .orientation = NONE};
-    
-    for(int i = 0; i < 3; i++){
-        memcpy(&sops[k+i], &s4, sizeof(msym_symmetry_operation_t));
-        memcpy(&sops[k+i+3], &s4, sizeof(msym_symmetry_operation_t));
-        vnorm2(v2[i],sops[k+i].v);
-        vnorm2(v2[i],sops[k+i+3].v);
-        sops[k+i+3].power = 3;
-    }
-    
-    k += 6;
-    cla += 1;
-    
-    printf("\n------ Td %d operations %d classes------\n",k-*pk, cla-*pcla);
-    
+    printf("------ Td %d operations %d classes------\n",k-*pk, cla-*pcla);
     *pk = k; *pcla = cla;
     
     return ret;
 err:
     return ret;
+}
 
+msym_error_t generateSymmetryOperationsTh(int n, int l, msym_symmetry_operation_t sops[l], int *pk, int *pcla){
+    msym_error_t ret = MSYM_SUCCESS;
+    int k = *pk, cla = *pcla;
+    
+    msym_symmetry_operation_t c2[2] = {
+        [0] = {.type = PROPER_ROTATION, .order = 2, .power = 1, .cla = cla, .orientation = HORIZONTAL},
+        [1] = {.type = REFLECTION, .order = 1, .power = 1, .cla = cla+1, .orientation = HORIZONTAL}
+    };
+    
+    msym_symmetry_operation_t c3[4] = {
+        [0] = {.type = PROPER_ROTATION, .order = 3, .power = 1, .cla = cla+2, .orientation = NONE},
+        [1] = {.type = PROPER_ROTATION, .order = 3, .power = 2, .cla = cla+2, .orientation = NONE},
+        [2] = {.type = IMPROPER_ROTATION, .order = 6, .power = 1, .cla = cla+3, .orientation = NONE},
+        [3] = {.type = IMPROPER_ROTATION, .order = 6, .power = 5, .cla = cla+3, .orientation = NONE}
+    };
+    
+    if(MSYM_SUCCESS != (ret = generateSymmetryOperationsTetrahedral(l,sops, 2, c2, 0, NULL, 4, c3, &k))) goto err;
+    
+    if(k - 1 > l){ret = MSYM_POINT_GROUP_ERROR; msymSetErrorDetails("Too many operations when generating Th operations %d >= %d",k, l); goto err;}
+    
+    sops[k].type = INVERSION;
+    sops[k].power = 1;
+    sops[k].order = 1;
+    sops[k].orientation = NONE;
+    sops[k].cla = cla+4;
+    k++;
+    
+    cla += 5;
+    
+    printf("------ Th %d operations %d classes------\n",k-*pk, cla-*pcla);
+    *pk = k; *pcla = cla;
+    
+    return ret;
+err:
+    return ret;
 }
 
 msym_error_t generateSymmetryOperationsO(int n, int l, msym_symmetry_operation_t sops[l], int *pk, int *pcla){

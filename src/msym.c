@@ -249,13 +249,19 @@ msym_error_t msymSetAlignmentTransform(msym_context ctx, double transform[3][3])
     msym_point_group_t *pg;
     msym_element_t *elements = NULL;
     msym_thresholds_t *t = NULL;
-    int elementsl = 0;
+    msym_equivalence_set_t *es = NULL;
+    int elementsl = 0, esl = 0;
     double m[3][3];
     
     if(MSYM_SUCCESS != (ret = ctxGetThresholds(ctx, &t))) goto err;
     if(MSYM_SUCCESS != (ret = ctxGetElements(ctx, &elementsl, &elements))){
         elements = NULL;
         elementsl = 0;
+    }
+    
+    if(MSYM_SUCCESS != (ret = ctxGetEquivalenceSets(ctx, &esl, &es))){
+        es = NULL;
+        esl = 0;
     }
     
     if(MSYM_SUCCESS != (ret = ctxGetPointGroup(ctx, &pg))) goto err;
@@ -265,14 +271,17 @@ msym_error_t msymSetAlignmentTransform(msym_context ctx, double transform[3][3])
         ret = MSYM_INVALID_POINT_GROUP;
         goto err;
     }
-    
-    for(int i = 0; i < elementsl;i++) mvmul(elements[i].v, pg->transform, elements[i].v);
+    /* Don't transform elements if we don't have an equivalence set the current pg is set manually */
+    if(NULL != es){
+        for(int i = 0; i < elementsl;i++) mvmul(elements[i].v, pg->transform, elements[i].v);
+    }
     for(int i = 0; i < pg->order;i++) mvmul(pg->sops[i].v, pg->transform, pg->sops[i].v);
     
     minv(transform,m);
     mcopy(transform, pg->transform);
-    
-    for(int i = 0; i < elementsl;i++) mvmul(elements[i].v, m, elements[i].v);
+    if(NULL != es){
+        for(int i = 0; i < elementsl;i++) mvmul(elements[i].v, m, elements[i].v);
+    }
     for(int i = 0; i < pg->order;i++) mvmul(pg->sops[i].v, m, pg->sops[i].v);
     
 err:
@@ -285,7 +294,8 @@ msym_error_t msymSetAlignmentAxes(msym_context ctx, double primary[3], double se
     msym_point_group_t *pg;
     msym_element_t *elements = NULL;
     msym_thresholds_t *t = NULL;
-    int elementsl = 0;
+    msym_equivalence_set_t *es = NULL;
+    int elementsl = 0, esl = 0;
     double x[3] = {1,0,0}, z[3] = {0,0,1}, m[3][3], p[3], s[3];
     
     vnorm2(primary, p);
@@ -295,6 +305,11 @@ msym_error_t msymSetAlignmentAxes(msym_context ctx, double primary[3], double se
     if(MSYM_SUCCESS != (ret = ctxGetElements(ctx, &elementsl, &elements))){
         elements = NULL;
         elementsl = 0;
+    }
+    
+    if(MSYM_SUCCESS != (ret = ctxGetEquivalenceSets(ctx, &esl, &es))){
+        es = NULL;
+        esl = 0;
     }
     
     if(MSYM_SUCCESS != (ret = ctxGetPointGroup(ctx, &pg))) goto err;
@@ -311,7 +326,10 @@ msym_error_t msymSetAlignmentAxes(msym_context ctx, double primary[3], double se
         goto err;
     }
     
-    for(int i = 0; i < elementsl;i++) mvmul(elements[i].v, pg->transform, elements[i].v);
+    /* Don't transform elements if we don't have an equivalence set the current pg is set manually */
+    if(NULL != es){
+        for(int i = 0; i < elementsl;i++) mvmul(elements[i].v, pg->transform, elements[i].v);
+    }
     for(int i = 0; i < pg->order;i++) mvmul(pg->sops[i].v, pg->transform, pg->sops[i].v);
     
     vproj_plane(s, p, s);
@@ -321,7 +339,9 @@ msym_error_t msymSetAlignmentAxes(msym_context ctx, double primary[3], double se
     mmmul(m,pg->transform,pg->transform);
     minv(pg->transform,m);
     
-    for(int i = 0; i < elementsl;i++) mvmul(elements[i].v, m, elements[i].v);
+    if(NULL != es){
+        for(int i = 0; i < elementsl;i++) mvmul(elements[i].v, m, elements[i].v);
+    }
     for(int i = 0; i < pg->order;i++) mvmul(pg->sops[i].v, m, pg->sops[i].v);
     
     
@@ -398,23 +418,24 @@ msym_error_t msymApplyTranslation(msym_context ctx, msym_element_t *ext, double 
     msym_error_t ret = MSYM_SUCCESS;
     
     msym_point_group_t *pg;
-    msym_equivalence_set_t *es;
-    msym_element_t *elements;
-    msym_element_t *element;
-    
+    msym_equivalence_set_t *es, *ees;
+    msym_element_t *eelements;
+    msym_equivalence_set_t **eesmap = NULL;
     msym_permutation_t **perm;
     msym_thresholds_t *t = NULL;
-    int perml = 0, esl = 0, elementsl = 0, sopsl = 0;
+    int perml = 0, esl = 0, eesl = 0, eelementsl = 0, sopsl = 0;
     
-    if(MSYM_SUCCESS != (ret = ctxGetInternalElement(ctx, ext, &element))) goto err;
     if(MSYM_SUCCESS != (ret = ctxGetThresholds(ctx, &t))) goto err;
-    if(MSYM_SUCCESS != (ret = ctxGetElements(ctx, &elementsl, &elements))) goto err;
     if(MSYM_SUCCESS != (ret = ctxGetPointGroup(ctx, &pg))) goto err;
+    if(MSYM_SUCCESS != (ret = ctxGetExternalElements(ctx, &eelementsl, &eelements))) goto err;
     if(MSYM_SUCCESS != (ret = ctxGetEquivalenceSets(ctx, &esl, &es))){
         if(MSYM_SUCCESS != (ret = msymFindEquivalenceSets(ctx))) goto err;
         if(MSYM_SUCCESS != (ret = msymFindEquivalenceSetPermutations(ctx))) goto err;
         if(MSYM_SUCCESS != (ret = ctxGetEquivalenceSets(ctx, &esl, &es))) goto err;
     }
+    if(MSYM_SUCCESS != (ret = ctxGetExternalEquivalenceSets(ctx, &eesl, &ees))) goto err;
+    if(MSYM_SUCCESS != (ret = ctxGetExternalElementEquivalenceSetMap(ctx, &eesmap))) goto err;
+    
     if(MSYM_SUCCESS != (ret = ctxGetEquivalenceSetPermutations(ctx, &perml, &sopsl, &perm))) goto err;
     if(sopsl != pg->order || perml != esl) {
         msymSetErrorDetails("Detected inconsistency between point group, equivalence sets and permutaions");
@@ -422,21 +443,30 @@ msym_error_t msymApplyTranslation(msym_context ctx, msym_element_t *ext, double 
         goto err;
     }
     
-    int fes = 0, fi = 0;
-    for(fes = 0;fes < esl;fes++){
-        for(fi = 0; fi < es[fes].length;fi++){
-            if(element == es[fes].elements[fi]) break;
-        }
-        if(fi < es[fes].length) break;
-    }
+    int esmi = (int)(ext - eelements);
     
-    if(fes >= esl){
-        msymSetErrorDetails("Could not find element %s in any of the %d equivalence sets", element->name, esl);
+    if(esmi > eelementsl) {
+        msymSetErrorDetails("Element outside of memory block of external elements");
         ret = MSYM_INVALID_ELEMENTS;
         goto err;
     }
     
-    if(MSYM_SUCCESS != (ret = symmetrizeTranslation(pg, &es[fes], perm[fes], fi, v))) goto err;
+    int fesi = (int)(eesmap[esmi] - ees);
+    msym_equivalence_set_t *fes = eesmap[esmi];
+    int fi = 0;
+    for(fi = 0;fi < fes->length;fi++){
+        if(fes->elements[fi] == ext) break;
+    }
+    
+    if(fi >= fes->length){
+        msymSetErrorDetails("Could not find index of element %s in equivalence set %d", ext->name, fesi);
+        ret = MSYM_INVALID_ELEMENTS;
+        goto err;
+    }
+    
+    if(MSYM_SUCCESS != (ret = symmetrizeTranslation(pg, &es[fesi], perm[fesi], fi, v))) goto err;
+    
+    if(MSYM_SUCCESS != (ret = ctxUpdateExternalElementCoordinates(ctx))) goto err;
     
     return ret;
 err:

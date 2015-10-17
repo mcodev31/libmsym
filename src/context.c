@@ -126,7 +126,8 @@ err:
 msym_error_t msymSetElements(msym_context ctx, int length, msym_element_t *elements){
     msym_error_t ret = MSYM_SUCCESS;
     if(ctx == NULL) {ret = MSYM_INVALID_CONTEXT;goto err;}
-    ctxDestroyPointGroup(ctx);
+    /* Allow manual setting of point group before elements */
+    if(NULL != ctx->es) ctxDestroyPointGroup(ctx);
     return ctxSetElements(ctx, length, elements);
 err:
     return ret;
