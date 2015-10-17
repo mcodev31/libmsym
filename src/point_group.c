@@ -192,7 +192,7 @@ msym_error_t pointGroupFromName(const char *name, msym_point_group_t *pg){
         case 'S' : {
             if(n < 4 || n % 2 != 0){
                 ret = MSYM_INVALID_POINT_GROUP;
-                msymSetErrorDetails("Improper rotation order (%d) must be even",n);
+                msymSetErrorDetails("Improper rotation order (%d) must be even and >= 4",n);
                 goto err;
             }
             gi = 2;

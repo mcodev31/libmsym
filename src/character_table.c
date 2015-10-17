@@ -39,6 +39,7 @@ msym_error_t getRepresentationsCs(int n, int rl, msym_representation_t rep[rl]);
 msym_error_t getRepresentationsCn(int n, int rl, msym_representation_t rep[rl]);
 msym_error_t getRepresentationsCnh(int n, int rl, msym_representation_t rep[rl]);
 msym_error_t getRepresentationsCnv(int n, int rl, msym_representation_t rep[rl]);
+msym_error_t getRepresentationsSn(int n, int rl, msym_representation_t rep[rl]);
 msym_error_t getRepresentationsDn(int n, int rl, msym_representation_t rep[rl]);
 msym_error_t getRepresentationsDnh(int n, int rl, msym_representation_t rep[rl]);
 msym_error_t getRepresentationsDnd(int n, int rl, msym_representation_t rep[rl]);
@@ -109,7 +110,7 @@ msym_error_t generateCharacterTable(msym_point_group_type_t type, int n, int sop
         [ 5] = {MSYM_POINT_GROUP_TYPE_Dn,  REP, .f.fr = getRepresentationsDn},
         [ 6] = {MSYM_POINT_GROUP_TYPE_Dnh, REP, .f.fr = getRepresentationsDnh},
         [ 7] = {MSYM_POINT_GROUP_TYPE_Dnd, REP, .f.fr = getRepresentationsDnd},
-        [ 8] = {MSYM_POINT_GROUP_TYPE_Sn,  REP, .f.fr = getRepresentationsUnknown},
+        [ 8] = {MSYM_POINT_GROUP_TYPE_Sn,  REP, .f.fr = getRepresentationsSn},
         [ 9] = {MSYM_POINT_GROUP_TYPE_T,   TAB, .f.ft = getCharacterTableT},
         [10] = {MSYM_POINT_GROUP_TYPE_Td,  TAB, .f.ft = getCharacterTableTd},
         [11] = {MSYM_POINT_GROUP_TYPE_Th,  TAB, .f.ft = getCharacterTableTh},
@@ -376,6 +377,49 @@ err:
     return ret;
 }
 
+msym_error_t getRepresentationsSn(int n, int rl, msym_representation_t rep[rl]){
+    msym_error_t ret = MSYM_SUCCESS;
+    int r = 0;
+    rep[r].type = IRREDUCIBLE;
+    rep[r].d = 1;
+    rep[r].eig.p = rep[r].eig.l = rep[r].eig.v = rep[r].eig.h = rep[r].eig.i = 1;
+    r++;
+    rep[r].type = IRREDUCIBLE;
+    rep[r].d = 1;
+    rep[r].eig.p = rep[r].eig.l = rep[r].eig.v = 1;
+    rep[r].eig.h = rep[r].eig.i = -1;
+    r++;
+    
+    if(!((n >> 1) & 1)){
+        for(int i = 1;r < rl;i++, r++){
+            rep[r].type = REDUCIBLE;
+            rep[r].d = 2;
+            rep[r].eig.l = i;
+            rep[r].eig.p = rep[r].eig.v = rep[r].eig.h = rep[r].eig.i = 1;
+        }
+    } else {
+        for(int i = 1;r < rl;i++){
+            rep[r].type = REDUCIBLE;
+            rep[r].d = 2;
+            rep[r].eig.l = i;
+            rep[r].eig.p = rep[r].eig.v = rep[r].eig.i = 1;
+            rep[r].eig.h = 1 - ((i % 2) << 1);
+            r++;
+            rep[r].type = REDUCIBLE;
+            rep[r].d = 2;
+            rep[r].eig.l = i;
+            rep[r].eig.p = rep[r].eig.v;
+            rep[r].eig.h = -1 + ((i % 2) << 1);
+            rep[r].eig.i = -1;
+            r++;
+        }
+    }
+    
+    return ret;
+err:
+    return ret;
+}
+
 msym_error_t getRepresentationsDn(int n, int rl, msym_representation_t rep[rl]){
     msym_error_t ret = MSYM_SUCCESS;
     int r = 0;
@@ -495,7 +539,7 @@ msym_error_t getRepresentationsDnd(int n, int rl, msym_representation_t rep[rl])
     rep[r].eig.p = rep[r].eig.l = rep[r].eig.h = rep[r].eig.i = 1;
     rep[r].eig.v = -1;
     r++;
-    if(~n & 1){
+    if(!(n & 1)){
         rep[r].type = IRREDUCIBLE;
         rep[r].d = 1;
         rep[r].eig.l = rep[r].eig.v = rep[r].eig.i = rep[r].eig.p = 1;
@@ -939,6 +983,11 @@ msym_error_t getRepresentationName(msym_point_group_type_t type, int n, msym_rep
             if(n & 1){eindex[3] = 0;}
             else {eindex[1] = 0;}
             eindex[2] = 0;
+            break;
+        case MSYM_POINT_GROUP_TYPE_Sn :
+            if(!((n >> 1) & 1)){eindex[3] = 0; eindex[0] = rep->eig.h;}
+            eindex[1] = eindex[2] = 0;
+            break;
             break;
         case MSYM_POINT_GROUP_TYPE_Dn  :
             if(n == 2 && eindex[0]+eindex[2] == 0){
