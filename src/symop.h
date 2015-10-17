@@ -22,6 +22,13 @@
 #define PROPER_ROTATION MSYM_SYMMETRY_OPERATION_TYPE_PROPER_ROTATION
 #define IMPROPER_ROTATION MSYM_SYMMETRY_OPERATION_TYPE_IMPROPER_ROTATION
 
+#define NONE MSYM_SYMMETRY_OPERATION_ORIENTATION_NONE
+#define HORIZONTAL MSYM_SYMMETRY_OPERATION_ORIENTATION_HORIZONTAL
+#define VERTICAL MSYM_SYMMETRY_OPERATION_ORIENTATION_VERTICAL
+#define DIHEDRAL MSYM_SYMMETRY_OPERATION_ORIENTATION_DIHEDRAL
+
+
+
 void symopPow(msym_symmetry_operation_t *A, int pow, msym_symmetry_operation_t *O);
 void applySymmetryOperation(msym_symmetry_operation_t *sop,double iv[3], double ov[3]);
 void symmetryOperationMatrix(msym_symmetry_operation_t *sop, double m[3][3]);

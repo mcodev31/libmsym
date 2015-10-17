@@ -551,7 +551,7 @@ msym_error_t representationCharacter(int n, msym_symmetry_operation_t *sop, msym
     msym_error_t ret = MSYM_SUCCESS;
     double x = 0;
     
-    if(sop->orientation == MSYM_SYMMETRY_OPERATION_ORIENTATION_HORIZONTAL){
+    if(sop->orientation == HORIZONTAL){
         switch(rep->d)
         {
             case 1: {
@@ -596,8 +596,8 @@ msym_error_t representationCharacter(int n, msym_symmetry_operation_t *sop, msym
                 switch (sop->type) {
                     case IDENTITY           : x = 1; break;
                     case INVERSION          : x = rep->eig.i; break;
-                    case REFLECTION         : x = sop->orientation == MSYM_SYMMETRY_OPERATION_ORIENTATION_VERTICAL ? rep->eig.v*rep->eig.h : rep->eig.p*rep->eig.v*rep->eig.h; break;
-                    case PROPER_ROTATION    : x = sop->orientation == MSYM_SYMMETRY_OPERATION_ORIENTATION_VERTICAL ? rep->eig.v : rep->eig.p*rep->eig.v; break;
+                    case REFLECTION         : x = sop->orientation == VERTICAL ? rep->eig.v*rep->eig.h : rep->eig.p*rep->eig.v*rep->eig.h; break;
+                    case PROPER_ROTATION    : x = sop->orientation == VERTICAL ? rep->eig.v : rep->eig.p*rep->eig.v; break;
                     case IMPROPER_ROTATION  :
                     default :
                         ret = MSYM_INVALID_CHARACTER_TABLE;
@@ -647,9 +647,9 @@ msym_error_t getCharacterTableT(int sopsl, msym_symmetry_operation_t sops[sopsl]
     msym_error_t ret = MSYM_SUCCESS;
     
     const msym_symmetry_operation_t tsops[3] = {
-        [0] = {.type = IDENTITY, .order = 1, .power = 1, .orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_NONE},
-        [1] = {.type = PROPER_ROTATION, .order = 3, .power = 1, .orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_NONE},
-        [2] = {.type = PROPER_ROTATION, .order = 2, .power = 1, .orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_NONE}
+        [0] = {.type = IDENTITY, .order = 1, .power = 1, .orientation = NONE},
+        [1] = {.type = PROPER_ROTATION, .order = 3, .power = 1, .orientation = NONE},
+        [2] = {.type = PROPER_ROTATION, .order = 2, .power = 1, .orientation = NONE}
     };
     
     const char *tname[3] = {"A","E","T"};
@@ -672,11 +672,11 @@ msym_error_t getCharacterTableTd(int sopsl, msym_symmetry_operation_t sops[sopsl
     msym_error_t ret = MSYM_SUCCESS;
     
     const msym_symmetry_operation_t tsops[5] = {
-        [0] = {.type = IDENTITY, .order = 1, .power = 1, .orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_NONE},
-        [1] = {.type = PROPER_ROTATION, .order = 2, .power = 1, .orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_NONE},
-        [2] = {.type = PROPER_ROTATION, .order = 3, .power = 1, .orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_NONE},
-        [3] = {.type = IMPROPER_ROTATION, .order = 4, .power = 1, .orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_NONE},
-        [4] = {.type = REFLECTION, .order = 1, .power = 1, .orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_NONE},
+        [0] = {.type = IDENTITY, .order = 1, .power = 1, .orientation = NONE},
+        [1] = {.type = PROPER_ROTATION, .order = 2, .power = 1, .orientation = NONE},
+        [2] = {.type = PROPER_ROTATION, .order = 3, .power = 1, .orientation = NONE},
+        [3] = {.type = IMPROPER_ROTATION, .order = 4, .power = 1, .orientation = NONE},
+        [4] = {.type = REFLECTION, .order = 1, .power = 1, .orientation = NONE},
     };
     
     const char *tname[5] = {"A1","A2","E","T1","T2"};
@@ -699,11 +699,11 @@ err:
 msym_error_t getCharacterTableO(int sopsl, msym_symmetry_operation_t sops[sopsl], msym_character_table_t *ct){
     msym_error_t ret = MSYM_SUCCESS;
     const msym_symmetry_operation_t tsops[5] = {
-        [0] = {.type = IDENTITY, .order = 1, .power = 1, .orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_NONE},
-        [1] = {.type = PROPER_ROTATION, .order = 3, .power = 1, .orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_NONE},
-        [2] = {.type = PROPER_ROTATION, .order = 2, .power = 1, .orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_VERTICAL},
-        [3] = {.type = PROPER_ROTATION, .order = 4, .power = 1, .orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_HORIZONTAL},
-        [4] = {.type = PROPER_ROTATION, .order = 2, .power = 1, .orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_HORIZONTAL}
+        [0] = {.type = IDENTITY, .order = 1, .power = 1, .orientation = NONE},
+        [1] = {.type = PROPER_ROTATION, .order = 3, .power = 1, .orientation = NONE},
+        [2] = {.type = PROPER_ROTATION, .order = 2, .power = 1, .orientation = VERTICAL},
+        [3] = {.type = PROPER_ROTATION, .order = 4, .power = 1, .orientation = HORIZONTAL},
+        [4] = {.type = PROPER_ROTATION, .order = 2, .power = 1, .orientation = HORIZONTAL}
     };
     
     const double table[][5] = {
@@ -727,16 +727,16 @@ err:
 msym_error_t getCharacterTableOh(int sopsl, msym_symmetry_operation_t sops[sopsl], msym_character_table_t *ct){
     msym_error_t ret = MSYM_SUCCESS;
     const msym_symmetry_operation_t tsops[10] = {
-        [0] = {.type = IDENTITY, .order = 1, .power = 1, .orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_NONE},
-        [1] = {.type = PROPER_ROTATION, .order = 4, .power = 1, .orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_HORIZONTAL},
-        [2] = {.type = PROPER_ROTATION, .order = 2, .power = 1, .orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_HORIZONTAL},
-        [3] = {.type = PROPER_ROTATION, .order = 3, .power = 1, .orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_NONE},
-        [4] = {.type = PROPER_ROTATION, .order = 2, .power = 1, .orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_VERTICAL},
-        [5] = {.type = INVERSION, .order = 1, .power = 1, .orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_NONE},
-        [6] = {.type = IMPROPER_ROTATION, .order = 4, .power = 1, .orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_HORIZONTAL},
-        [7] = {.type = IMPROPER_ROTATION, .order = 6, .power = 1, .orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_NONE},
-        [8] = {.type = REFLECTION, .order = 1, .power = 1, .orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_HORIZONTAL},
-        [9] = {.type = REFLECTION, .order = 1, .power = 1, .orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_DIHEDRAL}
+        [0] = {.type = IDENTITY, .order = 1, .power = 1, .orientation = NONE},
+        [1] = {.type = PROPER_ROTATION, .order = 4, .power = 1, .orientation = HORIZONTAL},
+        [2] = {.type = PROPER_ROTATION, .order = 2, .power = 1, .orientation = HORIZONTAL},
+        [3] = {.type = PROPER_ROTATION, .order = 3, .power = 1, .orientation = NONE},
+        [4] = {.type = PROPER_ROTATION, .order = 2, .power = 1, .orientation = VERTICAL},
+        [5] = {.type = INVERSION, .order = 1, .power = 1, .orientation = NONE},
+        [6] = {.type = IMPROPER_ROTATION, .order = 4, .power = 1, .orientation = HORIZONTAL},
+        [7] = {.type = IMPROPER_ROTATION, .order = 6, .power = 1, .orientation = NONE},
+        [8] = {.type = REFLECTION, .order = 1, .power = 1, .orientation = HORIZONTAL},
+        [9] = {.type = REFLECTION, .order = 1, .power = 1, .orientation = DIHEDRAL}
     };
     
     const double table[][10] = {
@@ -768,11 +768,11 @@ msym_error_t getCharacterTableI(int sopsl, msym_symmetry_operation_t sops[sopsl]
     msym_error_t ret = MSYM_SUCCESS;
     
     const msym_symmetry_operation_t tsops[5] = {
-        [0] = {.type = IDENTITY, .order = 1, .power = 1, .orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_NONE},
-        [1] = {.type = PROPER_ROTATION, .order = 2, .power = 1, .orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_NONE},
-        [2] = {.type = PROPER_ROTATION, .order = 3, .power = 1, .orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_NONE},
-        [3] = {.type = PROPER_ROTATION, .order = 5, .power = 1, .orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_NONE},
-        [4] = {.type = PROPER_ROTATION, .order = 5, .power = 2, .orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_NONE},
+        [0] = {.type = IDENTITY, .order = 1, .power = 1, .orientation = NONE},
+        [1] = {.type = PROPER_ROTATION, .order = 2, .power = 1, .orientation = NONE},
+        [2] = {.type = PROPER_ROTATION, .order = 3, .power = 1, .orientation = NONE},
+        [3] = {.type = PROPER_ROTATION, .order = 5, .power = 1, .orientation = NONE},
+        [4] = {.type = PROPER_ROTATION, .order = 5, .power = 2, .orientation = NONE},
     };
     
     const char *tname[5] = {"A","T1","T2","G","H"};
@@ -801,16 +801,16 @@ msym_error_t getCharacterTableIh(int sopsl, msym_symmetry_operation_t sops[sopsl
     msym_error_t ret = MSYM_SUCCESS;
     
     const msym_symmetry_operation_t tsops[10] = {
-        [0] = {.type = IDENTITY, .order = 1, .power = 1, .orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_NONE},
-        [1] = {.type = PROPER_ROTATION, .order = 2, .power = 1, .orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_NONE},
-        [2] = {.type = REFLECTION, .order = 1, .power = 1, .orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_NONE},
-        [3] = {.type = IMPROPER_ROTATION, .order = 6, .power = 1, .orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_NONE},
-        [4] = {.type = PROPER_ROTATION, .order = 5, .power = 1, .orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_NONE},
-        [5] = {.type = IMPROPER_ROTATION, .order = 10, .power = 1, .orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_NONE},
-        [6] = {.type = PROPER_ROTATION, .order = 5, .power = 2, .orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_NONE},
-        [7] = {.type = INVERSION, .order = 1, .power = 1, .orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_NONE},
-        [8] = {.type = PROPER_ROTATION, .order = 3, .power = 1, .orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_NONE},
-        [9] = {.type = IMPROPER_ROTATION, .order = 10, .power = 3, .orientation = MSYM_SYMMETRY_OPERATION_ORIENTATION_NONE},
+        [0] = {.type = IDENTITY, .order = 1, .power = 1, .orientation = NONE},
+        [1] = {.type = PROPER_ROTATION, .order = 2, .power = 1, .orientation = NONE},
+        [2] = {.type = REFLECTION, .order = 1, .power = 1, .orientation = NONE},
+        [3] = {.type = IMPROPER_ROTATION, .order = 6, .power = 1, .orientation = NONE},
+        [4] = {.type = PROPER_ROTATION, .order = 5, .power = 1, .orientation = NONE},
+        [5] = {.type = IMPROPER_ROTATION, .order = 10, .power = 1, .orientation = NONE},
+        [6] = {.type = PROPER_ROTATION, .order = 5, .power = 2, .orientation = NONE},
+        [7] = {.type = INVERSION, .order = 1, .power = 1, .orientation = NONE},
+        [8] = {.type = PROPER_ROTATION, .order = 3, .power = 1, .orientation = NONE},
+        [9] = {.type = IMPROPER_ROTATION, .order = 10, .power = 3, .orientation = NONE},
     };
     
     const char *tname[10] = {"Ag","Au","T1g","T1u","T2g","T2u","Gg","Gu","Hg","Hu"};

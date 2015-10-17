@@ -238,7 +238,7 @@ msym_error_t findSplittingFieldSubgroup(msym_point_group_t *pg, int irrep, int s
                     int h = 0;
                     for(int j = 0;j < sg[i].order;j++){
                         msym_symmetry_operation_t *sop = sg[i].sops[j];
-                        if(sop->type == PROPER_ROTATION && sop->order == 2 && sop->orientation == MSYM_SYMMETRY_OPERATION_ORIENTATION_HORIZONTAL){
+                        if(sop->type == PROPER_ROTATION && sop->order == 2 && sop->orientation == HORIZONTAL){
                             h = 1;
                             break;
                         }
@@ -264,7 +264,7 @@ msym_error_t findSplittingFieldSubgroup(msym_point_group_t *pg, int irrep, int s
                     int h = 0;
                     for(int j = 0;j < sg[i].order;j++){
                         msym_symmetry_operation_t *sop = sg[i].sops[j];
-                        if(sop->type == REFLECTION && sop->orientation == MSYM_SYMMETRY_OPERATION_ORIENTATION_HORIZONTAL){
+                        if(sop->type == REFLECTION && sop->orientation == HORIZONTAL){
                             h = 1;
                             break;
                         }
