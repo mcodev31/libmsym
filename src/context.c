@@ -314,6 +314,7 @@ msym_error_t msymSetCenterOfMass(msym_context ctx, double cm[3]){
     msym_error_t ret = MSYM_SUCCESS;
     if(ctx == NULL) {ret = MSYM_INVALID_CONTEXT; goto err;}
     vcopy(cm,ctx->cm);
+    if(MSYM_SUCCESS != (ret = ctxUpdateExternalElementCoordinates(ctx))) goto err;
 err:
     return ret;
 }

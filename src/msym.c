@@ -209,6 +209,7 @@ msym_error_t msymAlignAxes(msym_context ctx){
     for(int i = 0; i < elementsl;i++) mvmul(elements[i].v, pg->transform, elements[i].v);
     for(int i = 0; i < pg->order;i++) mvmul(pg->sops[i].v, pg->transform, pg->sops[i].v);
     mleye(3,pg->transform);
+    if(MSYM_SUCCESS != (ret = ctxUpdateExternalElementCoordinates(ctx))) goto err;
     
 err:
     return ret;
