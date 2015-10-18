@@ -182,40 +182,40 @@ msym_error_t findSplittingFieldSubgroup(msym_point_group_t *pg, int irrep, int s
     msym_error_t ret = MSYM_SUCCESS;
     *osg = NULL;
     msym_character_table_t *ct = pg->ct;
-    printf("WARNING: Using splitting low symmetry splitting field\n");
+    printf("WARNING: Using low symmetry splitting field (fix point group error number)\n");
     switch(pg->type){
         case MSYM_POINT_GROUP_TYPE_Cn :
         {
-            ret = MSYM_POINT_GROUP_ERROR;
+            ret = MSYM_SUBSPACE_ERROR;
             printf("Separate by imaginary component, what we have is the real components\n");
-            msymSetErrorDetails("Point %s group has complex characters in symmetry species %s",pg->name, ct->s[irrep].name);
+            msymSetErrorDetails("Point group %s has complex characters in symmetry species %s",pg->name, ct->s[irrep].name);
             goto err;
         }
         case MSYM_POINT_GROUP_TYPE_Cnh :
         {
             printf("Separate by imaginary component, what we have is the real components\n");
-            ret = MSYM_POINT_GROUP_ERROR;
+            ret = MSYM_SUBSPACE_ERROR;
             msymSetErrorDetails("Lowering of symmetry would require complex characters for point group %s symmetry species %s",pg->name, ct->s[irrep].name);
             goto err;
         }
         case MSYM_POINT_GROUP_TYPE_Ci :
         case MSYM_POINT_GROUP_TYPE_Cs :
         {
-            ret = MSYM_POINT_GROUP_ERROR;
+            ret = MSYM_SUBSPACE_ERROR;
             msymSetErrorDetails("Cannot lower symmetry of point group %s symmetry species %s",pg->name, ct->s[irrep].name);
             goto err;
         }
         case MSYM_POINT_GROUP_TYPE_I :
         case MSYM_POINT_GROUP_TYPE_Ih :
         {
-            ret = MSYM_POINT_GROUP_ERROR;
+            ret = MSYM_SUBSPACE_ERROR;
             msymSetErrorDetails("Lowering of symmetry not implemented for point group %s symmetry species %s",pg->name, ct->s[irrep].name);
             goto err;
         }
         case MSYM_POINT_GROUP_TYPE_Dnd :
         case MSYM_POINT_GROUP_TYPE_Cnv : {
             if(ct->s[irrep].d != 2){
-                ret = MSYM_POINT_GROUP_ERROR;
+                ret = MSYM_SUBSPACE_ERROR;
                 msymSetErrorDetails("Cannot lower symmetry of point group %s symmetry species %s",pg->name, ct->s[irrep].name);
                 goto err;
             }
@@ -229,7 +229,7 @@ msym_error_t findSplittingFieldSubgroup(msym_point_group_t *pg, int irrep, int s
         }
         case MSYM_POINT_GROUP_TYPE_Dn : {
             if(ct->s[irrep].d != 2){
-                ret = MSYM_POINT_GROUP_ERROR;
+                ret = MSYM_SUBSPACE_ERROR;
                 msymSetErrorDetails("Cannot lower symmetry of point group %s symmetry species %s",pg->name, ct->s[irrep].name);
                 goto err;
             }
@@ -253,7 +253,7 @@ msym_error_t findSplittingFieldSubgroup(msym_point_group_t *pg, int irrep, int s
         }
         case MSYM_POINT_GROUP_TYPE_Dnh : {
             if(ct->s[irrep].d != 2){
-                ret = MSYM_POINT_GROUP_ERROR;
+                ret = MSYM_SUBSPACE_ERROR;
                 msymSetErrorDetails("Cannot lower symmetry of point group %s symmetry species %s",pg->name, ct->s[irrep].name);
                 goto err;
             }
@@ -280,13 +280,13 @@ msym_error_t findSplittingFieldSubgroup(msym_point_group_t *pg, int irrep, int s
         
         case MSYM_POINT_GROUP_TYPE_Oh :
         case MSYM_POINT_GROUP_TYPE_O  :
-            ret = MSYM_POINT_GROUP_ERROR;
+            ret = MSYM_SUBSPACE_ERROR;
             msymSetErrorDetails("Not implemented for octahedral symmetry of symmetry species %s, requires Dn orientation determination",pg->name, ct->s[irrep].name);
             goto err;
         case MSYM_POINT_GROUP_TYPE_Th :
         case MSYM_POINT_GROUP_TYPE_T : {
             if(ct->s[irrep].d == 2){
-                ret = MSYM_POINT_GROUP_ERROR;
+                ret = MSYM_SUBSPACE_ERROR;
                 msymSetErrorDetails("Lowering of symmetry would require complex characters for point group %s symmetry species %s",pg->name, ct->s[irrep].name);
                 goto err;
             }
@@ -308,7 +308,7 @@ msym_error_t findSplittingFieldSubgroup(msym_point_group_t *pg, int irrep, int s
                     }
                 }
             } else {
-                ret = MSYM_POINT_GROUP_ERROR;
+                ret = MSYM_SUBSPACE_ERROR;
                 msymSetErrorDetails("Cannot lower symmetry of point group %s symmetry species %s",pg->name, ct->s[irrep].name);
                 goto err;
             }
@@ -316,13 +316,13 @@ msym_error_t findSplittingFieldSubgroup(msym_point_group_t *pg, int irrep, int s
         }
         default:
         {
-            ret = MSYM_POINT_GROUP_ERROR;
+            ret = MSYM_SUBSPACE_ERROR;
             msymSetErrorDetails("Unknown pointgroup %s symmetry species %s",pg->name, ct->s[irrep].name);
             goto err;
         }
     }
     if(*osg == NULL){
-        ret = MSYM_POINT_GROUP_ERROR;
+        ret = MSYM_SUBSPACE_ERROR;
         msymSetErrorDetails("Could not find subgroup for point group %s symmetry species %s",pg->name, ct->s[irrep].name);
     }
 err:
@@ -378,7 +378,7 @@ msym_error_t getSplittingFieldCharacters(msym_point_group_t *pg, const msym_subg
         }
 
     } else {
-        ret = MSYM_POINT_GROUP_ERROR;
+        ret = MSYM_INVALID_CHARACTER_TABLE;
         msymSetErrorDetails("Cannot determine symmetry decent character of subgroup %s",sg->name);
     }
 
@@ -441,6 +441,7 @@ msym_error_t generateSubrepresentationSpaces(msym_point_group_t *pg, int sgl, co
     
     
     msym_basis_function_t *(*srsbf) = calloc(basisl, sizeof(*srsbf));
+    
     int (*srsbfmap)[nmax+1][lmax+1] = calloc(esl,sizeof(*srsbfmap));
     
     struct _ltransforms {int d; void *t;} *lts = calloc(lmax+1,sizeof(*lts)); // transformation matrices for basis functions
@@ -513,7 +514,14 @@ msym_error_t generateSubrepresentationSpaces(msym_point_group_t *pg, int sgl, co
         }
     }
     
-    
+    /* scale reducible representations */
+    for(int k = 0;k < ct->d;k++){
+        double r = ct->s[k].r;
+        if(r > 1){
+            for(int l = 0; l <= lmax;l++) bspan[l][k] /= r;
+            for(int i = 0;i < esl;i++) pspan[i][k] /= r;
+        }
+    }
     
     /* scale basis span, calculate basis function transforms and symmetry species vectors */
     for(int l = 0;l <= lmax;l++){
@@ -547,7 +555,6 @@ msym_error_t generateSubrepresentationSpaces(msym_point_group_t *pg, int sgl, co
             nirl = mgs(d, lproj, st[pg->order], oirl, thresholds->orthogonalization/basisl);
             
             if(nirl - oirl != vspan){
-                
                 printTransform(d, d, st[pg->order]);
                 ret = MSYM_SUBSPACE_ERROR;
                 msymSetErrorDetails("Ortogonal subspace of dimension (%d) inconsistent with span (%d) in %s",nirl - oirl,vspan,ct->s[k].name);
@@ -570,7 +577,6 @@ msym_error_t generateSubrepresentationSpaces(msym_point_group_t *pg, int sgl, co
             vladd(ct->d, mspan, lspan[i], lspan[i]);
         }
     }
-
     
     /* calculate direct product of irreducible representations spanned by basis functions and permutations on each ES (don't really need to do this) */
     for(int i = 0;i < esl;i++){
@@ -588,7 +594,7 @@ msym_error_t generateSubrepresentationSpaces(msym_point_group_t *pg, int sgl, co
     decomposeRepresentation(ct, rspan, dspan);
     int ddim_max = 0;
     for(int k = 0;k < ct->d;k++){
-        ispan[k] = (int)round(dspan[k]);
+        ispan[k] = (int)round(dspan[k]/ct->s[k].r);
         ddim_max = ddim_max > ispan[k] ? ddim_max : ispan[k];
         srs[k].s = k;
         srs[k].salcl = ispan[k];
@@ -605,7 +611,17 @@ msym_error_t generateSubrepresentationSpaces(msym_point_group_t *pg, int sgl, co
     for(int prk = 0;prk < ct->d;prk++) printf(" + %d%s", ispan[prk], ct->s[prk].name);
     printf("\n");
     
+    int dbasisl = 0;
     
+    for(int k = 0;k < ct->d;k++){
+        dbasisl += ct->s[k].d*ispan[k];
+    }
+    
+    if(dbasisl != basisl){
+        ret = MSYM_SUBSPACE_ERROR;
+        msymSetErrorDetails("Unexpected number of basis functions in decomposition (expected %d, got %d)",basisl,dbasisl);
+        goto err;
+    }
     
     for(int i = 0; i < esl; i++){
         int d = es[i].length;
@@ -826,9 +842,6 @@ msym_error_t generateSubrepresentationSpaces(msym_point_group_t *pg, int sgl, co
     *osrs = srs;
     *osrsbf = srsbf;
     
-    
-
-    
     free(bspan);
     free(pspan);
     free(lspan);
@@ -845,7 +858,6 @@ msym_error_t generateSubrepresentationSpaces(msym_point_group_t *pg, int sgl, co
     free(mdcomp);
     free(mdproj);
     free(mdfound);
-    //free(ispan); used
     free(isalc);
     free(esnmax);
     free(esbfmap);
@@ -888,7 +900,6 @@ err:
     free(srsbfmap);
     for(int k = 0;k < ct->d;k++){
         for(int i = 0;i < srs[k].salcl;i++){
-            free(srs[k].salc[i].f);
             free(srs[k].salc[i].pf);
         }
         free(srs[k].salc);

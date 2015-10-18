@@ -84,6 +84,8 @@ int example(const char* in_file, msym_thresholds_t *thresholds){
         }
     }
     
+    printf("Created %d basis functions\n",bfsl);
+    
     /* Get elements msym elements */
     if(MSYM_SUCCESS != (ret = msymSetBasisFunctions(ctx, bfsl, bfs))) goto err;
     

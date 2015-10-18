@@ -43,7 +43,6 @@ msym_error_t getRepresentationsSn(int n, int rl, msym_representation_t rep[rl]);
 msym_error_t getRepresentationsDn(int n, int rl, msym_representation_t rep[rl]);
 msym_error_t getRepresentationsDnh(int n, int rl, msym_representation_t rep[rl]);
 msym_error_t getRepresentationsDnd(int n, int rl, msym_representation_t rep[rl]);
-msym_error_t getRepresentationsUnknown(int n, int rl, msym_representation_t rep[rl]);
 
 msym_error_t getCharacterTableT(int sopsl, msym_symmetry_operation_t sops[sopsl], msym_character_table_t *ct);
 msym_error_t getCharacterTableTd(int sopsl, msym_symmetry_operation_t sops[sopsl], msym_character_table_t *ct);
@@ -169,21 +168,11 @@ msym_error_t generateCharacterTable(msym_point_group_type_t type, int n, int sop
     int nc = -1;
     printf("\t\t");
     for(int j = 0;j < sopsl;j++){
-        //if(j == 0) printf("\t");
         if(nc < sops[j].cla){
             nc = sops[j].cla;
             char buf[12];
             symmetryOperationName(&sops[j], 12, buf);
             printf("%d%s",ct->classc[sops[j].cla],buf);
-            /*if(sops[j].order == 2 && sops[j].type == PROPER_ROTATION && sops[j].v[2] != 1.0){
-                if(sops[j].power == 1) printf("'");
-                else printf("''");
-            }
-            if(sops[j].type == REFLECTION){
-                if(sops[j].v[2] == 1.0) printf("h");
-                else if(sops[j].power == 1) printf("v");
-                else printf("d");
-            }*/
             printf("\t\t");
         }
     }
@@ -227,11 +216,6 @@ msym_error_t verifyCharacterTable(msym_character_table_t *ct){
         }
     }
     return ret;
-}
-
-msym_error_t getRepresentationsUnknown(int n, int rl, msym_representation_t rep[rl]){
-    msymSetErrorDetails("Character table representation NYI");
-    return MSYM_INVALID_CHARACTER_TABLE;
 }
 
 msym_error_t getRepresentationsCi(int n, int rl, msym_representation_t rep[rl]){
@@ -345,6 +329,11 @@ err:
 
 msym_error_t getRepresentationsCnv(int n, int rl, msym_representation_t rep[rl]){
     msym_error_t ret = MSYM_SUCCESS;
+    if(n == 0){
+        ret = MSYM_INVALID_CHARACTER_TABLE;
+        msymSetErrorDetails("Cannot generate character table for point group C0v");
+        goto err;
+    }
     int r = 0;
     rep[r].type = IRREDUCIBLE;
     rep[r].d = 1;
@@ -460,6 +449,13 @@ err:
 
 msym_error_t getRepresentationsDnh(int n, int rl, msym_representation_t rep[rl]){
     msym_error_t ret = MSYM_SUCCESS;
+    
+    if(n == 0){
+        ret = MSYM_INVALID_CHARACTER_TABLE;
+        msymSetErrorDetails("Cannot generate character table for point group D0h");
+        goto err;
+    }
+    
     int r = 0;
     rep[r].type = IRREDUCIBLE;
     rep[r].d = 1;
