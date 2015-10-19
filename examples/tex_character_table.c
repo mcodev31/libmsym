@@ -126,7 +126,7 @@ void symmetrySpeciesToTex(FILE *fp, msym_symmetry_species_t *s){
     int prim = 0;
     fprintf(fp,"$");
     if(s->r > 1){
-        fprintf(fp,"^{*}");
+        fprintf(fp,"^{%d}",s->r);
     }
     fprintf(fp,"%c",name[0]);
     int sub = name[1] != '\0' && name[1] != '\'';

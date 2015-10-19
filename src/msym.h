@@ -145,10 +145,9 @@ extern "C" {
         msym_salc_t *salc;
     } msym_subrepresentation_space_t;
     
-    //rename representation? we need info on wheather or not it's irreducible
     typedef struct _msym_symmetry_species {
-        int d;
-        int r;
+        int d; // dimensionality of a (ir)reducible representation of this species
+        int r; // sum over all x ct->classc[x]*ct->table[i][x]^2/pg->order (can be decomposed into r irreducible representations)
         char name[8];
     } msym_symmetry_species_t;
     
