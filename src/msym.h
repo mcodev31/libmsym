@@ -218,6 +218,7 @@ extern "C" {
     msym_error_t msymSymmetrizeWavefunctions(msym_context ctx, int l, double c[l][l], int species[l], msym_partner_function_t pf[l]);
     msym_error_t msymGetSALCs(msym_context ctx, int l, double c[l][l], int species[l], msym_partner_function_t pf[l]);
 #endif
+    msym_error_t msymSymmetrySpeciesComponents(msym_context ctx, int wfl, double *wf, int sl, double *s);
     msym_error_t msymGenerateElements(msym_context ctx, int length, msym_element_t *elements);
     msym_error_t msymGenerateSubrepresentationSpaces(msym_context ctx);
     msym_error_t msymAlignAxes(msym_context ctx);

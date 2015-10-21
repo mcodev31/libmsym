@@ -581,6 +581,47 @@ err:
     
 }
 
+msym_error_t msymSymmetrySpeciesComponents(msym_context ctx, int wfl, double *wf, int sl, double *s){
+    msym_error_t ret = MSYM_SUCCESS;
+    
+    msym_point_group_t *pg = NULL;
+    msym_subrepresentation_space_t *srs = NULL;
+    msym_basis_function_t *basis = NULL;
+    int *span = NULL;
+    
+    int srsl = 0, basisl = 0;
+    
+    if(MSYM_SUCCESS != (ret = ctxGetPointGroup(ctx, &pg))) goto err;
+    if(pg->ct == NULL){
+        if(MSYM_SUCCESS != (ret = generateCharacterTable(pg->type, pg->n, pg->order, pg->sops, &pg->ct))) goto err;
+    }
+    
+    if(MSYM_SUCCESS != (ret = ctxGetBasisFunctions(ctx, &basisl, &basis))) goto err;
+    
+    if(basisl != wfl) {
+        ret = MSYM_INVALID_ORBITALS;
+        msymSetErrorDetails("Number of coefficients (%d) does not match basis set (%d)",wfl,basisl);
+        goto err;
+    }
+    
+    if(sl != pg->ct->d) {
+        ret = MSYM_INVALID_CHARACTER_TABLE;
+        msymSetErrorDetails("Number of symmetry species (%d) does not match character table (%d)",sl,pg->ct->d);
+        goto err;
+    }
+    
+    if(MSYM_SUCCESS != (ret = ctxGetSubrepresentationSpaces(ctx, &srsl, &srs, &span))){
+        if(MSYM_SUCCESS != (ret = msymGenerateSubrepresentationSpaces(ctx))) goto err;
+        if(MSYM_SUCCESS != (ret = ctxGetSubrepresentationSpaces(ctx, &srsl, &srs, &span))) goto err;
+    }
+    
+    if(MSYM_SUCCESS != (ret = symmetrySpeciesComponents(pg, srsl, srs, basisl, basis, wf, s))) goto err;
+    
+err:
+    return ret;
+    
+}
+
 msym_error_t msymSymmetrizeWavefunctions(msym_context ctx, int l, double c[l][l], int species[l], msym_partner_function_t pf[l]){
     msym_error_t ret = MSYM_SUCCESS;
     msym_point_group_t *pg = NULL;

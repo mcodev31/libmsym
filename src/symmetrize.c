@@ -176,7 +176,7 @@ msym_error_t symmetrizeWavefunctions(msym_point_group_t *pg, int srsl, msym_subr
     for(int o = 0;o < basisl;o++){
         double mcomp = -1.0;
         int psalci = 0;
-        for(int k = 0;k < pg->ct->d;k++){
+        for(int k = 0;k < srsl;k++){
             double mabs = 0.0;
             for(int s = 0;s < srs[k].salcl;s++){
                 msym_salc_t *salc = &srs[k].salc[s];
@@ -409,28 +409,5 @@ err:
     return ret;
 }
 
-/*
-msym_error_t addProjectionOntoSubspace(int d, double orb[d], msym_subspace_t *ss, msym_orbital_t basis[d], double mem[d], double proj[d]){
-    msym_error_t ret = MSYM_SUCCESS;
-    if(ss->subspacel){
-        for(int i = 0;i < ss->subspacel;i++){
-            if(MSYM_SUCCESS != (ret = addProjectionOntoSubspace(d, orb, &ss->subspace[i], basis, mem, proj))) goto err;
-        }
-    } else {
-        for(int i = 0; i < ss->d;i++){
-            double (*space)[ss->basisl] = (double (*)[ss->basisl]) ss->space;
-            memset(mem, 0, sizeof(double[d]));
-            for(int j = 0; j < ss->basisl;j++){
-                mem[ss->basis.o[j] - basis] = space[i][j];
-            }
-            vlproj(d, orb, mem, mem);
-            vladd(d, mem, proj, proj);
-        }
-    }
-
-err:
-    return ret;
-}
- */
 
 

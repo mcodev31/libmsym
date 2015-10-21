@@ -342,15 +342,20 @@ class Context(object):
     if np is None:
         _SALCsMatrix = c_void_p
         _SALCsSpecies = POINTER(c_int)
+        _NPDArray = POINTER(c_double)
     else:
         _SALCsMatrix = np.ctypeslib.ndpointer(dtype=np.float64, ndim=2, flags='C_CONTIGUOUS')
         _SALCsSpecies = np.ctypeslib.ndpointer(dtype=np.int32, ndim=1, flags='C_CONTIGUOUS')
+        _NPDArray = np.ctypeslib.ndpointer(dtype=np.float64, ndim=1, flags='C_CONTIGUOUS')
     
     libmsym.msymGetSALCs.restype = _ReturnCode
     libmsym.msymGetSALCs.argtypes = [_Context, c_int, _SALCsMatrix, _SALCsSpecies, POINTER(PartnerFunction)]
 
     libmsym.msymSymmetrizeWavefunctions.restype = _ReturnCode
     libmsym.msymSymmetrizeWavefunctions.argtypes = [_Context, c_int, _SALCsMatrix, _SALCsSpecies, POINTER(PartnerFunction)]
+
+    libmsym.msymSymmetrySpeciesComponents.restype = _ReturnCode
+    libmsym.msymSymmetrySpeciesComponents.argtypes = [_Context, c_int, _NPDArray, c_int, _NPDArray]
 
 
     def __init__(self, elements=[], basis_functions=[], point_group="", _func=libmsym.msymCreateContext):
@@ -582,7 +587,16 @@ class Context(object):
         self._assert_success(_func(self._ctx, size, element_array))
         self._update_elements()
         return self._elements
-        
+
+    def symmetry_species_components(self, wf, _func=libmsym.msymSymmetrySpeciesComponents):
+       
+        wf_size = len(wf)
+        if not (wf_size == len(self.basis_functions) and wf.dtype == np.float64):
+            raise ValueError("Must provide a numpy.float64 array of length " + str(len(self.basis_functions)))
+        species_size = self.character_table._d
+        species = np.zeros((species_size),dtype=np.float64)
+        self._assert_success(_func(self._ctx, wf_size, wf, species_size, species))
+        return species
         
 
 

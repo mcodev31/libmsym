@@ -33,6 +33,7 @@ int example(const char* in_file, msym_thresholds_t *thresholds){
     const msym_subgroup_t *msg = NULL;
     const msym_subrepresentation_space_t *msrs = NULL;
     const msym_character_table_t *mct = NULL;
+    double *irrep = NULL;
     
     
     
@@ -180,6 +181,8 @@ int example(const char* in_file, msym_thresholds_t *thresholds){
     if(MSYM_SUCCESS != (ret = msymGetSubrepresentationSpaces(ctx, &msrsl, &msrs))) goto err;
     if(MSYM_SUCCESS != (ret = msymGetCharacterTable(ctx, &mct))) goto err;
     
+    irrep = calloc(mct->d, sizeof(*irrep));
+    
     for(int i = 0; i < msrsl;i++){
         printf("Got %d SALCs with %d partner functions of symmetry species %s\n",msrs[i].salcl,mct->s[msrs[i].s].d, mct->s[msrs[i].s].name);
         for(int j = 0;j < msrs[i].salcl;j++){
@@ -218,6 +221,15 @@ int example(const char* in_file, msym_thresholds_t *thresholds){
     //printTransform(bfsl,bfsl,salcs);
     /* Symmetrize wavefunctions */
     if(MSYM_SUCCESS != (ret = msymSymmetrizeWavefunctions(ctx, bfsl, salcs, species, pf))) goto err;
+    
+    for(int i = 0; i < bfsl;i++) cmem[i] = 1;
+    if(MSYM_SUCCESS != (ret = msymSymmetrySpeciesComponents(ctx, bfsl, cmem, mct->d, irrep))) goto err;
+    printf("Test wavefunction 1,1... components\n");
+    printf("%lf%s", irrep[0], mct->s[0].name);
+    for(int j = 1;j < mct->d;j++){
+        printf(" + %lf%s", irrep[j], mct->s[j].name);
+    }
+    printf("\n");
     
     //printf("out=\n");
     //printTransform(bfsl,bfsl,salcs);
@@ -265,6 +277,7 @@ int example(const char* in_file, msym_thresholds_t *thresholds){
     free(pf);
     free(bfs);
     free(elements);
+    free(irrep);
     
     return ret;
 err:
@@ -274,6 +287,7 @@ err:
     free(pf);
     free(bfs);
     free(elements);
+    free(irrep);
     error = msymErrorString(ret);
     fprintf(stderr,"Error %s: ",error);
     error = msymGetErrorDetails();

@@ -22,6 +22,8 @@
 #include "point_group.h"
 #include "subspace.h"
 
+#define SQR(x) ((x)*(x))
+
 void printTransform(int r, int c, double M[r][c]);
 void printNewSubspace(msym_character_table_t *ct, int l, msym_subrepresentation_space_t srs[l]);
 void tabPrintTransform(int r, int c, double M[r][c],int indent);
@@ -386,6 +388,35 @@ err:
     return ret;
 }
 
+msym_error_t symmetrySpeciesComponents(msym_point_group_t *pg, int srsl, msym_subrepresentation_space_t *srs, int basisl, msym_basis_function_t *basis, double *wf, double *s){
+    msym_error_t ret = MSYM_SUCCESS;
+    
+    if(srsl != pg->ct->d){
+        ret = MSYM_SYMMETRIZATION_ERROR;
+        msymSetErrorDetails("Unexpected subspace length (expected %d got %d)",pg->ct->d, srsl);
+        goto err;
+    }
+    
+    for(int k = 0;k < srsl;k++){
+        double kcomp = 0.0;
+        for(int s = 0;s < srs[k].salcl;s++){
+            msym_salc_t *salc = &srs[k].salc[s];
+            double (*space)[salc->fl] = (double (*)[salc->fl]) salc->pf;
+            for(int d = 0;d < salc->d;d++){
+                double c = 0.0;
+                for(int j = 0; j < salc->fl;j++){
+                    c += wf[salc->f[j] - basis]*space[d][j];
+                }
+                kcomp += SQR(c);
+            }
+        }
+        s[k] = sqrt(kcomp);
+    }
+    
+err:
+    
+    return ret;
+}
 
 
 msym_error_t generateSubrepresentationSpaces(msym_point_group_t *pg, int sgl, const msym_subgroup_t sg[sgl], int esl, msym_equivalence_set_t *es, msym_permutation_t **perm, int basisl, msym_basis_function_t basis[basisl], msym_element_t *elements, msym_equivalence_set_t **esmap, msym_thresholds_t *thresholds, int *osrsl, msym_subrepresentation_space_t **osrs, msym_basis_function_t ***osrsbf, int **ospan){

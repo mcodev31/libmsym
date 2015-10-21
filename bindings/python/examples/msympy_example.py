@@ -50,12 +50,25 @@ with msym.Context(elements = elements, basis_functions = basis_functions) as ctx
     ctx.subrepresentation_spaces[0].salcs # salcs that span space
     ctx.subrepresentation_spaces[0].salcs[0].basis_functions # basis functions for salc    
     ctx.subrepresentation_spaces[0].salcs[0].partner_functions # numpy array of partner functions expressed in terms of basis_functions coefficients
+
     ctx.character_table.table # table as numpy array
     ctx.character_table.symmetry_operations # representative symmetry operations
     ctx.character_table.symmetry_species # symmetry species
     ctx.character_table.symmetry_species[0].dim  # dimensionality of symmetry species
     ctx.character_table.symmetry_species[0].name # name of symmetry species e.g. A2g
 
+    somefunc = np.zeros((len(basis_functions)),dtype=np.float64)
+    for i in range(0,len(somefunc)):
+        somefunc[i] = i
+
+    species_components = ctx.symmetry_species_components(somefunc)
+    
+    species = ctx.character_table.symmetry_species
+
+    print(somefunc)
+    for i, c in enumerate(species_components):
+        print(str(c) + species[i].name)
+    
     #matrix version of the above, as well as wave function symmetrization
     (matrix, species, partners) = ctx.salcs
     (d,d) = matrix.shape
