@@ -17,7 +17,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <float.h>
-#include "msym.h"
+#include <string.h>
+#include "rsh.h"
+#include "linalg.h"
 #include "symop.h"
 
 #define SQR(x) ((x)*(x))
@@ -26,21 +28,24 @@
 #define M_SQRT2 1.41421356237309504880
 #endif
 
-typedef struct _rsh_representations {
-    int d;
-    void *t;
-} rsh_representations_t;
+void rshSymmetryOperationRepresentation(msym_symmetry_operation_t *sops, int index, int l, rsh_representations_t *lts);
+void rshCalculateUVWCoefficients(int l, int m1, int m2, double* u, double* v, double* w);
+void rshRotationRepresentation(int index, int l, rsh_representations_t *lrs);
+double rshRotationP(int index, int l, int i, int m1, int m2, rsh_representations_t *lrs);
+double rshRotationU(int index, int l, int m1, int m2, rsh_representations_t *lrs);
+double rshRotationV(int index, int l, int m1, int m2, rsh_representations_t *lrs);
+double rshRotationW(int index, int l, int m1, int m2, rsh_representations_t *lrs);
 
-void rshSymmetryOperationRepresentation(msym_point_group_t *pg, int index, int l, rsh_representations_t *lts);
-void rshCalculateUVWCoefficients(int m1, int m2, int l, double* u, double* v, double* w);
-void rshProperRotationRepresentation(int index, int l, rsh_representations_t *lrs);
-
-void generateTransforms(){
+void generateRSHTest(){
     int lmax = 2;
     msym_point_group_t mpg;
     msym_point_group_t *pg = &mpg;
     pg->order = 1;
-    msym_symmetry_operation_t sop = {.order = 3, .power = 1, .v = {0,0,1}, .type = PROPER_ROTATION};
+    //msym_symmetry_operation_t sop = {.order = 5, .power = 1, .v = {0,0,1}, .type = PROPER_ROTATION};
+    //msym_symmetry_operation_t sop = {.order = 5, .power = 1, .v = {0,0,1}, .type = REFLECTION};
+    msym_symmetry_operation_t sop = {.order = 5, .power = 1, .v = {0,0,1}, .type = IMPROPER_ROTATION};
+    //msym_symmetry_operation_t sop = {.order = 1, .power = 1, .v = {0,0,0}, .type = INVERSION};
+    vnorm(sop.v);
     pg->sops = &sop;
     rsh_representations_t *lrs = calloc(lmax+1,sizeof(*lrs));
     for(int l = 0; l <= lmax;l++){
@@ -52,7 +57,7 @@ void generateTransforms(){
     
     for(int l = 0;l <= lmax;l++){
         for(int i = 0; i < pg->order;i++){
-            rshSymmetryOperationRepresentation(pg,i,l,lrs);
+            rshSymmetryOperationRepresentation(pg->sops,i,l,lrs);
         }
     }
     
@@ -66,9 +71,26 @@ void generateTransforms(){
     
 }
 
+msym_error_t generateRSHRepresentations(int sopsl, msym_symmetry_operation_t sops[sopsl], int lmax, rsh_representations_t *lrs){
+    msym_error_t ret = MSYM_SUCCESS;
+    for(int l = 0;l <= lmax;l++){
+        if(lrs[l].d != 2*l+1){
+            ret = MSYM_INVALID_ORBITALS;
+            msymSetErrorDetails("Invalid dimension of real spherical harmonic (expected %d, got %d)",2*l+1, lrs[l].d);
+            goto err;
+        }
+        for(int i = 0; i < sopsl;i++){
+            rshSymmetryOperationRepresentation(sops,i,l,lrs);
+        }
+    }
+    
+err:
+    return ret;
+}
 
 
-void rshSymmetryOperationRepresentation(msym_point_group_t *pg, int index, int l, rsh_representations_t *lrs){
+
+void rshSymmetryOperationRepresentation(msym_symmetry_operation_t *sops, int index, int l, rsh_representations_t *lrs){
     if(0 == l){
         int d = lrs[0].d;
         double (*st)[d][d] = lrs[0].t;
@@ -76,27 +98,46 @@ void rshSymmetryOperationRepresentation(msym_point_group_t *pg, int index, int l
     } else if(1 == l){
         int d = lrs[1].d;
         double (*st)[d][d] = lrs[1].t;
-        symmetryOperationMatrix(&pg->sops[index], st[index]);
+        double (*r)[d] = st[index];
+        double t[3][3];
+        symmetryOperationMatrix(&sops[index], t);
+        // x,y,z -> py, pz, px
+        r[0][0] = t[1][1];
+        r[0][1] = t[1][2];
+        r[0][2] = t[1][0];
+        r[1][0] = t[2][1];
+        r[1][1] = t[2][2];
+        r[1][2] = t[2][0];
+        r[2][0] = t[0][1];
+        r[2][1] = t[0][2];
+        r[2][2] = t[0][0];
+        //printTransform(d,d,r);
     } else {
         int d = lrs[l].d;
-        double (*t)[d][d] = calloc(1, sizeof(*t));
-        generateBasisFunctionTransforms(1,pg->sops,l,t);
-        printTransform(d,d,t[0]);
-        free(t);
-        switch (pg->sops[index].type) {
+        double (*st)[d][d] = lrs[l].t;
+        double (*r)[d] = st[index];        
+        switch (sops[index].type) {
+            case INVERSION:
+                if(l & 1){
+                    memset(r,0,sizeof(double[d][d]));
+                    for(int i = 0;i < d;i++) r[i][i] = -1;
+                    break;
+                } //fallthrough
+            case IDENTITY:
+                mleye(d,r);
+                break;
+            case REFLECTION:
+            case IMPROPER_ROTATION:
             case PROPER_ROTATION:
-                rshProperRotationRepresentation(index, l, lrs);
+            default:
+                rshRotationRepresentation(index, l, lrs);
                 break;
                 
-            default:
-                printf("can only handle proper rotation");
-                exit(1);
-                break;
         }
     }
 }
 
-double rshProperRotationP(int index, int l, int i, int m1, int m2, rsh_representations_t *lrs){
+double rshRotationP(int index, int l, int i, int m1, int m2, rsh_representations_t *lrs){
     int d1 = lrs[1].d, dl = lrs[l-1].d, o1 = 1, ol = (dl - 1)/2;
     double (*st1)[d1][d1] = lrs[1].t, (*stl)[dl][dl] = lrs[l-1].t;
     double (*r1)[d1] = st1[index], (*rl)[dl] = stl[index];
@@ -105,7 +146,7 @@ double rshProperRotationP(int index, int l, int i, int m1, int m2, rsh_represent
     if (m2 == l) {
         ret = r1[i + o1][1 + o1]*rl[m1 + ol][l - 1 + ol] - r1[i + o1][-1 + o1]*rl[m1 + ol][1 - l + ol];
     } else if (m2 == -l) {
-        ret = r1[i + o1][1 + o1]*rl[m1 + ol][1 - l + ol] - r1[i + o1][-1 + o1]*rl[m1 + ol][l - 1 + ol];
+        ret = r1[i + o1][1 + o1]*rl[m1 + ol][1 - l + ol] + r1[i + o1][-1 + o1]*rl[m1 + ol][l - 1 + ol];
     } else {
         ret = r1[i + o1][o1]*rl[m1 + ol][m2 + ol];
     }
@@ -113,56 +154,55 @@ double rshProperRotationP(int index, int l, int i, int m1, int m2, rsh_represent
     return ret;
 }
 
-double rshProperRotationU(int index, int l, int m1, int m2, rsh_representations_t *lrs){
-    return rshProperRotationP(index, l, 0, m1, m2, lrs);
+double rshRotationU(int index, int l, int m1, int m2, rsh_representations_t *lrs){
+    return rshRotationP(index, l, 0, m1, m2, lrs);
 }
 
-double rshProperRotationV(int index, int l, int m1, int m2, rsh_representations_t *lrs){
+double rshRotationV(int index, int l, int m1, int m2, rsh_representations_t *lrs){
     double ret = 0;
     if (m1 == 0) {
-        ret = rshProperRotationP(index, l, 1, 1, m2, lrs) + rshProperRotationP(index, l, -1, -1, m2, lrs);
+        ret = rshRotationP(index, l, 1, 1, m2, lrs) + rshRotationP(index, l, -1, -1, m2, lrs);
     } else if (m1 == 1){
-        ret = M_SQRT2*rshProperRotationP(index, l, 1, 0, m2, lrs);
+        ret = M_SQRT2*rshRotationP(index, l, 1, 0, m2, lrs);
     } else if (m1 == -1){
-        ret = M_SQRT2*rshProperRotationP(index, l, -1, 0, m2, lrs);
+        ret = M_SQRT2*rshRotationP(index, l, -1, 0, m2, lrs);
     } else if (m1 > 0){
-        ret = rshProperRotationP(index, l, 1, m1 - 1, m2, lrs) + rshProperRotationP(index,l, -1,-m1 + 1, m2, lrs);
+        ret = rshRotationP(index, l, 1, m1 - 1, m2, lrs) - rshRotationP(index,l, -1, -m1 + 1, m2, lrs);
     } else {
-        ret = rshProperRotationP(index, l, 1, m1 + 1, m2, lrs) + rshProperRotationP(index,l, -1,-m1 - 1, m2, lrs);
+        ret = rshRotationP(index, l, 1, m1 + 1, m2, lrs) + rshRotationP(index,l, -1, -m1 - 1, m2, lrs);
     }
     
     return ret;
 }
 
-double rshProperRotationW(int index, int l, int m1, int m2, rsh_representations_t *lrs){
+double rshRotationW(int index, int l, int m1, int m2, rsh_representations_t *lrs){
     double ret = 0;
     if (m1 > 0) {
-        ret = rshProperRotationP(index, l, 1, m1 + 1, m2, lrs) + rshProperRotationP(index, l, -1, -m1 - 1, m2, lrs);
+        ret = rshRotationP(index, l, 1, m1 + 1, m2, lrs) + rshRotationP(index, l, -1, -m1 - 1, m2, lrs);
     } else {
-        ret = rshProperRotationP(index, l, 1, m1 - 1, m2, lrs) + rshProperRotationP(index, l, -1, -m1 + 1, m2, lrs);
+        ret = rshRotationP(index, l, 1, m1 - 1, m2, lrs) - rshRotationP(index, l, -1, -m1 + 1, m2, lrs);
     }
     
     return ret;
 }
 
-void rshProperRotationRepresentation(int index, int l, rsh_representations_t *lrs){
+void rshRotationRepresentation(int index, int l, rsh_representations_t *lrs){
     int d = lrs[l].d;
     double (*st)[d][d] = lrs[l].t;
     double (*r)[d] = st[index];
     for (int m1 = -l; m1 <= l; m1++) {
         for (int m2 = -l; m2 <= l; m2++) {
             double u, v, w;
-            rshCalculateUVWCoefficients(m1, m2, l, &u, &v, &w);
+            rshCalculateUVWCoefficients(l, m1, m2, &u, &v, &w);
             if(u != 0){
-                u *= rshProperRotationU(index, l, m1, m2, lrs);
+                u *= rshRotationU(index, l, m1, m2, lrs);
             }
             if(v != 0){
-                v *= rshProperRotationV(index, l, m1, m2, lrs);
+                v *= rshRotationV(index, l, m1, m2, lrs);
             }
             if(w != 0){
-                w *= rshProperRotationW(index, l, m1, m2, lrs);
+                w *= rshRotationW(index, l, m1, m2, lrs);
             }
-            
             r[m1 + l][m2 + l] = u + v + w;
         }
     }
@@ -170,7 +210,7 @@ void rshProperRotationRepresentation(int index, int l, rsh_representations_t *lr
 
 #define RSH_EPSILON 16
 
-void rshCalculateUVWCoefficients(int m1, int m2, int l, double* ou, double* ov, double* ow) {
+void rshCalculateUVWCoefficients(int l, int m1, int m2, double* ou, double* ov, double* ow) {
     double u = 0, v = 0, w = 0;
     if(m1 == 0){ // d = 1
         if(abs(m2) == l){

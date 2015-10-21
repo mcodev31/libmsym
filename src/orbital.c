@@ -21,6 +21,7 @@
 #include "permutation.h"
 #include "point_group.h"
 #include "subspace.h"
+#include "rsh.h"
 
 #define SQR(x) ((x)*(x))
 
@@ -28,6 +29,8 @@ void printTransform(int r, int c, double M[r][c]);
 void printNewSubspace(msym_character_table_t *ct, int l, msym_subrepresentation_space_t srs[l]);
 void tabPrintTransform(int r, int c, double M[r][c],int indent);
 void tabprintf(char *format, int indent, ...);
+
+msym_error_t generateRepresentations(int n, int sopsl, msym_symmetry_operation_t sops[sopsl], int lmax, rsh_representations_t *lrs);
 
 
 //These are not the real orbitals but linear combinations:
@@ -177,6 +180,27 @@ err:
     free(mkron);
     free(poly);
     return ret;
+}
+
+msym_error_t generateRepresentations(int n, int sopsl, msym_symmetry_operation_t sops[sopsl], int lmax, rsh_representations_t *lrs){
+    msym_error_t ret = MSYM_SUCCESS;
+    for(int l = 0;l <= lmax;l++){
+        int d = 2*l+1;
+        lrs[l].d = d;
+        lrs[l].t = malloc(sizeof(double[n][d][d]));
+    }
+    
+    if(MSYM_SUCCESS != (ret = generateRSHRepresentations(sopsl, sops, lmax, lrs))) goto err;
+    
+    return ret;
+err:
+    for(int l = 0;l <= lmax;l++){
+        free(lrs[l].t);
+        lrs[l].t = NULL;
+        lrs[l].d = 0;
+    }
+    return ret;
+
 }
 
 /* move this */
@@ -470,12 +494,11 @@ msym_error_t generateSubrepresentationSpaces(msym_point_group_t *pg, int sgl, co
     msym_basis_function_t *(*esbfmap)[pg->order][nmax+1][lmax+1][2*lmax+1] = calloc(esl,sizeof(*esbfmap));
     
     
-    
     msym_basis_function_t *(*srsbf) = calloc(basisl, sizeof(*srsbf));
     
     int (*srsbfmap)[nmax+1][lmax+1] = calloc(esl,sizeof(*srsbfmap));
     
-    struct _ltransforms {int d; void *t;} *lts = calloc(lmax+1,sizeof(*lts)); // transformation matrices for basis functions
+    rsh_representations_t *lts = calloc(lmax+1,sizeof(*lts)); // transformation matrices for rsh basis functions
     
     int (*les)[lmax+1] = calloc(esl, sizeof(*les));                      // number of l-type basis functions in each ES
     
@@ -488,6 +511,8 @@ msym_error_t generateSubrepresentationSpaces(msym_point_group_t *pg, int sgl, co
     for(int o = 0;o < basisl;o++){
         les[esmap[basis[o].element - elements] - es][basis[o].f.sh.l] += basis[o].f.sh.m == 0;
     }
+    
+    if(MSYM_SUCCESS != (ret = generateRepresentations(pg->order+1, pg->order, pg->sops, lmax, lts))) goto err;
     
     for(int o = 0;o < basisl;o++){
         msym_basis_function_t *bf = &basis[o];
@@ -556,18 +581,15 @@ msym_error_t generateSubrepresentationSpaces(msym_point_group_t *pg, int sgl, co
     
     /* scale basis span, calculate basis function transforms and symmetry species vectors */
     for(int l = 0;l <= lmax;l++){
-        int d = 2*l+1;
+        int d = lts[l].d;
         double (*lproj)[d] = mproj;
         double (*lscal)[d] = mscal;
         
         vlscale(1.0/pg->order, ct->d, bspan[l], bspan[l]);
         
-        lts[l].d = d;
-        lts[l].t = malloc(sizeof(double[pg->order+1][d][d]));
-        
         double (*st)[d][d] = lts[l].t;
         
-        if(MSYM_SUCCESS != (ret = generateBasisFunctionTransforms(pg->order, pg->sops, l, lts[l].t))) goto err; //TODO: generalize basis function concept
+        //if(MSYM_SUCCESS != (ret = generateBasisFunctionTransforms(pg->order, pg->sops, l, lts[l].t))) goto err; //TODO: generalize basis function concept
         
         memset(st[pg->order], 0, sizeof(double[d][d]));
         

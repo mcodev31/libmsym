@@ -123,7 +123,6 @@ double symmetryOperationYCharacter(msym_symmetry_operation_t *sop, int l){
     double x = 0.0, a = sop->power*2*M_PI/sop->order;
     switch (sop->type) {
         case IDENTITY          : x = 2*l+1; break;
-        //case INVERSION         : x = -2*l+1; break;
         case INVERSION         : x = (2*l+1)*(1 - ((l & 1) << 1)); break;
         case REFLECTION        : x = 1; break;
         case PROPER_ROTATION   : x = sin((l+0.5)*a)/sin(a/2); break;
