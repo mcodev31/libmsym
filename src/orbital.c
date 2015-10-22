@@ -535,11 +535,20 @@ msym_error_t generateSubrepresentationSpaces(msym_point_group_t *pg, int sgl, co
             for(int l = 0;l <= lmax;l++){
                 srsbfmap[i][n][l] = srsbfi;
                 for(int e = 0;e < es[i].length;e++){
+                    msym_basis_function_t *lbf = esbfmap[i][e][n][l][0];
                     for(int m = -l;m <= l;m++){
                         msym_basis_function_t *bf = esbfmap[i][e][n][l][m+l];
-                        if(NULL == bf) break;
+                        if((NULL == bf && NULL != lbf) || (NULL == lbf && NULL != bf)) {
+                            lbf = NULL == lbf ? bf : lbf;
+                            ret = MSYM_INVALID_ORBITALS;
+                            msymSetErrorDetails("Found basis function %s but function where m = %d is missing on element %d of equivalence set %d",lbf->name,m,e,i);
+                            goto err;
+                        }
+                        if(NULL != bf){
+                            lbf = bf;
                             srsbf[srsbfi] = bf;
                             srsbfi++;
+                        }
                     }
                 }
             }

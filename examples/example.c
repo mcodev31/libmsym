@@ -43,7 +43,7 @@ int example(const char* in_file, msym_thresholds_t *thresholds){
     int msgl = 0, msopsl = 0, mlength = 0, msrsl = 0, mbfsl = 0;
     int orbitalsl = 0, bfsl = 0;
     
-    char *orbitals[15] = {"2px", "2py", "2pz", "3d2-", "3d1-", "3d0", "3d1+", "3d2+","4f3-", "4f2-", "4f1-", "4f0", "4f1+", "4f2+", "4f3+",};
+    char *orbitals[15] = {"2px", "2py", "2pz", "3d2-", "3d1-", "3d0", "3d1+", "3d2+","4f3-", "4f2-", "4f1-", "4f0", "4f1+", "4f2+", "4f3+"};
     
     
     /* This function reads xyz files.
