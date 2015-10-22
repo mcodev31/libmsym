@@ -36,40 +36,6 @@ double rshRotationU(int index, int l, int m1, int m2, rsh_representations_t *lrs
 double rshRotationV(int index, int l, int m1, int m2, rsh_representations_t *lrs);
 double rshRotationW(int index, int l, int m1, int m2, rsh_representations_t *lrs);
 
-void generateRSHTest(){
-    int lmax = 2;
-    msym_point_group_t mpg;
-    msym_point_group_t *pg = &mpg;
-    pg->order = 1;
-    //msym_symmetry_operation_t sop = {.order = 5, .power = 1, .v = {0,0,1}, .type = PROPER_ROTATION};
-    //msym_symmetry_operation_t sop = {.order = 5, .power = 1, .v = {0,0,1}, .type = REFLECTION};
-    msym_symmetry_operation_t sop = {.order = 5, .power = 1, .v = {0,0,1}, .type = IMPROPER_ROTATION};
-    //msym_symmetry_operation_t sop = {.order = 1, .power = 1, .v = {0,0,0}, .type = INVERSION};
-    vnorm(sop.v);
-    pg->sops = &sop;
-    rsh_representations_t *lrs = calloc(lmax+1,sizeof(*lrs));
-    for(int l = 0; l <= lmax;l++){
-        int d = 2*l+1;
-        lrs[l].t = calloc(pg->order+1,sizeof(double[d][d]));
-        lrs[l].d = d;
-    }
-    
-    
-    for(int l = 0;l <= lmax;l++){
-        for(int i = 0; i < pg->order;i++){
-            rshSymmetryOperationRepresentation(pg->sops,i,l,lrs);
-        }
-    }
-    
-    
-    for(int i = 0; i < pg->order;i++){
-        printSymmetryOperation(&pg->sops[i]);
-        for(int l = 0;l <= lmax;l++){
-            printTransform(lrs[l].d,lrs[l].d,lrs[l].t);
-        }
-    }
-    
-}
 
 msym_error_t generateRSHRepresentations(int sopsl, msym_symmetry_operation_t sops[sopsl], int lmax, rsh_representations_t *lrs){
     msym_error_t ret = MSYM_SUCCESS;
@@ -208,29 +174,22 @@ void rshRotationRepresentation(int index, int l, rsh_representations_t *lrs){
     }
 }
 
-#define RSH_EPSILON 16
-
-void rshCalculateUVWCoefficients(int l, int m1, int m2, double* ou, double* ov, double* ow) {
-    double u = 0, v = 0, w = 0;
+void rshCalculateUVWCoefficients(int l, int m1, int m2, double *u, double *v, double *w) {
     if(m1 == 0){ // d = 1
         if(abs(m2) == l){
-            u =  sqrt(l/(4*l - 2.0));
-            v = -0.5*sqrt((l - 1.0)/(2*l - 1.0));
+            *u =  sqrt(l/(4*l - 2.0));
+            *v = -0.5*sqrt((l - 1.0)/(2*l - 1.0));
         } else {
             double m22 = SQR(m2), l2 = SQR(l), l2m22 = l2 - m22;
-            u =  sqrt(l2/l2m22);
-            v = -0.5*sqrt(2*(l2 - l)/l2m22);
+            *u =  sqrt(l2/l2m22);
+            *v = -0.5*sqrt(2*(l2 - l)/l2m22);
         }
-        w = 0;
+        *w = 0;
     } else { // d = 0
         double am1 = abs(m1);
         double div = (abs(m2) == l ? 2.0*l*(2.0*l - 1) : (l + m2)*(l - m2));
-        u =  sqrt((l + m1)*(l - m1)/div);
-        v =  0.5*sqrt((l + am1 - 1)*(l + am1)/div);
-        w = -0.5*sqrt((l - am1 - 1)*(l - am1)/div);
+        *u =  sqrt((l + m1)*(l - m1)/div);
+        *v =  0.5*sqrt((l + am1 - 1)*(l + am1)/div);
+        *w = -0.5*sqrt((l - am1 - 1)*(l - am1)/div);
     }
-    
-    *ou = fabs(u) > DBL_EPSILON*RSH_EPSILON ? u : 0.0;
-    *ov = fabs(v) > DBL_EPSILON*RSH_EPSILON ? v : 0.0;
-    *ow = fabs(w) > DBL_EPSILON*RSH_EPSILON ? w : 0.0;
 }
