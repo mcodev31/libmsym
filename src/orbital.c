@@ -74,7 +74,9 @@ msym_error_t basisFunctionFromQuantumNumbers(int n, int l, int m, msym_basis_fun
             break;
         }
         default : {
-            char t = 'f' - 3 + l;
+            char t = '\0';
+            if(l <= 6) t = 'f' - 3 + l;
+            else t = 'k' - 7 + l;
             char *d = (m < 0 ? "-" : "+");
             snprintf(bf->name, sizeof(bf->name), "%d%c%d%s",n,t,abs(m),d);
         }
@@ -105,7 +107,7 @@ msym_error_t basisFunctionFromName(char *name, msym_basis_function_t *bf){
         }
         default :
             if(cl < 'd' || cl == 'e' || cl > 'z') goto err;
-            l = cl == 'd' ? 2 : cl + 3 - 'f';
+            l = cl == 'd' ? 2 : (cl <= 'i' ? cl + 3 - 'f' : cl + 7 - 'k');
             m = (cm1 - (int)'0')*(cm2 == '-' ? -1 : 1);
     }
     

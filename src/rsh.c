@@ -77,7 +77,6 @@ void rshSymmetryOperationRepresentation(msym_symmetry_operation_t *sops, int ind
         r[2][0] = t[0][1];
         r[2][1] = t[0][2];
         r[2][2] = t[0][0];
-        //printTransform(d,d,r);
     } else {
         int d = lrs[l].d;
         double (*st)[d][d] = lrs[l].t;
