@@ -138,17 +138,17 @@ void rshSymmetryOperationRepresentation(msym_symmetry_operation_t *sops, int ind
 }
 
 double rshRotationP(int index, int l, int i, int m1, int m2, rsh_representations_t *lrs){
-    int d1 = lrs[1].d, dl = lrs[l-1].d, o1 = 1, ol = (dl - 1)/2;
+    int d1 = lrs[1].d, dl = lrs[l-1].d, ol = (dl - 1)/2;
     double (*st1)[d1][d1] = lrs[1].t, (*stl)[dl][dl] = lrs[l-1].t;
     double (*r1)[d1] = st1[index], (*rl)[dl] = stl[index];
     double ret = 0;
     
     if (m2 == l) {
-        ret = r1[i + o1][1 + o1]*rl[m1 + ol][l - 1 + ol] - r1[i + o1][-1 + o1]*rl[m1 + ol][1 - l + ol];
+        ret = r1[i + 1][2]*rl[m1 + ol][l - 1 + ol] - r1[i + 1][0]*rl[m1 + ol][1 - l + ol];
     } else if (m2 == -l) {
-        ret = r1[i + o1][1 + o1]*rl[m1 + ol][1 - l + ol] + r1[i + o1][-1 + o1]*rl[m1 + ol][l - 1 + ol];
+        ret = r1[i + 1][2]*rl[m1 + ol][1 - l + ol] + r1[i + 1][0]*rl[m1 + ol][l - 1 + ol];
     } else {
-        ret = r1[i + o1][o1]*rl[m1 + ol][m2 + ol];
+        ret = r1[i + 1][1]*rl[m1 + ol][m2 + ol];
     }
     
     return ret;
