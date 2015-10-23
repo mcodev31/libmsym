@@ -399,7 +399,7 @@ msym_error_t getRepresentationsSn(int n, int rl, msym_representation_t rep[rl]){
             rep[r].type = REDUCIBLE;
             rep[r].d = 2;
             rep[r].eig.l = i;
-            rep[r].eig.p = rep[r].eig.v;
+            rep[r].eig.p = rep[r].eig.v = 1;
             rep[r].eig.h = -1 + ((i % 2) << 1);
             rep[r].eig.i = -1;
             r++;
@@ -575,7 +575,7 @@ msym_error_t getRepresentationsDnd(int n, int rl, msym_representation_t rep[rl])
             rep[r].type = IRREDUCIBLE;
             rep[r].d = 2;
             rep[r].eig.l = i;
-            rep[r].eig.p = rep[r].eig.v;
+            rep[r].eig.p = rep[r].eig.v = 1;
             rep[r].eig.h = -1 + ((i % 2) << 1);
             rep[r].eig.i = -1;
             r++;

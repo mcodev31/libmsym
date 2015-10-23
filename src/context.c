@@ -223,6 +223,18 @@ err:
     return ret;
 }
 
+msym_error_t msymGetPointGroupType(msym_context ctx, msym_point_group_type_t *t, int *n){
+    msym_error_t ret = MSYM_SUCCESS;
+    if(ctx == NULL) {ret = MSYM_INVALID_CONTEXT;goto err;}
+    if(ctx->pg == NULL) {ret = MSYM_INVALID_POINT_GROUP;goto err;}
+    
+    *t = ctx->pg->type;
+    *n = ctx->pg->n;
+    
+err:
+    return ret;
+}
+
 msym_error_t msymGetSubgroups(msym_context ctx, int *sgl, const msym_subgroup_t **sg){
     msym_error_t ret = MSYM_SUCCESS;
     

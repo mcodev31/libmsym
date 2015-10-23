@@ -196,6 +196,7 @@ extern "C" {
     msym_error_t msymSetBasisFunctions(msym_context ctx, int length, msym_basis_function_t *basis);
     msym_error_t msymGetBasisFunctions(msym_context ctx, int *length, msym_basis_function_t **basis);
     msym_error_t msymGetPointGroup(msym_context ctx, msym_point_group_t **pg);
+    msym_error_t msymGetPointGroupType(msym_context ctx, msym_point_group_type_t *t, int *n);
     msym_error_t msymSetPointGroupByName(msym_context ctx, const char *name);
     msym_error_t msymGetPointGroupName(msym_context ctx, int l, char *buf);
     msym_error_t msymGetSubgroups(msym_context ctx, int *l, const msym_subgroup_t **subgroups);
