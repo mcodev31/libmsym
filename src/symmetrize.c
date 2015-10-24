@@ -26,7 +26,7 @@ msym_error_t symmetrizeMoleculeLinear(msym_point_group_t *pg, int esl, msym_equi
 
 msym_error_t symmetrizeMolecule(msym_point_group_t *pg, int esl, msym_equivalence_set_t *es, msym_permutation_t **perm, msym_thresholds_t *thresholds, double *err){
     msym_error_t ret = MSYM_SUCCESS;
-    if((pg->type == MSYM_POINT_GROUP_TYPE_Cnv || pg->type == MSYM_POINT_GROUP_TYPE_Dnh) && pg->n == 0){
+    if(isLinearPointGroup(pg)){
         ret = symmetrizeMoleculeLinear(pg,esl,es,perm,thresholds,err);
     } else {
         ret = symmetrizeMoleculeProject(pg,esl,es,perm,thresholds,err);
@@ -82,13 +82,21 @@ msym_error_t symmetrizeMoleculeLinear(msym_point_group_t *pg, int esl, msym_equi
     double (*v)[3] = malloc(sizeof(double[pg->order][3]));
     double (*vinf)[3] = malloc(sizeof(double[pg->order][3]));
     msym_symmetry_operation_t *cinf = NULL;
+    msym_symmetry_operation_t *cinfsub = NULL;
+    int sub = isLinearSubgroup(pg);
     
     for(int i = 0; i < pg->order;i++){
         if(pg->sops[i].type == PROPER_ROTATION && pg->sops[i].order == 0) {
             cinf = &pg->sops[i];
             break;
         }
+        
+        if(sub && pg->sops[i].type == PROPER_ROTATION && pg->sops[i].orientation == HORIZONTAL){
+            cinfsub = &pg->sops[i];
+        }
     }
+    
+    cinf = (cinf == NULL ? cinfsub : cinf);
     
     if(cinf == NULL){
         ret = MSYM_SYMMETRIZATION_ERROR;

@@ -105,7 +105,7 @@ void characterToTex(FILE *fp,int n, const msym_character_table_t *ct, int i, int
         
     double theta = (2*M_PI)/n;
     
-    if(mode == 2){
+    if(mode == 2 && n){
         for(int k = 1;k < n;k++){
             if(fabs(c - 2*cos(k*theta)) < CHARACTER_EQUAL){
                 if(k == 1) fprintf(fp,"& $2\\cos(\\theta)$ ");

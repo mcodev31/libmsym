@@ -98,7 +98,7 @@ msym_error_t generatePointGroupFromName(const char *name, msym_thresholds_t *thr
 
     if(MSYM_SUCCESS != (ret = generateSymmetryOperations(pg->type, pg->n, pg->order, &pg->sops))) goto err;
     
-    if((pg->type == MSYM_POINT_GROUP_TYPE_Cnv && pg->n == 0) || (pg->type == MSYM_POINT_GROUP_TYPE_Dnh && pg->n == 0)){
+    if(isLinearPointGroup(pg)){
         pg->perm = NULL;
     } else {
         if(MSYM_SUCCESS != (ret = findSymmetryOperationPermutations(pg->order,pg->sops, thresholds, &pg->perm))) goto err;
@@ -309,14 +309,14 @@ msym_error_t generatePointGroup(msym_point_group_type_t type, int n, msym_symmet
     }
     
     
-    //Allocate more memory (allocate sops here, change generate)
+    //TODO: this may still be needed
     //if(MSYM_SUCCESS != (ret = generateSymmetryOperationsImpliedRot(sopsl, sops, pg->order, thresholds, &sopsl))) goto err;
     
     if(MSYM_SUCCESS != (ret = transformAxes(type, n, primary, sopsl, sops, thresholds, pg->transform))) goto err;
     
     if(MSYM_SUCCESS != (ret = generateSymmetryOperations(type, n, pg->order, &pg->sops))) goto err;
     
-    if((pg->type == MSYM_POINT_GROUP_TYPE_Cnv && pg->n == 0) || (pg->type == MSYM_POINT_GROUP_TYPE_Dnh && pg->n == 0)){
+    if(isLinearPointGroup(pg)){
         pg->perm = NULL;
     } else {
         if(MSYM_SUCCESS != (ret = findSymmetryOperationPermutations(pg->order,pg->sops, thresholds, &pg->perm))) goto err;
@@ -789,6 +789,61 @@ err:
     return ret;
 }
 
+int isLinearPointGroup(msym_point_group_t *pg){
+    return 0 == pg->n && (MSYM_POINT_GROUP_TYPE_Dnh == pg->type || MSYM_POINT_GROUP_TYPE_Cnv == pg->type);
+}
+
+int isLinearSubgroup(msym_point_group_t *pg){
+    int sub = 0;
+    switch(pg->type){
+        case MSYM_POINT_GROUP_TYPE_Cnv: sub = pg->n == 0 && pg->order > 2; break;
+        case MSYM_POINT_GROUP_TYPE_Dnh: sub = pg->n == 0 && pg->order > 4; break;
+        default: break;
+    }
+    return sub;
+}
+
+msym_error_t reduceLinearPointGroup(msym_point_group_t *pg, int n, msym_thresholds_t *thresholds){
+    msym_error_t ret = MSYM_SUCCESS;
+    int order = 0;
+    msym_permutation_t *perm = NULL;
+    if(!isLinearPointGroup(pg)){
+        msymSetErrorDetails("Trying to reduce non linear point group");
+        ret = MSYM_POINT_GROUP_ERROR;
+        goto err;
+    }
+    if(MSYM_SUCCESS != (ret = getPointGroupOrder(pg->type, n, &order))) goto err;
+    msym_symmetry_operation_t *sops = malloc(sizeof(msym_symmetry_operation_t[order]));
+    
+    if(MSYM_SUCCESS != (ret = generateSymmetryOperations(pg->type, 0, order, &sops))) goto err;
+    
+    double T[3][3];
+    minv(pg->transform, T);
+    
+    for(int i = 0; i < order;i++){
+        mvmul(sops[i].v,T,sops[i].v);
+    }
+    
+    
+    
+    if(MSYM_SUCCESS != (ret = findSymmetryOperationPermutations(order,sops, thresholds, &perm))) goto err;
+    
+    for(int i = 0;i < pg->order && pg->perm != NULL;i++){
+        freePermutationData(&pg->perm[i]);
+    }
+    
+    free(pg->sops);
+    
+    pg->sops = sops;
+    pg->order = order;
+    pg->perm = perm;
+    
+    return ret;
+err:
+    free(sops);
+    return ret;
+
+}
 
 msym_error_t pointGroupFromSubgroup(const msym_subgroup_t *sg, msym_thresholds_t *thresholds, msym_point_group_t **opg){
     msym_error_t ret = MSYM_SUCCESS;
@@ -824,7 +879,7 @@ msym_error_t pointGroupFromSubgroup(const msym_subgroup_t *sg, msym_thresholds_t
     
     if(MSYM_SUCCESS != (ret = generateSymmetryOperations(pg->type, pg->n, pg->order, &pg->sops))) goto err;
     
-    if((pg->type == MSYM_POINT_GROUP_TYPE_Cnv && pg->n == 0) || (pg->type == MSYM_POINT_GROUP_TYPE_Dnh && pg->n == 0)){
+    if(isLinearPointGroup(pg)){
         pg->perm = NULL;
     } else {
         if(MSYM_SUCCESS != (ret = findSymmetryOperationPermutations(pg->order,pg->sops, thresholds, &pg->perm))) goto err;
@@ -1334,7 +1389,7 @@ msym_error_t generateSymmetryOperationsCnv(int n, int l, msym_symmetry_operation
     msym_error_t ret = MSYM_SUCCESS;
     int k = *pk, cla = *pcla;
     
-    if(n == 0){
+    if(n == 0 && l == 2){ // normal c0v
         if(k + 1 > l){
             ret = MSYM_POINT_GROUP_ERROR;
             msymSetErrorDetails("Too many operations when generating C%dv symmetry operations",n);
@@ -1344,6 +1399,37 @@ msym_error_t generateSymmetryOperationsCnv(int n, int l, msym_symmetry_operation
         memcpy(&sops[k], &c0, sizeof(msym_symmetry_operation_t));
         k += 1;
         cla += 1;
+        
+    } else if(n == 0){ // c0v represented by a subclass cnv where n is even
+        int n0 = l/2;
+        double z[3] = {0,0,1};
+        if(n0 & 1){
+            ret = MSYM_POINT_GROUP_ERROR;
+            msymSetErrorDetails("Cannot generate an odd representative (C%dv) of C0v",n0);
+            goto err;
+        }
+        
+        if(MSYM_SUCCESS != (ret = generateSymmetryOperationsCn(n0,l,sops,&k,&cla))) goto err;
+        
+        if(k + n0 > l){
+            ret = MSYM_POINT_GROUP_ERROR;
+            msymSetErrorDetails("Too many operations when generating D0h (D%dh) symmetry operations",n0);
+            goto err;
+        }
+        
+        // Can't use generateReflectionPlanes they'll generate vertical and dihedral
+        msym_symmetry_operation_t sigma = {.type = REFLECTION, .power = 1, .order = 1, .orientation = VERTICAL, .v = {0,1,0}};
+        for(int i = 0;i < n0;i++){
+            int index = k+i;
+            memcpy(&(sops[index]), &sigma, sizeof(msym_symmetry_operation_t));
+            vrotate(i*M_PI/n0, sigma.v, z, sops[index].v);
+            sops[index].cla = cla;
+        }
+        
+        k += n0;
+        cla += 1;
+        
+        printf("\n------ C0v %d operations %d classes------\n",k-*pk, cla-*pcla);
     } else {
         if(k + (n << 1) - 1 > l){
             ret = MSYM_POINT_GROUP_ERROR;
@@ -1388,19 +1474,56 @@ msym_error_t generateSymmetryOperationsDnh(int n, int l, msym_symmetry_operation
     msym_error_t ret = MSYM_SUCCESS;
     int k = *pk, cla = *pcla;
     
-    if(n == 0){
+    if(n == 0 && l == 4){ // standard d0h
         if(k + 3 > l){
             ret = MSYM_POINT_GROUP_ERROR;
             msymSetErrorDetails("Too many operations when generating D%dh symmetry operations",n);
             goto err;
         }
-        if(MSYM_SUCCESS != (ret = generateSymmetryOperationsCnv(n,l,sops,&k,&cla))) goto err;
+        if(MSYM_SUCCESS != (ret = generateSymmetryOperationsCnv(n,2,sops,&k,&cla))) goto err;
         msym_symmetry_operation_t sigma = {.type = REFLECTION, .order = 1, .power = 1, .orientation = HORIZONTAL, .cla = cla, .v = {0,0,1}};
-        msym_symmetry_operation_t inversion = {.type = PROPER_ROTATION, .order = n, .power = 1, .orientation = HORIZONTAL, .cla = cla+1, .v = {0,0,1}};
+        msym_symmetry_operation_t inversion = {.type = INVERSION, .order = 1, .power = 1, .orientation = NONE, .cla = cla+1, .v = {0,0,1}};
         memcpy(&sops[k], &sigma, sizeof(msym_symmetry_operation_t));
         memcpy(&sops[k+1], &inversion, sizeof(msym_symmetry_operation_t));
         k += 2;
         cla += 2;
+    }
+    else if(n == 0){ // d0h represented by a subclass cnv where n is even
+        int n0 = l/4;
+        double z[3] = {0,0,1};
+        if(n0 & 1){
+            ret = MSYM_POINT_GROUP_ERROR;
+            msymSetErrorDetails("Cannot generate an odd representative (D%dh) of D0h",n0);
+            goto err;
+        }
+        
+        if(MSYM_SUCCESS != (ret = generateSymmetryOperationsCnh(n0,l,sops,&k,&cla))) goto err;
+        
+        if(k + (n0 << 1) > l){
+            ret = MSYM_POINT_GROUP_ERROR;
+            msymSetErrorDetails("Too many operations when generating D0h (D%dh) symmetry operations",n0);
+            goto err;
+        }
+        
+        // Can't use generateReflectionPlanes/generateC2Axes they'll generate vertical and dihedral
+        msym_symmetry_operation_t c2 = {.type = PROPER_ROTATION, .power = 1, .order = 2, .orientation = VERTICAL, .v = {1,0,0}};
+        msym_symmetry_operation_t sigma = {.type = REFLECTION, .power = 1, .order = 1, .orientation = VERTICAL, .v = {0,1,0}};
+        for(int i = 0;i < n0;i++){
+            int index = k+i;
+            memcpy(&(sops[index]), &sigma, sizeof(msym_symmetry_operation_t));
+            vrotate(i*M_PI/n0, sigma.v, z, sops[index].v);
+            sops[index].cla = cla;
+            printf("generated sigma at %d\n",index);
+            index += n0;
+            memcpy(&(sops[index]), &c2, sizeof(msym_symmetry_operation_t));
+            vrotate(i*M_PI/n0, c2.v, z, sops[index].v);
+            sops[index].cla = cla+1;
+        }
+        
+        k += n0 << 1;
+        cla += 2;
+
+        printf("\n------ D0h %d operations %d classes------\n",k-*pk, cla-*pcla);
     } else {
         
         if(k + (n << 2) - 1 > l){
@@ -2035,6 +2158,14 @@ int numberOfSubgroups(msym_point_group_t *pg){
     
     int n = pg->n;
     int size = 0, ndiv = n >= 2, sdiv = 0, nodd = 0, sodd = 0, neven = 0, seven = 0;
+    
+    if(isLinearSubgroup(pg)){
+        switch (pg->type) {
+            case MSYM_POINT_GROUP_TYPE_Cnv : n = pg->order / 4; break;
+            case MSYM_POINT_GROUP_TYPE_Dnh : n = pg->order / 2; break;
+            default: break;
+        }
+    }
     
     switch (pg->type) {
         case MSYM_POINT_GROUP_TYPE_Kh  : size = -1; break;

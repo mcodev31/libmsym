@@ -79,6 +79,7 @@ void directProduct(int l, double irrep1[l], double irrep2[l], double pspan[l]){
 msym_error_t generateCharacterTable(msym_point_group_type_t type, int n, int sopsl, msym_symmetry_operation_t sops[sopsl], msym_character_table_t **oct){
     msym_error_t ret = MSYM_SUCCESS;
     int d = sops[sopsl-1].cla + 1; //max cla
+    int linear = n == 0 && (MSYM_POINT_GROUP_TYPE_Dnh == type || MSYM_POINT_GROUP_TYPE_Cnv == type);
     msym_character_table_t *ct = calloc(1, sizeof(msym_character_table_t) + sizeof(int[d]) + sizeof(msym_symmetry_species_t[d]) + sizeof(msym_symmetry_operation_t*[d]) + sizeof(double[d][d]));
     
     
@@ -166,7 +167,7 @@ msym_error_t generateCharacterTable(msym_point_group_type_t type, int n, int sop
     }
     
     int nc = -1;
-    printf("\t\t");
+    printf("\t");
     for(int j = 0;j < sopsl;j++){
         if(nc < sops[j].cla){
             nc = sops[j].cla;
@@ -186,7 +187,7 @@ msym_error_t generateCharacterTable(msym_point_group_type_t type, int n, int sop
         printf("\n");
     }
     
-    if(MSYM_SUCCESS != (ret = verifyCharacterTable(ct))) goto err;
+    if(!linear && MSYM_SUCCESS != (ret = verifyCharacterTable(ct))) goto err;
     
     *oct = ct;
     
@@ -329,11 +330,7 @@ err:
 
 msym_error_t getRepresentationsCnv(int n, int rl, msym_representation_t rep[rl]){
     msym_error_t ret = MSYM_SUCCESS;
-    if(n == 0){
-        ret = MSYM_INVALID_CHARACTER_TABLE;
-        msymSetErrorDetails("Cannot generate character table for point group C0v");
-        goto err;
-    }
+    
     int r = 0;
     rep[r].type = IRREDUCIBLE;
     rep[r].d = 1;
@@ -344,7 +341,7 @@ msym_error_t getRepresentationsCnv(int n, int rl, msym_representation_t rep[rl])
     rep[r].eig.p = rep[r].eig.l = rep[r].eig.h = rep[r].eig.i = 1;
     rep[r].eig.v = -1;
     r++;
-    if(~n & 1){
+    if(n && !(n & 1)){
         rep[r].type = IRREDUCIBLE;
         rep[r].d = 1;
         rep[r].eig.l = rep[r].eig.v = rep[r].eig.i = rep[r].eig.h = 1;
@@ -357,7 +354,7 @@ msym_error_t getRepresentationsCnv(int n, int rl, msym_representation_t rep[rl])
         r++;
     }
     for(int i = 1;r < rl;i++, r++){
-        rep[r].type = IRREDUCIBLE;
+        rep[r].type = (n == 0 && (r == rl - 1)) ? REDUCIBLE : IRREDUCIBLE;
         rep[r].d = 2;
         rep[r].eig.l = i;
         rep[r].eig.p = rep[r].eig.v = rep[r].eig.h = rep[r].eig.i = 1;
@@ -450,12 +447,6 @@ err:
 msym_error_t getRepresentationsDnh(int n, int rl, msym_representation_t rep[rl]){
     msym_error_t ret = MSYM_SUCCESS;
     
-    if(n == 0){
-        ret = MSYM_INVALID_CHARACTER_TABLE;
-        msymSetErrorDetails("Cannot generate character table for point group D0h");
-        goto err;
-    }
-    
     int r = 0;
     rep[r].type = IRREDUCIBLE;
     rep[r].d = 1;
@@ -476,7 +467,7 @@ msym_error_t getRepresentationsDnh(int n, int rl, msym_representation_t rep[rl])
     rep[r].eig.p = rep[r].eig.l = 1;
     rep[r].eig.h = rep[r].eig.i = rep[r].eig.v = -1;
     r++;
-    if(!(n & 1)){
+    if(n && !(n & 1)){
         
         rep[r].type = IRREDUCIBLE;
         rep[r].d = 1;
@@ -505,13 +496,13 @@ msym_error_t getRepresentationsDnh(int n, int rl, msym_representation_t rep[rl])
         r++;
     }
     for(int i = 1;r < rl;i++){
-        rep[r].type = IRREDUCIBLE;
+        rep[r].type = (n == 0 && (r == rl - 2)) ? REDUCIBLE : IRREDUCIBLE;
         rep[r].d = 2;
         rep[r].eig.l = i;
         rep[r].eig.p = rep[r].eig.v = rep[r].eig.h = 1;
         rep[r].eig.i = 1 - ((i & 1) << 1);
         r++;
-        rep[r].type = IRREDUCIBLE;
+        rep[r].type = (n == 0 && (r == rl - 1)) ? REDUCIBLE : IRREDUCIBLE;
         rep[r].d = 2;
         rep[r].eig.l = i;
         rep[r].eig.p = rep[r].eig.v = 1;
@@ -593,7 +584,6 @@ err:
 msym_error_t representationCharacter(int n, msym_symmetry_operation_t *sop, msym_representation_t *rep, double *c){
     msym_error_t ret = MSYM_SUCCESS;
     double x = 0;
-    
     if(sop->orientation == HORIZONTAL){
         switch(rep->d)
         {
@@ -602,8 +592,8 @@ msym_error_t representationCharacter(int n, msym_symmetry_operation_t *sop, msym
                     case IDENTITY           : x = 1; break;
                     case REFLECTION         : x = rep->eig.h; break;
                     case INVERSION          : x = rep->eig.i; break;
-                    case PROPER_ROTATION    : x = ((n/sop->order) & 1) ? rep->eig.p : 1 ; break;
-                    case IMPROPER_ROTATION  : x = rep->eig.h*(((n/sop->order) & 1) ? rep->eig.p : 1); break; //TODO: fix does not consider S2n
+                    case PROPER_ROTATION    : x = !n || ((n/sop->order) & 1) ? rep->eig.p : 1 ; break;
+                    case IMPROPER_ROTATION  : x = rep->eig.h*(!n || ((n/sop->order) & 1) ? rep->eig.p : 1); break; //TODO: fix does not consider S2n
                     default :
                         ret = MSYM_INVALID_CHARACTER_TABLE;
                         msymSetErrorDetails("Invalid symmetry operation when building character table");

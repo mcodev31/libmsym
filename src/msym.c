@@ -34,6 +34,7 @@ msym_error_t msymFindSymmetry(msym_context ctx){
     msym_symmetry_operation_t *sops = NULL;
     msym_equivalence_set_t *ses = NULL;
     int sesl = 0;
+    msym_point_group_t *fpg = NULL;
     
     clock_t start, end;
 
@@ -56,7 +57,8 @@ msym_error_t msymFindSymmetry(msym_context ctx){
         time = (double)(end - start) / CLOCKS_PER_SEC;
         printf("time: %lf seconds to find %d symmetry operations in %d equivalence sets\n",time,sopsl,esl);
         start = clock();
-        if(MSYM_SUCCESS != (ret = findPointGroup(sopsl, sops, t, &pg))) goto err;
+        if(MSYM_SUCCESS != (ret = findPointGroup(sopsl, sops, t, &fpg))) goto err;
+        pg = fpg;
         end = clock();
         time = (double)(end - start) / CLOCKS_PER_SEC;
         printf("time: %lf seconds to find point group %s\n",time,pg->name);
@@ -65,6 +67,12 @@ msym_error_t msymFindSymmetry(msym_context ctx){
             goto err;
         }
         
+        printf("reducing linear\n");
+        if(MSYM_SUCCESS != (ret = ctxReduceLinearPointGroup(ctx))) goto err;
+        
+    }
+    
+    if(NULL != fpg || isLinearSubgroup(pg)){
         // Reuild equivalence sets after determining poing group in case they are very similar
         start = clock();
         //if(MSYM_SUCCESS != (ret = msymFindEquivalenceSets(ctx))) goto err;
@@ -75,7 +83,6 @@ msym_error_t msymFindSymmetry(msym_context ctx){
         end = clock();
         time = (double)(end - start) / CLOCKS_PER_SEC;
         printf("time: %lf seconds to regenerate %d equivalence sets\n",time,esl);
-        
     }
     
     start = clock();
@@ -724,7 +731,9 @@ msym_error_t msymFindEquivalenceSetPermutations(msym_context ctx) {
             if(MSYM_SUCCESS != (ret = findPermutation(&pg->sops[j], es[i].length, esv, t, &perm[i][j]))) goto err;
         }
     }
+        
     if(MSYM_SUCCESS != (ret = ctxSetEquivalenceSetPermutations(ctx, esl, pg->order, perm))) goto err;
+    
     free(esv);
     return ret;
     

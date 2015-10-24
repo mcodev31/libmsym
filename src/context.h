@@ -35,6 +35,7 @@ msym_error_t ctxGetInternalElement(msym_context ctx, msym_element_t *ext, msym_e
 msym_error_t ctxGetInternalSubgroup(msym_context ctx, msym_subgroup_t *ext, msym_subgroup_t **sg);
 msym_error_t ctxSetPointGroup(msym_context ctx, msym_point_group_t *pg);
 msym_error_t ctxGetPointGroup(msym_context ctx, msym_point_group_t **pg);
+msym_error_t ctxReduceLinearPointGroup(msym_context ctx);
 msym_error_t ctxSetSubgroups(msym_context ctx, int sgl, msym_subgroup_t *sg);
 msym_error_t ctxGetSubgroups(msym_context ctx, int *sgl, msym_subgroup_t **sg);
 msym_error_t ctxSetEquivalenceSets(msym_context ctx, int esl, msym_equivalence_set_t *es);

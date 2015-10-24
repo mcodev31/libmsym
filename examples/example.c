@@ -43,8 +43,9 @@ int example(const char* in_file, msym_thresholds_t *thresholds){
     int msgl = 0, msopsl = 0, mlength = 0, msrsl = 0, mbfsl = 0;
     int orbitalsl = 0, bfsl = 0;
     
-    char *orbitals[15] = {"2px", "2py", "2pz", "3d2-", "3d1-", "3d0", "3d1+", "3d2+","4f3-", "4f2-", "4f1-", "4f0", "4f1+", "4f2+", "4f3+"};
+    //char *orbitals[15] = {"2px", "2py", "2pz", "3d2-", "3d1-", "3d0", "3d1+", "3d2+","4f3-", "4f2-", "4f1-", "4f0", "4f1+", "4f2+", "4f3+"};
     
+    char *orbitals[13] = {"7i6-", "7i5-", "7i4-", "7i3-", "7i2-", "7i1-", "7i0", "7i1+", "7i2+", "7i3+", "7i4+", "7i5+", "7i6+"};
     
     /* This function reads xyz files.
      * It initializes an array of msym_element_t to 0,
@@ -131,11 +132,11 @@ int example(const char* in_file, msym_thresholds_t *thresholds){
      * using the same alignment as the original.
      * If specific axes are wanted the alignment axes can be set instead
      * And of course you can keep Th if you want =D */
-    if(0 == strncmp(point_group, "Th", 2) && ssg == 0){
+    if(0 == strncmp(point_group, "XXX", 3) && ssg == 0){
         double transform[3][3];
-        printf("Changing pointgroup from Th -> D2h\n");
+        printf("Changing pointgroup from XXX -> D12h\n");
         if(MSYM_SUCCESS != (ret = msymGetAlignmentTransform(ctx, transform))) goto err;
-        if(MSYM_SUCCESS != (ret = msymSetPointGroupByName(ctx, "D2h"))) goto err;
+        if(MSYM_SUCCESS != (ret = msymSetPointGroupByName(ctx, "D12h"))) goto err;
         if(MSYM_SUCCESS != (ret = msymSetAlignmentTransform(ctx, transform))) goto err;
         if(MSYM_SUCCESS != (ret = msymFindSymmetry(ctx))) goto err;
         if(MSYM_SUCCESS != (ret = msymGetPointGroupName(ctx, sizeof(char[6]), point_group))) goto err;
@@ -195,6 +196,16 @@ int example(const char* in_file, msym_thresholds_t *thresholds){
     }
     
     if(MSYM_SUCCESS != (ret = msymGetSALCs(ctx, bfsl, salcs, species, pf))) goto err;
+    
+    /*printf("species = [");
+    for(int i = 0;i < bfsl;i++){
+        printf("\"%s\"",mct->s[species[i]].name);
+        if(i == bfsl - 1) printf("]\n");
+        else printf(", ");
+    }
+    
+    printf("salcs =");
+    printTransform(bfsl,bfsl,salcs);*/
     
     /* Reorder the SALCs */
     for(int i = 0;i < bfsl;i++){

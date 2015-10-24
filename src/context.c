@@ -206,10 +206,18 @@ msym_error_t msymSetBasisFunctions(msym_context ctx, int length, msym_basis_func
     
     ctx->basisl = length;
     
+    if(NULL != ctx->pg && isLinearPointGroup(ctx->pg)){
+        if(MSYM_SUCCESS != (ret = ctxReduceLinearPointGroup(ctx))) goto err;
+        free(ctx->pg->ct);
+        ctx->pg->ct = NULL;
+        if(MSYM_SUCCESS != (ret = msymFindSymmetry(ctx))) goto err; // This will only do eq set building
+    }
+    
     return ret;
 
 err:
     free(ctx->basis);
+    ctx->basisl = 0;
     ctx->basis = NULL;
     return ret;
 }
@@ -243,9 +251,12 @@ msym_error_t msymGetSubgroups(msym_context ctx, int *sgl, const msym_subgroup_t 
     
     if(ctx == NULL) {ret = MSYM_INVALID_CONTEXT;goto err;}
     if(ctx->pg == NULL) {ret = MSYM_INVALID_POINT_GROUP;goto err;}
-    if(ctx->pg->perm == NULL) {ret = MSYM_INVALID_PERMUTATION;goto err;}
+    if(ctx->pg->perm == NULL && !(isLinearPointGroup(ctx->pg) && !isLinearSubgroup(ctx->pg))) {
+        ret = MSYM_INVALID_PERMUTATION;
+        goto err;
+    }
     
-    if(ctx->sg == NULL){
+    if(ctx->sg == NULL && (!isLinearSubgroup(ctx->pg) || isLinearSubgroup(ctx->pg))){
         int sgmax = numberOfSubgroups(ctx->pg);
         if(MSYM_SUCCESS != (ret = findPermutationSubgroups(ctx->pg->order, ctx->pg->perm, sgmax, ctx->pg->sops, &gsgl, &gsg))) goto err;
         
@@ -573,6 +584,21 @@ msym_error_t ctxSetPointGroup(msym_context ctx, msym_point_group_t *pg){
     msym_error_t ret = MSYM_SUCCESS;
     if(MSYM_SUCCESS != (ret = ctxDestroyPointGroup(ctx))) goto err;
     ctx->pg = pg;
+err:
+    return ret;
+}
+       
+msym_error_t ctxReduceLinearPointGroup(msym_context ctx){
+    msym_error_t ret = MSYM_SUCCESS;
+    if(ctx == NULL) {ret = MSYM_INVALID_CONTEXT; goto err;}
+    if(ctx->pg == NULL) {ret = MSYM_INVALID_POINT_GROUP; goto err;}
+    if(isLinearPointGroup(ctx->pg) && NULL != ctx->basis && 0 != ctx->basisl){
+        int lmax = 0;
+        for(int i = 0;i < ctx->basisl;i++) lmax = lmax > ctx->basis[i].f.sh.l ? lmax : ctx->basis[i].f.sh.l;
+        if(MSYM_SUCCESS != (ret = reduceLinearPointGroup(ctx->pg, 2*lmax, ctx->thresholds))) goto err;
+        ctxDestroySubgroups(ctx);
+    }
+    
 err:
     return ret;
 }

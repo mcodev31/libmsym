@@ -483,7 +483,9 @@ msym_error_t generateSubrepresentationSpaces(msym_point_group_t *pg, int sgl, co
     double (*morth)[pg->order] = calloc(pg->order, sizeof(*morth)); // permutation orthoginalization memory
     double (*mbasis)[projm] = calloc(basisl, sizeof(*mbasis));      // basis function coefficients
     double (*mdec)[projm] = calloc(basisl, sizeof(*mdec));          // directo product decomposition memory
-    double (*sgc)[pg->order] = calloc(5,sizeof(*sgc));
+    double (*sgc)[5][pg->order] = calloc(ct->d,sizeof(*sgc));
+
+    const msym_subgroup_t **rsg = calloc(ct->d, sizeof(*rsg));
     
     double *mdcomp = NULL;
     double *mdproj = NULL;
@@ -515,6 +517,15 @@ msym_error_t generateSubrepresentationSpaces(msym_point_group_t *pg, int sgl, co
     }
     
     if(MSYM_SUCCESS != (ret = generateRepresentations(pg->order+1, pg->order, pg->sops, lmax, lts))) goto err;
+    
+    
+    for(int k = 0; k < ct->d;k++){
+        if(ct->s[k].d > 1){
+            if(MSYM_SUCCESS != (ret = findSplittingFieldSubgroup(pg, k, sgl, sg, thresholds, &rsg[k]))) goto err;
+            if(MSYM_SUCCESS != (ret = getSplittingFieldCharacters(pg, rsg[k], sgc[k]))) goto err;
+        }
+    }
+    
     
     for(int o = 0;o < basisl;o++){
         msym_basis_function_t *bf = &basis[o];
@@ -605,7 +616,6 @@ msym_error_t generateSubrepresentationSpaces(msym_point_group_t *pg, int sgl, co
         memset(st[pg->order], 0, sizeof(double[d][d]));
         
         for(int k = 0, oirl = 0, nirl = 0;k < ct->d;k++, oirl = nirl){
-            printf("bspan[%d][%d] = %lf this is only correct if the representation is irreducible\n",l,k,bspan[l][k]);
             int vspan = ct->s[k].d*((int) round(bspan[l][k]));
             if(vspan == 0) continue;
             
@@ -728,6 +738,7 @@ msym_error_t generateSubrepresentationSpaces(msym_point_group_t *pg, int sgl, co
                     directProduct(ct->d, ctable[k], ctable[lk], rspan);
                     vlscale(pspan[i][k]*bspan[l][lk], ct->d, rspan, rspan);
                     decomposeRepresentation(ct, rspan, mspan);
+                    for(int dk = 0; dk < ct->d; dk++) mspan[dk] /= ct->s[dk].r;
                     if(ct->s[k].d > 1 && ct->s[lk].d > 1){
                         memcpy(mdec, mbasis, sizeof(double[vspan*lvspan][dd]));
                         memset(mbasis, 0, sizeof(double[vspan*lvspan][dd]));
@@ -776,23 +787,15 @@ msym_error_t generateSubrepresentationSpaces(msym_point_group_t *pg, int sgl, co
                             memset(dproj, 0, sizeof(double[dd][dd]));
                             memset(mdec, 0, sizeof(double[vspan*lvspan][dd]));
 
-                            const msym_subgroup_t *rsg = NULL;
-                            if(MSYM_SUCCESS != (ret = findSplittingFieldSubgroup(pg, sk, sgl, sg, thresholds, &rsg))) goto err;
-                            //printf("using subgroup %s\n",rsg->name);
-                            
-                            if(MSYM_SUCCESS != (ret = getSplittingFieldCharacters(pg, rsg, sgc))) goto err;
-                            
-                            //printTransform(5, pg->order, sgc);
-
                             
                             
                             for(int dim = 0, doirl = 0, dnirl = 0;dim < ct->s[sk].d;dim++, doirl = dnirl){
                                 memset(dproj, 0, sizeof(double[dd][dd]));
                                 for(int s = 0;s < pg->order;s++){
-                                    if(sgc[dim][s] == 0) continue;
+                                    if(sgc[sk][dim][s] == 0) continue;
                                     permutationMatrix(&perm[i][s], mperm);
                                     kron(d, mperm, ld, lst[s], dd, dscal);
-                                    mlscale(sgc[dim][s], dd, dscal, dscal);
+                                    mlscale(sgc[sk][dim][s], dd, dscal, dscal);
                                     mladd(dd, dscal, dproj, dproj);
                                 }
 
@@ -808,7 +811,7 @@ msym_error_t generateSubrepresentationSpaces(msym_point_group_t *pg, int sgl, co
                                 dnirl = mgs(dd, dproj, sdec, doirl, thresholds->orthogonalization/basisl);
                                 if(dnirl - doirl != round(mspan[sk])){
                                     ret = MSYM_SUBSPACE_ERROR;
-                                    msymSetErrorDetails("Multi-dimensional subspace decomposition of dimension (%d) inconsistent with representaion (%d) in subgroup irrep %d",dnirl - doirl,round(mspan[sk]),dim);
+                                    msymSetErrorDetails("Multi-dimensional subspace decomposition of dimension (%d) inconsistent with representaion (%d) in subgroup irrep %d",dnirl - doirl,(int) round(mspan[sk]),dim);
                                     goto err;
                                 }
                                 
@@ -918,6 +921,7 @@ msym_error_t generateSubrepresentationSpaces(msym_point_group_t *pg, int sgl, co
     free(morth);
     free(mbasis);
     free(mdec);
+    free(rsg);
     free(sgc);
     free(mdcomp);
     free(mdproj);
@@ -948,6 +952,7 @@ err:
     free(morth);
     free(mbasis);
     free(mdec);
+    free(rsg);
     free(sgc);
     free(mdcomp);
     free(mdproj);
