@@ -15,7 +15,8 @@ int main(int argc, const char * argv[]) {
     msym_error_t ret = MSYM_SUCCESS;
     const char *error = NULL;
     msym_context ctx = msymCreateContext();
-    if(argc == 3){
+    if(argc >= 3){
+        int l = -1;
         FILE *fp = fopen(argv[2],"w");
         if(!fp) {
             fprintf(stderr,"unable to open file %s for writing\n",argv[2]);
@@ -26,8 +27,12 @@ int main(int argc, const char * argv[]) {
         int pg_n = 0;
         if(MSYM_SUCCESS != (ret = msymSetPointGroupByName(ctx, argv[1]))) goto err;
         if(MSYM_SUCCESS != (ret = msymGetPointGroupType(ctx, &pg_type, &pg_n))) goto err;
-        if(pg_n == 0 && (pg_type == MSYM_POINT_GROUP_TYPE_Cnv || pg_type == MSYM_POINT_GROUP_TYPE_Dnh)){
-            int l = 0;
+        if(argc >= 4){
+            l = argv[3][0] - '0';
+            if(l <= 0 || l > 9) l = -1;            
+        }
+            
+        if(pg_n == 0 && (pg_type == MSYM_POINT_GROUP_TYPE_Cnv || pg_type == MSYM_POINT_GROUP_TYPE_Dnh) && l >= 0){
             msym_element_t element = {.v = {0,0,0}, .m = 0.0, .n = 1, .name = {'\0'}};
             if(MSYM_SUCCESS != (ret = msymSetElements(ctx, 1, &element))) goto err;
             msym_basis_function_t *basis = calloc(2*l+1,sizeof(*basis));
@@ -39,7 +44,11 @@ int main(int argc, const char * argv[]) {
                 basis[i].f.sh.l = l;
                 basis[i].f.sh.m = m;
             }
-            if(MSYM_SUCCESS != (ret = msymSetBasisFunctions(ctx, 2*l+1, basis))) goto err;
+            if(MSYM_SUCCESS != (ret = msymSetBasisFunctions(ctx, 2*l+1, basis))) {
+                free(basis);
+                goto err;
+            }
+            free(basis);
         }
         if(MSYM_SUCCESS != (ret = msymGetCharacterTable(ctx, &ct))) goto err;
         characterTableToTex(fp,pg_type,pg_n,argv[1],ct);
