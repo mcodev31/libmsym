@@ -205,8 +205,98 @@ err:
 
 }
 
-/* move this */
 msym_error_t findSplittingFieldSubgroup(msym_point_group_t *pg, int irrep, int sgl, const msym_subgroup_t sg[sgl], msym_thresholds_t *thresholds, const msym_subgroup_t **osg){
+    msym_error_t ret = MSYM_SUCCESS;
+    *osg = NULL;
+    msym_character_table_t *ct = pg->ct;
+    
+    if(ct->s[irrep].d == 2){
+        switch(pg->type){
+            case MSYM_POINT_GROUP_TYPE_Cnv :
+            case MSYM_POINT_GROUP_TYPE_Td  : {
+                for(int i = 0;i < sgl;i++){
+                    if(sg[i].type == MSYM_POINT_GROUP_TYPE_Cs){
+                        *osg = &sg[i];
+                        break;
+                    }
+                }
+                break;
+            }
+            case MSYM_POINT_GROUP_TYPE_Dn  :
+            case MSYM_POINT_GROUP_TYPE_Dnh :
+            case MSYM_POINT_GROUP_TYPE_O   :
+            case MSYM_POINT_GROUP_TYPE_Oh  : {
+                for(int i = 0;i < sgl;i++){
+                    if(sg[i].type == MSYM_POINT_GROUP_TYPE_Cn && sg[i].n == 2){
+                        int h = 0;
+                        for(int j = 0;j < sg[i].order;j++){
+                            msym_symmetry_operation_t *sop = sg[i].sops[j];
+                            if(sop->type == PROPER_ROTATION && sop->order == 2 && sop->orientation == HORIZONTAL){
+                                h = 1;
+                                break;
+                            }
+                        }
+                        if(!h){
+                            *osg = &sg[i];
+                            break;
+                        }
+                    }
+                }
+                break;
+            }
+            case MSYM_POINT_GROUP_TYPE_Cn  :
+            case MSYM_POINT_GROUP_TYPE_Cnh :
+            case MSYM_POINT_GROUP_TYPE_T   :
+            case MSYM_POINT_GROUP_TYPE_Th  : {
+                ret = MSYM_SUBSPACE_ERROR;
+                msymSetErrorDetails("Cannot construct splitting field, point group %s has complex characters in symmetry species %s",pg->name, ct->s[irrep].name);
+                goto err;
+            }
+            default: break;
+        }
+    } else if(ct->s[irrep].d == 3){
+        switch(pg->type){
+            case MSYM_POINT_GROUP_TYPE_T  :
+            case MSYM_POINT_GROUP_TYPE_Td :
+            case MSYM_POINT_GROUP_TYPE_Th :
+            case MSYM_POINT_GROUP_TYPE_O  :
+            case MSYM_POINT_GROUP_TYPE_Oh :
+            case MSYM_POINT_GROUP_TYPE_I  :
+            case MSYM_POINT_GROUP_TYPE_Ih : {
+                for(int i = 0;i < sgl;i++){
+                    if(sg[i].type == MSYM_POINT_GROUP_TYPE_Dn && sg[i].n == 2){
+                        int h = 1;
+                        for(int j = 0; j < sg[i].order; j++){
+                            msym_symmetry_operation_t *sop = sg[i].sops[j];
+                            if(!(sop->orientation == HORIZONTAL || sop->orientation == NONE)){
+                                h = 0;
+                                break;
+                            }
+                        }
+                        if(h){
+                            *osg = &sg[i];
+                            break;
+                        }
+                    }
+                }
+            }
+            default: break;
+        }
+    }
+    
+    
+    if(*osg == NULL){
+        ret = MSYM_SUBSPACE_ERROR;
+        msymSetErrorDetails("Could not find splitting filed subgroup in dimension %d for point group %s symmetry species %s",ct->s[irrep].d, pg->name, ct->s[irrep].name);
+    }
+err:
+    return ret;
+
+}
+
+
+/* move this */
+msym_error_t findSplittingFieldSubgroupOld(msym_point_group_t *pg, int irrep, int sgl, const msym_subgroup_t sg[sgl], msym_thresholds_t *thresholds, const msym_subgroup_t **osg){
     msym_error_t ret = MSYM_SUCCESS;
     *osg = NULL;
     msym_character_table_t *ct = pg->ct;
@@ -305,12 +395,96 @@ msym_error_t findSplittingFieldSubgroup(msym_point_group_t *pg, int irrep, int s
             }
             break;
         }
-        
-        case MSYM_POINT_GROUP_TYPE_Oh :
         case MSYM_POINT_GROUP_TYPE_O  :
-            ret = MSYM_SUBSPACE_ERROR;
-            msymSetErrorDetails("Not implemented for octahedral symmetry of symmetry species %s, requires Dn orientation determination",pg->name, ct->s[irrep].name);
-            goto err;
+            if(ct->s[irrep].d == 2){
+                for(int i = 0;i < sgl;i++){
+                    if(sg[i].type == MSYM_POINT_GROUP_TYPE_Cn && sg[i].n == 2){
+                        for(int j = 0; j < sg[i].order; j++){
+                            msym_symmetry_operation_t *sop = sg[i].sops[j];
+                            if(sop->orientation == HORIZONTAL && sop->type == PROPER_ROTATION && sop->order == 2){
+                                *osg = &sg[i];
+                                break;
+                            }
+                        }
+                    }
+                    if(*osg) break;
+                }
+            } else if(ct->s[irrep].d == 3){
+                for(int i = 0;i < sgl;i++){
+                    if(sg[i].type == MSYM_POINT_GROUP_TYPE_Dn && sg[i].n == 2){
+                        int h = 1;
+                        for(int j = 0; j < sg[i].order; j++){
+                            msym_symmetry_operation_t *sop = sg[i].sops[j];
+                            if(!(sop->orientation == HORIZONTAL || sop->orientation == NONE)){
+                                h = 0;
+                                break;
+                            }
+                        }
+                        if(h){
+                            *osg = &sg[i];
+                            break;
+                        }
+                    }
+                }
+            } else {
+                ret = MSYM_SUBSPACE_ERROR;
+                msymSetErrorDetails("Cannot lower symmetry of point group %s symmetry species %s",pg->name, ct->s[irrep].name);
+                goto err;
+            }
+            break;
+        case MSYM_POINT_GROUP_TYPE_Oh :
+            if(ct->s[irrep].d == 2){
+                for(int i = 0;i < sgl;i++){
+                    if(sg[i].type == MSYM_POINT_GROUP_TYPE_Cs){
+                        for(int j = 0; j < sg[i].order; j++){
+                            msym_symmetry_operation_t *sop = sg[i].sops[j];
+                            if(sop->orientation == HORIZONTAL && sop->type == REFLECTION){
+                                *osg = &sg[i];
+                                break;
+                            }
+                        }
+                    }
+                    if(*osg) break;
+                }
+            } else if(ct->s[irrep].d == 3){
+                for(int i = 0;i < sgl;i++){
+                    if(sg[i].type == MSYM_POINT_GROUP_TYPE_Dn && sg[i].n == 2){
+                        int h = 1;
+                        for(int j = 0; j < sg[i].order; j++){
+                            msym_symmetry_operation_t *sop = sg[i].sops[j];
+                            if(!(sop->orientation == HORIZONTAL || sop->orientation == NONE)){
+                                h = 0;
+                                break;
+                            }
+                        }
+                        if(h){
+                            *osg = &sg[i];
+                            break;
+                        }
+                    }
+                } // Different Tg->Bg & Tu->Bu gets a little messy, just use D2, same splitting field for all
+                /*for(int i = 0;i < sgl;i++){
+                    if(sg[i].type == MSYM_POINT_GROUP_TYPE_Dnh && sg[i].n == 2){
+                        int h = 1;
+                        for(int j = 0; j < sg[i].order; j++){
+                            msym_symmetry_operation_t *sop = sg[i].sops[j];
+                            if(!(sop->orientation == HORIZONTAL || sop->orientation == NONE)){
+                                h = 0;
+                                break;
+                            }
+                        }
+                        if(h){
+                            *osg = &sg[i];
+                            break;
+                        }
+                    }
+                }*/
+            } else {
+                ret = MSYM_SUBSPACE_ERROR;
+                msymSetErrorDetails("Cannot lower symmetry of point group %s symmetry species %s",pg->name, ct->s[irrep].name);
+                goto err;
+            }
+            break;
         case MSYM_POINT_GROUP_TYPE_Th :
         case MSYM_POINT_GROUP_TYPE_T : {
             if(ct->s[irrep].d == 2){
@@ -362,7 +536,7 @@ msym_error_t getSplittingFieldCharacters(msym_point_group_t *pg, const msym_subg
     int e = 0;
     if(sg->type == MSYM_POINT_GROUP_TYPE_Dn && sg->n == 2){
         int index = 0;
-        double d2c[3][3] = {
+        double d2c[3][3] = { // Only works for 3d, need A for 4d
             [0] = { 1, -1, -1},
             [1] = {-1, -1,  1},
             [2] = {-1,  1, -1}
@@ -738,7 +912,9 @@ msym_error_t generateSubrepresentationSpaces(msym_point_group_t *pg, int sgl, co
                     directProduct(ct->d, ctable[k], ctable[lk], rspan);
                     vlscale(pspan[i][k]*bspan[l][lk], ct->d, rspan, rspan);
                     decomposeRepresentation(ct, rspan, mspan);
+                    
                     for(int dk = 0; dk < ct->d; dk++) mspan[dk] /= ct->s[dk].r;
+                    
                     if(ct->s[k].d > 1 && ct->s[lk].d > 1){
                         memcpy(mdec, mbasis, sizeof(double[vspan*lvspan][dd]));
                         memset(mbasis, 0, sizeof(double[vspan*lvspan][dd]));
@@ -811,7 +987,7 @@ msym_error_t generateSubrepresentationSpaces(msym_point_group_t *pg, int sgl, co
                                 dnirl = mgs(dd, dproj, sdec, doirl, thresholds->orthogonalization/basisl);
                                 if(dnirl - doirl != round(mspan[sk])){
                                     ret = MSYM_SUBSPACE_ERROR;
-                                    msymSetErrorDetails("Multi-dimensional subspace decomposition of dimension (%d) inconsistent with representaion (%d) in subgroup irrep %d",dnirl - doirl,(int) round(mspan[sk]),dim);
+                                    msymSetErrorDetails("Multi-dimensional subspace decomposition of %s dimension (%d) inconsistent with representaion (%d) in subgroup irrep %d",ct->s[sk].name, dnirl - doirl,(int) round(mspan[sk]),dim);
                                     goto err;
                                 }
                                 
