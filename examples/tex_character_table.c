@@ -5,7 +5,7 @@
 
 #include "msym.h"
 
-void characterTableToTex(FILE *fp, msym_point_group_type_t type, int n, char *name, const msym_character_table_t *ct);
+void characterTableToTex(FILE *fp, msym_point_group_type_t type, int n, const char *name, const msym_character_table_t *ct);
 void pointGroupToTex(FILE *fp, msym_point_group_type_t type, int n, int l, char buf[l]);
 void symmetryOperationToTex(FILE *fp, msym_symmetry_operation_t *sop, int l, char buf[l]);
 void symmetrySpeciesToTex(FILE *fp, msym_symmetry_species_t *s);
@@ -26,6 +26,21 @@ int main(int argc, const char * argv[]) {
         int pg_n = 0;
         if(MSYM_SUCCESS != (ret = msymSetPointGroupByName(ctx, argv[1]))) goto err;
         if(MSYM_SUCCESS != (ret = msymGetPointGroupType(ctx, &pg_type, &pg_n))) goto err;
+        if(pg_n == 0 && (pg_type == MSYM_POINT_GROUP_TYPE_Cnv || pg_type == MSYM_POINT_GROUP_TYPE_Dnh)){
+            int l = 0;
+            msym_element_t element = {.v = {0,0,0}, .m = 0.0, .n = 1, .name = {'\0'}};
+            if(MSYM_SUCCESS != (ret = msymSetElements(ctx, 1, &element))) goto err;
+            msym_basis_function_t *basis = calloc(2*l+1,sizeof(*basis));
+            for(int m = -l; m <= l;m++){
+                int i = m+l;
+                basis[i].type = MSYM_BASIS_TYPE_REAL_SPHERICAL_HARMONIC;
+                basis[i].element = &element;
+                basis[i].f.sh.n = l+1;
+                basis[i].f.sh.l = l;
+                basis[i].f.sh.m = m;
+            }
+            if(MSYM_SUCCESS != (ret = msymSetBasisFunctions(ctx, 2*l+1, basis))) goto err;
+        }
         if(MSYM_SUCCESS != (ret = msymGetCharacterTable(ctx, &ct))) goto err;
         characterTableToTex(fp,pg_type,pg_n,argv[1],ct);
     } else {
@@ -42,7 +57,7 @@ err:
     return ret;
 }
 
-void characterTableToTex(FILE *fp, msym_point_group_type_t type, int n, char *name, const msym_character_table_t *ct){
+void characterTableToTex(FILE *fp, msym_point_group_type_t type, int n, const char *name, const msym_character_table_t *ct){
     char buf[256];
     pointGroupToTex(fp,type,n,sizeof(buf),buf);
     fprintf(fp,"\\documentclass{article}\n\
@@ -152,9 +167,15 @@ void pointGroupToTex(FILE *fp, msym_point_group_type_t type, int n, int l, char 
         case MSYM_POINT_GROUP_TYPE_Cs : snprintf(buf,l,"C_{s}"); break;
         case MSYM_POINT_GROUP_TYPE_Cn : snprintf(buf,l,"C_{%d}",n); break;
         case MSYM_POINT_GROUP_TYPE_Cnh : snprintf(buf,l,"C_{%dh}",n); break;
-        case MSYM_POINT_GROUP_TYPE_Cnv : snprintf(buf,l,"C_{%dv}",n); break;
+        case MSYM_POINT_GROUP_TYPE_Cnv :
+            if(n == 0) snprintf(buf,l,"C_{\\infty v}");
+            else snprintf(buf,l,"C_{%dv}",n);
+            break;
         case MSYM_POINT_GROUP_TYPE_Dn : snprintf(buf,l,"D_{%d}",n); break;
-        case MSYM_POINT_GROUP_TYPE_Dnh : snprintf(buf,l,"D_{%dh}",n); break;
+        case MSYM_POINT_GROUP_TYPE_Dnh :
+            if(n == 0) snprintf(buf,l,"D_{\\infty h}");
+            else snprintf(buf,l,"D_{%dh}",n);
+            break;
         case MSYM_POINT_GROUP_TYPE_Dnd : snprintf(buf,l,"D_{%dd}",n); break;
         case MSYM_POINT_GROUP_TYPE_Sn : snprintf(buf,l,"S_{%d}",n); break;
         case MSYM_POINT_GROUP_TYPE_T : snprintf(buf,l,"T"); break;

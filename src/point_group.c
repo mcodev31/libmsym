@@ -807,13 +807,17 @@ msym_error_t reduceLinearPointGroup(msym_point_group_t *pg, int n, msym_threshol
     msym_error_t ret = MSYM_SUCCESS;
     int order = 0;
     msym_permutation_t *perm = NULL;
+    msym_symmetry_operation_t *sops = NULL;
     if(!isLinearPointGroup(pg)){
         msymSetErrorDetails("Trying to reduce non linear point group");
         ret = MSYM_POINT_GROUP_ERROR;
         goto err;
     }
+    
+    if(n == 0) n = 2;
+    
     if(MSYM_SUCCESS != (ret = getPointGroupOrder(pg->type, n, &order))) goto err;
-    msym_symmetry_operation_t *sops = malloc(sizeof(msym_symmetry_operation_t[order]));
+    sops = malloc(sizeof(msym_symmetry_operation_t[order]));
     
     if(MSYM_SUCCESS != (ret = generateSymmetryOperations(pg->type, 0, order, &sops))) goto err;
     
