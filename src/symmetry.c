@@ -165,7 +165,12 @@ msym_error_t findSymmetryLinear(msym_equivalence_set_t *es, double cm[3], double
         sops[0].order = 0;
         sops[0].power = 1;
         sops[1].type = REFLECTION;
+        sops[1].order = 1;
+        sops[1].power = 1;
         sops[2].type = INVERSION;
+        sops[2].order = 1;
+        sops[2].power = 1;
+        sops[2].v[0] = sops[2].v[1] = sops[2].v[2] = 0;
         
     } else {
         sopsl = 3;
@@ -252,7 +257,10 @@ msym_error_t findSymmetryPlanarRegular(msym_equivalence_set_t *es, double cm[3],
     }
     
     if(inversion){
+        sops[n].order = 1;
+        sops[n].power = 1;
         sops[n].type = INVERSION;
+        sops[n].v[0] = sops[n].v[1] = sops[n].v[2] = 0;
         n++;
     }
     
@@ -347,6 +355,9 @@ msym_error_t findSymmetryPlanarIrregular(msym_equivalence_set_t *es, double cm[3
         sops[5].power = 1;
         
         sops[6].type = INVERSION;
+        sops[6].order = 1;
+        sops[6].power = 1;
+        sops[6].v[0] = sops[6].v[1] = sops[6].v[2] = 0;
         
     }
     
@@ -494,6 +505,9 @@ msym_error_t findSymmetrySymmetricPolyhedron(msym_equivalence_set_t *es, double 
     
     if(inversion){
         sops[n].type = INVERSION;
+        sops[n].order = 1;
+        sops[n].power = 1;
+        sops[n].v[0] = sops[n].v[1] = sops[n].v[2] = 0;
         n++;
     }
     
@@ -594,9 +608,18 @@ msym_error_t findSymmetryAsymmetricPolyhedron(msym_equivalence_set_t *es, double
         vcopy(sops[1].v,sops[4].v);
         vcopy(sops[2].v,sops[5].v);
         sops[3].type = REFLECTION;
+        sops[3].order = 1;
+        sops[3].power = 1;
         sops[4].type = REFLECTION;
+        sops[4].order = 1;
+        sops[4].power = 1;
         sops[5].type = REFLECTION;
+        sops[5].order = 1;
+        sops[5].power = 1;
         sops[6].type = INVERSION;
+        sops[6].order = 1;
+        sops[6].power = 1;
+        sops[6].v[0] = sops[6].v[1] = sops[6].v[2] = 0;
         
     }
     
@@ -667,7 +690,7 @@ msym_error_t findSymmetryCubic(msym_equivalence_set_t *es, double cm[3], double 
     msym_permutation_t perm;
     msym_symmetry_operation_t sopc = {.type = PROPER_ROTATION, .order = 2, .power = 1};
     msym_symmetry_operation_t sopsigma = {.type = REFLECTION, .order = 1, .power = 1};
-    msym_symmetry_operation_t sopinversion = {.type = INVERSION, .order = 1, .power = 1};
+    msym_symmetry_operation_t sopinversion = {.type = INVERSION, .order = 1, .power = 1, .v = {0,0,0}};
     
     //15 C2 (I), 10 C3 (I), 3 C4 (O), 6 C5 (I)
     ac[0] = malloc((15+10+3+6)*sizeof(msym_symmetry_operation_t*));
@@ -1056,9 +1079,18 @@ msym_error_t reduceSymmetry(int sopsl, msym_symmetry_operation_t sops[sopsl], ms
             rsopsl = 7;
             
             rsops[0].type = INVERSION;
+            rsops[0].v[0] = rsops[0].v[1] = rsops[0].v[2] = 0;
+            rsops[0].order = 1;
+            rsops[0].power = 1;
             rsops[1].type = REFLECTION;
+            rsops[1].order = 1;
+            rsops[1].power = 1;
             rsops[2].type = REFLECTION;
+            rsops[2].order = 1;
+            rsops[2].power = 1;
             rsops[3].type = REFLECTION;
+            rsops[3].order = 1;
+            rsops[3].power = 1;
             rsops[4].type = PROPER_ROTATION;
             rsops[4].order = 2;
             rsops[4].power = 1;
@@ -1079,7 +1111,12 @@ msym_error_t reduceSymmetry(int sopsl, msym_symmetry_operation_t sops[sopsl], ms
             rsops = realloc(rsops, sizeof(msym_symmetry_operation_t[3]));
             rsopsl = 3;
             rsops[0].type = INVERSION;
+            rsops[0].v[0] = rsops[0].v[1] = rsops[0].v[2] = 0;
+            rsops[0].order = 1;
+            rsops[0].power = 1;
             rsops[1].type = REFLECTION;
+            rsops[1].order = 1;
+            rsops[1].power = 1;
             rsops[2].type = PROPER_ROTATION;
             rsops[2].order = 2;
             rsops[2].power = 1;
