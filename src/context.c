@@ -256,7 +256,7 @@ msym_error_t msymGetSubgroups(msym_context ctx, int *sgl, const msym_subgroup_t 
         goto err;
     }
     
-    if(ctx->sg == NULL && (!isLinearSubgroup(ctx->pg) || isLinearSubgroup(ctx->pg))){
+    if(ctx->sg == NULL && (!isLinearPointGroup(ctx->pg) || isLinearSubgroup(ctx->pg))){
         int sgmax = numberOfSubgroups(ctx->pg);
         if(MSYM_SUCCESS != (ret = findPermutationSubgroups(ctx->pg->order, ctx->pg->perm, sgmax, ctx->pg->sops, &gsgl, &gsg))) goto err;
         
