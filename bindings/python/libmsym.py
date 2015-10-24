@@ -436,6 +436,8 @@ class Context(object):
             
         self._assert_success(_func(self._ctx, size, (BasisFunction*size)(*basis_functions)))
         self._basis_functions = basis_functions
+        self._update_symmetry_operations() #in case it's linear
+        self._update_character_table()
         
     def _update_elements(self, _func=libmsym.msymGetElements):
         if not self._ctx:
