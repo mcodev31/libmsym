@@ -14,7 +14,6 @@
 #include <float.h>
 
 #include "symmetrize.h"
-#include "orbital.h"
 #include "linalg.h"
 
 #define SQR(x) ((x)*(x))

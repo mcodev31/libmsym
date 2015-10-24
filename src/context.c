@@ -164,7 +164,7 @@ err:
 msym_error_t msymGetBasisFunctions(msym_context ctx, int *length, msym_basis_function_t **basis){
     msym_error_t ret = MSYM_SUCCESS;
     if(ctx == NULL) {ret = MSYM_INVALID_CONTEXT;goto err;}
-    if(ctx->basis == NULL) {ret = MSYM_INVALID_ORBITALS;goto err;}
+    if(ctx->basis == NULL) {ret = MSYM_INVALID_BASIS_FUNCTIONS;goto err;}
     
     *length = ctx->basisl;
     *basis = ctx->basis;
@@ -185,13 +185,13 @@ msym_error_t msymSetBasisFunctions(msym_context ctx, int length, msym_basis_func
             bf->element = bf->element - ctx->ext.set_elements_ptr + ctx->ext.elements;
         }
         else if(!(bf->element >= ctx->ext.elements && ctx->basis[i].element < ctx->ext.elements + ctx->elementsl)){
-            ret = MSYM_INVALID_ORBITALS;
+            ret = MSYM_INVALID_BASIS_FUNCTIONS;
             msymSetErrorDetails("Basis function element not set correctly should be within [%p,%p) or [%p,%p) but is at %p",ctx->ext.set_elements_ptr,ctx->ext.set_elements_ptr + ctx->elementsl,ctx->ext.elements,ctx->ext.elements + ctx->elementsl, bf->element);
             goto err;
         }
         
         if(bf->type != MSYM_BASIS_TYPE_REAL_SPHERICAL_HARMONIC){
-            ret = MSYM_INVALID_ORBITALS;
+            ret = MSYM_INVALID_BASIS_FUNCTIONS;
             goto err;
         }
         
@@ -288,7 +288,7 @@ msym_error_t msymGetSubrepresentationSpaces(msym_context ctx, int *l, const msym
     if(NULL == ctx) {ret = MSYM_INVALID_CONTEXT;goto err;}
     if(NULL == ctx->srs){
         if(MSYM_SUCCESS != (ret = msymGenerateSubrepresentationSpaces(ctx))) goto err;
-        if(NULL == ctx->srs){ret = MSYM_INVALID_ORBITALS;goto err;}
+        if(NULL == ctx->srs){ret = MSYM_INVALID_BASIS_FUNCTIONS;goto err;}
     }
     
     *srs = ctx->srs;
@@ -573,7 +573,7 @@ err:
 msym_error_t ctxGetBasisFunctions(msym_context ctx, int *l, msym_basis_function_t **basis){
     msym_error_t ret = MSYM_SUCCESS;
     if(ctx == NULL) {ret = MSYM_INVALID_CONTEXT; goto err;}
-    if(ctx->basis == NULL) {ret = MSYM_INVALID_ORBITALS; goto err;}
+    if(ctx->basis == NULL) {ret = MSYM_INVALID_BASIS_FUNCTIONS; goto err;}
     *basis = (msym_basis_function_t *) ctx->basis;
     *l = ctx->basisl;
 err:

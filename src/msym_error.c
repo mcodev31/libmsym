@@ -29,7 +29,7 @@ const struct _errordesc {
     { MSYM_INVALID_CONTEXT, "Invalid context" },
     { MSYM_INVALID_THRESHOLD, "Invalid threshold" },
     { MSYM_INVALID_ELEMENTS, "Invalid elements" },
-    { MSYM_INVALID_ORBITALS, "Invalid orbitals" },
+    { MSYM_INVALID_BASIS_FUNCTIONS, "Invalid basis functions" },
     { MSYM_INVALID_POINT_GROUP, "Invalid point group" },
     { MSYM_INVALID_PERMUTATION, "Invalid permutation" },
     { MSYM_INVALID_EQUIVALENCE_SET, "Invalid equivalence set" },

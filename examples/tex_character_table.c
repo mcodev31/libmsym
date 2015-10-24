@@ -1,3 +1,14 @@
+//
+//  tex_character_table.c
+//  libmsym
+//
+//  Created by Marcus Johansson on 12/09/15.
+//  Copyright (c) 2015 Marcus Johansson.
+//
+//  Distributed under the MIT License ( See LICENSE file or copy at http://opensource.org/licenses/MIT )
+//
+
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <float.h>

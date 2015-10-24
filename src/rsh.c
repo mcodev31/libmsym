@@ -41,7 +41,7 @@ msym_error_t generateRSHRepresentations(int sopsl, msym_symmetry_operation_t sop
     msym_error_t ret = MSYM_SUCCESS;
     for(int l = 0;l <= lmax;l++){
         if(lrs[l].d != 2*l+1){
-            ret = MSYM_INVALID_ORBITALS;
+            ret = MSYM_INVALID_BASIS_FUNCTIONS;
             msymSetErrorDetails("Invalid dimension of real spherical harmonic (expected %d, got %d)",2*l+1, lrs[l].d);
             goto err;
         }

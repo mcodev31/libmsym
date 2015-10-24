@@ -18,8 +18,6 @@
 #include "equivalence_set.h"
 #include "point_group.h"
 #include "symmetrize.h"
-#include "orbital.h"
-#include "vibration.h"
 #include "linalg.h"
 #include "subspace.h"
 
@@ -578,7 +576,7 @@ msym_error_t msymGetSALCs(msym_context ctx, int l, double c[l][l], int species[l
     }
     
     if(wf != basisl){
-        ret = MSYM_INVALID_ORBITALS;
+        ret = MSYM_INVALID_BASIS_FUNCTIONS;
         msymSetErrorDetails("Number of salc wavefunctions (%d) do not match orbital basis (%d)",wf,basisl);
         goto err;
     }
@@ -606,7 +604,7 @@ msym_error_t msymSymmetrySpeciesComponents(msym_context ctx, int wfl, double *wf
     if(MSYM_SUCCESS != (ret = ctxGetBasisFunctions(ctx, &basisl, &basis))) goto err;
     
     if(basisl != wfl) {
-        ret = MSYM_INVALID_ORBITALS;
+        ret = MSYM_INVALID_BASIS_FUNCTIONS;
         msymSetErrorDetails("Number of coefficients (%d) does not match basis set (%d)",wfl,basisl);
         goto err;
     }
@@ -651,7 +649,7 @@ msym_error_t msymSymmetrizeWavefunctions(msym_context ctx, int l, double c[l][l]
     if(MSYM_SUCCESS != (ret = ctxGetBasisFunctions(ctx, &basisl, &basis))) goto err;
     
     if(basisl != l) {
-        ret = MSYM_INVALID_ORBITALS;
+        ret = MSYM_INVALID_BASIS_FUNCTIONS;
         msymSetErrorDetails("Number of orbital coefficients (%d) do not match orbital basis (%d)",l,basisl);
         goto err;
     }

@@ -14,7 +14,7 @@
 #include <stdio.h>
 #include "msym.h"
 #include "point_group.h"
-#include "orbital.h"
+#include "basis_function.h"
 
 #define DEFAULT_ZERO_THRESHOLD 1.0e-3
 #define DEFAULT_GEOMETRY_THRESHOLD 1.0e-3
