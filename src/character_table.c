@@ -79,7 +79,8 @@ void directProduct(int l, double irrep1[l], double irrep2[l], double pspan[l]){
 msym_error_t generateCharacterTable(msym_point_group_type_t type, int n, int sopsl, msym_symmetry_operation_t sops[sopsl], msym_character_table_t **oct){
     msym_error_t ret = MSYM_SUCCESS;
     int d = sops[sopsl-1].cla + 1; //max cla
-    int linear = n == 0 && (MSYM_POINT_GROUP_TYPE_Dnh == type || MSYM_POINT_GROUP_TYPE_Cnv == type);
+    int linear = n == 0 && ((MSYM_POINT_GROUP_TYPE_Dnh == type && sopsl == 4) || (MSYM_POINT_GROUP_TYPE_Cnv == type && sopsl == 2));
+    
     msym_character_table_t *ct = calloc(1, sizeof(msym_character_table_t) + sizeof(int[d]) + sizeof(msym_symmetry_species_t[d]) + sizeof(msym_symmetry_operation_t*[d]) + sizeof(double[d][d]));
     
     
