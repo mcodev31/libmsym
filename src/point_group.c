@@ -817,7 +817,6 @@ msym_error_t reduceLinearPointGroup(msym_point_group_t *pg, int n, msym_threshol
     if(n == 0) n = 2;
     
     if(MSYM_SUCCESS != (ret = getPointGroupOrder(pg->type, n, &order))) goto err;
-    sops = malloc(sizeof(msym_symmetry_operation_t[order]));
     
     if(MSYM_SUCCESS != (ret = generateSymmetryOperations(pg->type, 0, order, &sops))) goto err;
     
