@@ -390,9 +390,6 @@ msym_error_t generateSubrepresentationSpaces(msym_point_group_t *pg, int sgl, co
         vlscale(1.0/pg->order, ct->d, bspan[l], bspan[l]);
         
         double (*st)[d][d] = lts[l].t;
-        
-        //if(MSYM_SUCCESS != (ret = generateBasisFunctionTransforms(pg->order, pg->sops, l, lts[l].t))) goto err; //TODO: generalize basis function concept
-        
         memset(st[pg->order], 0, sizeof(double[d][d]));
         
         for(int k = 0, oirl = 0, nirl = 0;k < ct->d;k++, oirl = nirl){

@@ -32,7 +32,7 @@ msym_error_t findPermutation(msym_symmetry_operation_t *sop, int l, double (*v[l
     symmetryOperationMatrix(sop, m);
     
     perm->p = malloc(sizeof(int[l]));
-    memset(perm->p, -1, sizeof(int[l]));
+    memset(perm->p, -1, sizeof(int[l])); //TODO: 2s complement
     perm->p_length = l;
     
     for(int i = 0; i < l;i++){
@@ -270,7 +270,7 @@ msym_error_t setPermutationCycles(msym_permutation_t *perm){
     int *lcycle = malloc(sizeof(int[l]));
     
     int cl = 0;
-    memset(icycle, -1,sizeof(int[l]));
+    memset(icycle, -1,sizeof(int[l])); //TODO: 2s complement
     memset(lcycle,  0,sizeof(int[l]));
     
     perm->c = NULL;

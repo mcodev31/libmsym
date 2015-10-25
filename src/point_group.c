@@ -307,7 +307,7 @@ msym_error_t generatePointGroup(msym_point_group_type_t type, int n, msym_symmet
     }
     
     
-    //TODO: this may still be needed
+    //TODO: this may still be needed, in broken symmetry
     //if(MSYM_SUCCESS != (ret = generateSymmetryOperationsImpliedRot(sopsl, sops, pg->order, thresholds, &sopsl))) goto err;
     
     if(MSYM_SUCCESS != (ret = transformAxes(type, n, primary, sopsl, sops, thresholds, pg->transform))) goto err;

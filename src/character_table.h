@@ -14,11 +14,6 @@
 #include "msym.h"
 #include "symop.h"
 
-#define C4PI (-1.61803398874989484820458683436563811772030917980576286213544) //(2*cos(4*M_PI/5))
-#define C2PI (0.618033988749894848204586834365638117720309179805762862135448) //(2*cos(2*M_PI/5))
-
-
-
 void decomposeRepresentation(msym_character_table_t *ct, double rspan[ct->d], double dspan[ct->d]);
 
 void directProduct(int l, double irrep1[l], double irrep2[l], double pspan[l]);

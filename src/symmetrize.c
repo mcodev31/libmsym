@@ -302,13 +302,6 @@ msym_error_t symmetrizeWavefunctions(msym_point_group_t *pg, int srsl, msym_subr
                 goto err;
             }
         }
-        
-        /*printf("basis %d (%s) partner functions = %d",o,pg->ct->s[species[o]].name,o);
-        for(int i = 1;i < dim;i++){
-            clean_debug_printf(",%d",pf[o][i]);
-        }
-        clean_debug_printf("\n");*/
-        
     }
     
     

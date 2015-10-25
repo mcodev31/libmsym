@@ -575,7 +575,7 @@ msym_error_t representationCharacter(int n, msym_symmetry_operation_t *sop, msym
                     case REFLECTION         : x = rep->eig.h; break;
                     case INVERSION          : x = rep->eig.i; break;
                     case PROPER_ROTATION    : x = !n || ((n/sop->order) & 1) ? rep->eig.p : 1 ; break;
-                    case IMPROPER_ROTATION  : x = rep->eig.h*(!n || ((n/sop->order) & 1) ? rep->eig.p : 1); break; //TODO: fix does not consider S2n
+                    case IMPROPER_ROTATION  : x = rep->eig.h*(!n || ((n/sop->order) & 1) ? rep->eig.p : 1); break;
                     default :
                         ret = MSYM_INVALID_CHARACTER_TABLE;
                         msymSetErrorDetails("Invalid symmetry operation when building character table");
@@ -816,6 +816,9 @@ msym_error_t getCharacterTableOh(int sopsl, msym_symmetry_operation_t sops[sopsl
 err:
     return ret;
 }
+
+#define C4PI (-1.61803398874989484820458683436563811772030917980576286213544) //(2*cos(4*M_PI/5))
+#define C2PI (0.618033988749894848204586834365638117720309179805762862135448) //(2*cos(2*M_PI/5))
 
 msym_error_t getCharacterTableI(int sopsl, msym_symmetry_operation_t sops[sopsl], msym_character_table_t *ct){
     msym_error_t ret = MSYM_SUCCESS;

@@ -17,6 +17,8 @@
 #include "context.h"
 #include "elements.h"
 
+#include "debug.h"
+
 #define SQR(x) ((x)*(x))
 
 msym_error_t partitionEquivalenceSets(int length, msym_element_t *elements[length], msym_element_t *pelements[length], msym_geometry_t g, int *esl, msym_equivalence_set_t **es, msym_thresholds_t *thresholds);
@@ -218,11 +220,11 @@ msym_error_t partitionPointGroupEquivalenceSets(msym_point_group_t *pg, int leng
                 ret = MSYM_INVALID_EQUIVALENCE_SET;
                 goto err;
             } else if(f < length && eqi[f] == gesl-1){
-                //printf("element[%d] %s belongs to equivalence set %d, but already added\n",f,elements[f]->name, eqi[f]);
+                //clean_debug_printf("element[%d] %s belongs to equivalence set %d, but already added\n",f,elements[f]->name, eqi[f]);
             } else if(f < length){
                 eqi[f] = gesl - 1;
                 aes->elements[aes->length++] = elements[f];
-                //printf("element[%d] %s belongs to equivalence set %d, adding\n",f,elements[f]->name, eqi[f]);
+                //clean_debug_printf("element[%d] %s belongs to equivalence set %d, adding\n",f,elements[f]->name, eqi[f]);
             } else {
                 char buf[64];
                 symmetryOperationName(s, 64, buf);

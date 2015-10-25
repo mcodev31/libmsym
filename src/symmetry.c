@@ -442,7 +442,7 @@ msym_error_t findSymmetrySymmetricPolyhedron(msym_equivalence_set_t *es, double 
                 
             }
         } else {
-            //This can potentially find a staggered form if split by squal amounts (should be ok, TODO: check)
+            //This can potentially find a staggered form if split by equal amounts (should be ok, TODO: check)
             if(fabs(theta - 2*M_PI/es->length) < asin(thresholds->angle)){
                 staggered = 1;
             }
