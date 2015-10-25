@@ -16,7 +16,6 @@
 #ifdef LIBMSYM_DEBUG
 #include <stdlib.h>
 #include "permutation.h"
-//#define clean_debug_printf(fmt, ...) do { fprintf(stderr, fmt, ##__VA_ARGS__); } while (0)
 
 #define clean_debug_printf(...) fprintf (stderr, __VA_ARGS__)
 #define debug_printTransform(R,C,M) do { printTransform((R),(C),(M)); } while(0)

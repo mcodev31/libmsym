@@ -453,7 +453,6 @@ msym_error_t generateSubrepresentationSpaces(msym_point_group_t *pg, int sgl, co
         srs[k].salc = calloc(srs[k].salcl, sizeof(msym_salc_t));
     }
     
-    //printf("ddim_max = %d\n",ddim_max);
     mdcomp = malloc(sizeof(double[5][ddim_max][ddim_max]));
     mdproj = malloc(sizeof(double[projm][projm]));
     mdfound = malloc(sizeof(int[5][ddim_max]));
@@ -696,7 +695,6 @@ msym_error_t generateSubrepresentationSpaces(msym_point_group_t *pg, int sgl, co
     free(lts);
     free(les);
     free(srsbfmap);
-    //free(ss); used
     
     return ret;
     
