@@ -144,7 +144,7 @@ err:
     return ret;
 }
 
-msym_error_t symmetrizeWavefunctions(msym_point_group_t *pg, int srsl, msym_subrepresentation_space_t *srs, int *span, int basisl, msym_basis_function_t basis[basisl], double wf[basisl][basisl], double symwf[basisl][basisl], int species[basisl], msym_partner_function_t pfo[basisl]){
+msym_error_t symmetrizeWavefunctions(msym_point_group_t *pg, int srsl, msym_subrepresentation_space_t *srs, int *span, int basisl, msym_basis_function_t basis[basisl], double wf[basisl][basisl], double symwf[basisl][basisl], int specieso[basisl], msym_partner_function_t pfo[basisl]){
     msym_error_t ret = MSYM_SUCCESS;
     
     if(srsl != pg->ct->d){
@@ -154,9 +154,11 @@ msym_error_t symmetrizeWavefunctions(msym_point_group_t *pg, int srsl, msym_subr
     }
     
     int *ispan = calloc(pg->ct->d,sizeof(*ispan));
+    int *species = (NULL == specieso ? malloc(sizeof(int[basisl])) : specieso);
+    
     
     memset(species,0,sizeof(int[basisl]));
-    memset(pfo,0,sizeof(msym_partner_function_t[basisl]));
+    if(NULL != pfo) memset(pfo,0,sizeof(msym_partner_function_t[basisl]));
     
     int md = 1;
     //could deduce from pg type but can't be bothered
@@ -370,14 +372,17 @@ msym_error_t symmetrizeWavefunctions(msym_point_group_t *pg, int srsl, msym_subr
                 for(int j = 0; j < salc->fl;j++){
                     symwf[wfi][salc->f[j] - basis] += c*space[di][j];
                 }
-                pfo[wfi].d = di;
-                pfo[wfi].i = pfmin;
+                if(NULL != pfo){
+                    pfo[wfi].d = di;
+                    pfo[wfi].i = pfmin;
+                }
             }
         }
     }
     
 err:
     
+    if(species != specieso) free(species);
     free(ispan);
     free(pf);
     free(psalc);
