@@ -65,6 +65,7 @@ msym_error_t findSplittingFieldSubgroup(msym_point_group_t *pg, int irrep, int s
                 break;
             }
             case MSYM_POINT_GROUP_TYPE_Dn  :
+            case MSYM_POINT_GROUP_TYPE_Dnd :
             case MSYM_POINT_GROUP_TYPE_Dnh :
             case MSYM_POINT_GROUP_TYPE_O   :
             case MSYM_POINT_GROUP_TYPE_Oh  : {
