@@ -83,10 +83,41 @@ err:
 
 msym_error_t msymSetPointGroupByName(msym_context ctx, const char *name){
     msym_error_t ret = MSYM_SUCCESS;
-    msym_point_group_t *pg = NULL;
+    msym_point_group_t *pg = NULL, *ppg = NULL;
     msym_thresholds_t *t = NULL;
+    
+    
     if(MSYM_SUCCESS != (ret = ctxGetThresholds(ctx, &t))) goto err;
-    if(MSYM_SUCCESS != (ret = generatePointGroupFromName(name, t, &pg))) goto err;
+    
+    if(MSYM_SUCCESS != (ret = ctxGetPointGroup(ctx, &ppg))){
+        double transform[3][3];
+        mleye(3,transform);
+        if(MSYM_SUCCESS != (ret = generatePointGroupFromName(name, transform, t, &pg))) goto err;
+    } else if(MSYM_SUCCESS != (ret = generatePointGroupFromName(name, ppg->transform, t, &pg))) goto err;
+    
+    if(MSYM_SUCCESS != (ret = ctxSetPointGroup(ctx, pg))) goto err;
+    
+    return ret;
+    
+err:
+    free(pg);
+    return ret;
+}
+
+msym_error_t msymSetPointGroupByType(msym_context ctx, msym_point_group_type_t type, int n){
+    msym_error_t ret = MSYM_SUCCESS;
+    msym_point_group_t *pg = NULL, *ppg = NULL;
+    msym_thresholds_t *t = NULL;
+    
+    
+    if(MSYM_SUCCESS != (ret = ctxGetThresholds(ctx, &t))) goto err;
+    
+    if(MSYM_SUCCESS != (ret = ctxGetPointGroup(ctx, &ppg))){
+        double transform[3][3];
+        mleye(3,transform);
+        if(MSYM_SUCCESS != (ret = generatePointGroupFromType(type, n, transform, t, &pg))) goto err;
+    } else if(MSYM_SUCCESS != (ret = generatePointGroupFromType(type, n, ppg->transform, t, &pg))) goto err;
+    
     if(MSYM_SUCCESS != (ret = ctxSetPointGroup(ctx, pg))) goto err;
     
     return ret;
@@ -505,7 +536,13 @@ msym_error_t msymGetSALCs(msym_context ctx, int l, double c[l][l], int species[l
         if(MSYM_SUCCESS != (ret = ctxGetSubrepresentationSpaces(ctx, &srsl, &srs, &span))) goto err;
     }
     
-    memset(c,0,sizeof(double[basisl][basisl]));
+    if(l != basisl){
+        ret = MSYM_INVALID_INPUT;
+        msymSetErrorDetails("Supplied SALC matrix size (%dx%d) does not match number of basis functions (%d)",l,l,basisl);
+        goto err;
+    }
+    
+    memset(c,0,sizeof(double[l][l]));
     int wf = 0;
     for(int i = 0;i < srsl;i++){
         int s = srs[i].s;
@@ -522,9 +559,11 @@ msym_error_t msymGetSALCs(msym_context ctx, int l, double c[l][l], int species[l
                     int index = (int)(srs[i].salc[j].f[f] - basis);
                     c[wf][index] = mpf[d][f];
                 }
-                pf[wf].i = pwf;
-                pf[wf].d = d;
-                species[wf] = s;
+                if(NULL != pf){
+                    pf[wf].i = pwf;
+                    pf[wf].d = d;
+                }
+                if(NULL != species) species[wf] = s;
                 wf++;
             }
         }
@@ -532,7 +571,7 @@ msym_error_t msymGetSALCs(msym_context ctx, int l, double c[l][l], int species[l
     
     if(wf != basisl){
         ret = MSYM_INVALID_BASIS_FUNCTIONS;
-        msymSetErrorDetails("Number of salc wavefunctions (%d) do not match orbital basis (%d)",wf,basisl);
+        msymSetErrorDetails("Number of generated SALC wavefunctions (%d) does not match orbital basis (%d)",wf,basisl);
         goto err;
     }
     
@@ -559,14 +598,14 @@ msym_error_t msymSymmetrySpeciesComponents(msym_context ctx, int wfl, double *wf
     if(MSYM_SUCCESS != (ret = ctxGetBasisFunctions(ctx, &basisl, &basis))) goto err;
     
     if(basisl != wfl) {
-        ret = MSYM_INVALID_BASIS_FUNCTIONS;
-        msymSetErrorDetails("Number of coefficients (%d) does not match basis set (%d)",wfl,basisl);
+        ret = MSYM_INVALID_INPUT;
+        msymSetErrorDetails("Supplied coefficient vector size (%d) does not match number of basis functions (%d)",wfl,basisl);
         goto err;
     }
     
     if(sl != pg->ct->d) {
-        ret = MSYM_INVALID_CHARACTER_TABLE;
-        msymSetErrorDetails("Number of symmetry species (%d) does not match character table (%d)",sl,pg->ct->d);
+        ret = MSYM_INVALID_INPUT;
+        msymSetErrorDetails("Supplied symmetry species vector size (%d) does not match character table (%d)",sl,pg->ct->d);
         goto err;
     }
     
@@ -600,8 +639,8 @@ msym_error_t msymSymmetrizeWavefunctions(msym_context ctx, int l, double c[l][l]
     if(MSYM_SUCCESS != (ret = ctxGetBasisFunctions(ctx, &basisl, &basis))) goto err;
     
     if(basisl != l) {
-        ret = MSYM_INVALID_BASIS_FUNCTIONS;
-        msymSetErrorDetails("Number of orbital coefficients (%d) do not match orbital basis (%d)",l,basisl);
+        ret = MSYM_INVALID_INPUT;
+        msymSetErrorDetails("Supplied wavefunction matrix size (%d) does not match number of basis functions (%d)",l,basisl);
         goto err;
     }
     

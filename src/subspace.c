@@ -187,7 +187,7 @@ msym_error_t getSplittingFieldCharacters(msym_point_group_t *pg, const msym_subg
         
     } else {
         ret = MSYM_INVALID_CHARACTER_TABLE;
-        msymSetErrorDetails("Cannot determine symmetry decent character of subgroup %s",sg->name);
+        msymSetErrorDetails("Cannot determine splitting field characters of subgroup %s",sg->name);
         goto err;
     }
     
@@ -199,7 +199,7 @@ msym_error_t symmetrySpeciesComponents(msym_point_group_t *pg, int srsl, msym_su
     msym_error_t ret = MSYM_SUCCESS;
     
     if(srsl != pg->ct->d){
-        ret = MSYM_SYMMETRIZATION_ERROR;
+        ret = MSYM_SUBSPACE_ERROR;
         msymSetErrorDetails("Unexpected subspace length (expected %d got %d)",pg->ct->d, srsl);
         goto err;
     }

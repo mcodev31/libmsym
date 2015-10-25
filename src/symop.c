@@ -137,87 +137,6 @@ double symmetryOperationYCharacter(msym_symmetry_operation_t *sop, int l){
 
 }
 
-
-double symmetryOperationCharacter2(msym_symmetry_operation_t *sop, int dim, int eig){
-    double x = 0.0;
-    switch (sop->type) {
-        case IDENTITY          : x = dim; break;
-        case INVERSION         : x = -dim; break;
-        case REFLECTION        : x = dim - 2;
-        case PROPER_ROTATION   : {
-            switch(dim){
-                case 1  : x = 1; break;
-                case 2  : {
-                    if(sop->order % 2 == 0){
-                        x = 0;
-                    } else {
-                        double theta = 2*eig*sop->power*(M_PI/sop->order);
-                        x = 2*cos(theta);
-                        x += dim & 1;
-                    }
-                    break;
-                }
-                default : {
-                    int d = dim - 3, l = eig - 1;
-                    double phi = 0.0;
-                    if(sop->order == 2 || sop->order == 3) phi = PHI;
-                    else phi = -1/PHI;
-                    
-                    double ev[3][4][2] = {
-                        [0] = { // 3D;
-                            [0] = { -1,    -1}, //C2
-                            [1] = {  0,     0}, //C3
-                            [2] = {  1,    -1}, //C4
-                            [3] = {phi,-1/phi}  //C5
-                        },
-                        [1] = { // 4D;
-                            [0] = {  0,     0}, //C2
-                            [1] = {  1,     1}, //C3
-                            [2] = {  0,     0}, //C4
-                            [3] = { -1,    -1}  //C5
-                        },
-                        [2] = { // 5D;
-                            [0] = {  1,    -1}, //C2
-                            [1] = { -1,    -1}, //C3
-                            [2] = {  1,    -1}, //C4
-                            [3] = {  0,     0}  //C5
-                        }
-                    };
-                    
-                    clean_debug_printf("in %d dimensions ev[%d][%d][%d] = %lf\n",dim,d,sop->order-1,l,ev[d][sop->order-1][l]);
-                    
-                    x = ev[d][sop->order-1][l];
-                }
-            }
-            break;
-            /*
-            int d = dim % sop->order, lmax = 1 + (sop->order >> 1), l = eig % lmax;
-            
-            x += d & sop->order & 1;
-            
-            d = dim;
-            
-            for(int i = 0;i < d >> 1;i++, l = (l+1) % lmax){
-                double theta = 2*l*sop->power*(M_PI/sop->order);
-                //printf("theta = %lf\n",theta);
-                x += 2*cos(theta);
-            }
-            
-            x += d & 1;
-            
-            break;*/
-        }
-        case IMPROPER_ROTATION : {
-            x = 0.0;
-            break;
-        }
-        default:
-            break;
-    }
-    //printf("returning %lf\n",x);
-    return x;
-}
-
 void symmetryOperationName(msym_symmetry_operation_t* sop, int l, char buf[l]){
     char *rn = "";
     char *cn = "";
@@ -320,7 +239,7 @@ void symmetryOperationMatrix(msym_symmetry_operation_t *sop, double m[3][3]){
         case REFLECTION        :
             mreflect(sop->v, m);
             break;
-        case INVERSION         :
+        case INVERSION         : //TODO: fix this
             for(int i = 0; i < 3; i++){
                 for(int j = 0; j < 3; j++){
                     m[i][j] = -(i == j);

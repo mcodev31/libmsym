@@ -85,14 +85,38 @@ msym_error_t generateSymmetryOperationsUnknown(int n, int l, msym_symmetry_opera
 
 
 msym_error_t pointGroupFromName(const char *name, msym_point_group_t *pg);
+msym_error_t pointGroupFromType(msym_point_group_type_t type, int n, msym_point_group_t *pg);
+msym_error_t generatePointGroupFromStruct(msym_point_group_t *pg, double transform[3][3], msym_thresholds_t *thresholds);
 
 int classifySymmetryOperations(msym_point_group_t *pg);
 void sortSymmetryOperations(msym_point_group_t *pg, int classes);
 
-msym_error_t generatePointGroupFromName(const char *name, msym_thresholds_t *thresholds, msym_point_group_t **opg){
+msym_error_t generatePointGroupFromType(msym_point_group_type_t type, int n, double transform[3][3], msym_thresholds_t *thresholds, msym_point_group_t **opg){
+    msym_error_t ret = MSYM_SUCCESS;
+    msym_point_group_t *pg = calloc(1,sizeof(msym_point_group_t));
+    if(MSYM_SUCCESS != (ret = pointGroupFromType(type,n,pg))) goto err;
+    if(MSYM_SUCCESS != (ret = generatePointGroupFromStruct(pg, transform, thresholds))) goto err;
+    *opg = pg;
+    return ret;
+err:
+    free(pg);
+    return ret;
+}
+
+msym_error_t generatePointGroupFromName(const char *name, double transform[3][3], msym_thresholds_t *thresholds, msym_point_group_t **opg){
     msym_error_t ret = MSYM_SUCCESS;
     msym_point_group_t *pg = calloc(1,sizeof(msym_point_group_t));
     if(MSYM_SUCCESS != (ret = pointGroupFromName(name,pg))) goto err;
+    if(MSYM_SUCCESS != (ret = generatePointGroupFromStruct(pg, transform, thresholds))) goto err;
+    *opg = pg;
+    return ret;
+err:
+    free(pg);
+    return ret;
+}
+
+msym_error_t generatePointGroupFromStruct(msym_point_group_t *pg, double transform[3][3], msym_thresholds_t *thresholds){
+    msym_error_t ret = MSYM_SUCCESS;
 
     if(MSYM_SUCCESS != (ret = generateSymmetryOperations(pg->type, pg->n, pg->order, &pg->sops))) goto err;
     
@@ -101,22 +125,57 @@ msym_error_t generatePointGroupFromName(const char *name, msym_thresholds_t *thr
     } else {
         if(MSYM_SUCCESS != (ret = findSymmetryOperationPermutations(pg->order,pg->sops, thresholds, &pg->perm))) goto err;
     }
+    
+    memcpy(pg->transform, transform, sizeof(double[3][3]));
+    
+    double T[3][3];
+    minv(pg->transform, T);
+    
     for(msym_symmetry_operation_t *s = pg->sops;s < (pg->sops + pg->order);s++){
         if(pg->primary == NULL || (s->type == PROPER_ROTATION && s->order > pg->primary->order)) pg->primary = s;
+        mvmul(s->v,T,s->v);
     }
     
-    mleye(3,pg->transform);
-    
-    *opg = pg;
     return ret;
     
 err:
-    *opg = NULL;
     free(pg->sops);
-    free(pg);
+    pg->sops = NULL;
+    // Need to free findSymmetryOperationPermutations if there is ever a possibility of an error after that call
     return ret;
 }
 
+msym_error_t pointGroupFromType(msym_point_group_type_t type, int n, msym_point_group_t *pg){
+    msym_error_t ret = MSYM_SUCCESS;
+    pg->type = type;
+    switch (pg->type) {
+        case MSYM_POINT_GROUP_TYPE_Cs:
+        case MSYM_POINT_GROUP_TYPE_Ci:
+            n = 1;
+            break;
+        case MSYM_POINT_GROUP_TYPE_T:
+        case MSYM_POINT_GROUP_TYPE_Td:
+        case MSYM_POINT_GROUP_TYPE_Th:
+            n = 3;
+            break;
+        case MSYM_POINT_GROUP_TYPE_O:
+        case MSYM_POINT_GROUP_TYPE_Oh:
+            n = 4;
+            break;
+        case MSYM_POINT_GROUP_TYPE_I:
+        case MSYM_POINT_GROUP_TYPE_Ih:
+            n = 5;
+            break;
+        default:
+            break;
+    }
+    pg->n = n;
+    if(MSYM_SUCCESS != (ret = getPointGroupOrder(pg->type, pg->n, &pg->order))) goto err;
+    if(MSYM_SUCCESS != (ret = getPointGroupName(pg->type, pg->n, sizeof(pg->name)/sizeof(char), pg->name))) goto err;
+
+err:
+    return ret;
+}
 
 msym_error_t pointGroupFromName(const char *name, msym_point_group_t *pg){
     msym_error_t ret = MSYM_SUCCESS;
@@ -230,32 +289,7 @@ msym_error_t pointGroupFromName(const char *name, msym_point_group_t *pg){
         goto err;
     }
     
-    pg->type = pg_map[fi].type;
-    switch (pg->type) {
-        case MSYM_POINT_GROUP_TYPE_Cs:
-        case MSYM_POINT_GROUP_TYPE_Ci:
-            n = 1;
-            break;
-        case MSYM_POINT_GROUP_TYPE_T:
-        case MSYM_POINT_GROUP_TYPE_Td:
-        case MSYM_POINT_GROUP_TYPE_Th:
-            n = 3;
-            break;
-        case MSYM_POINT_GROUP_TYPE_O:
-        case MSYM_POINT_GROUP_TYPE_Oh:
-            n = 4;
-            break;
-        case MSYM_POINT_GROUP_TYPE_I:
-        case MSYM_POINT_GROUP_TYPE_Ih:
-            n = 5;
-            break;
-        default:
-            break;
-    }
-    pg->n = n;
-    if(MSYM_SUCCESS != (ret = getPointGroupOrder(pg->type, pg->n, &pg->order))) goto err;
-    if(MSYM_SUCCESS != (ret = getPointGroupName(pg->type, pg->n, sizeof(pg->name)/sizeof(char), pg->name))) goto err;
-    
+    return pointGroupFromType(pg_map[fi].type, n, pg);
 err:
     return ret;
     

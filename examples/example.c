@@ -128,16 +128,17 @@ int example(const char* in_file, msym_thresholds_t *thresholds){
         
     }
     
-    /* Set pointgroup to the D2h subgroup if it has Th symmetry
+    /* Set pointgroup to the C3v subgroup if it has XXX symmetry
      * using the same alignment as the original.
-     * If specific axes are wanted the alignment axes can be set instead
+     * If specific axes are wanted the alignment axes/transform can be set using:
+     * msym Get/Set Alignment Transform/Axes
      * And of course you can keep Th if you want =D */
     if(0 == strncmp(point_group, "XXX", 3) && ssg == 0){
-        double transform[3][3];
-        printf("Changing pointgroup from XXX -> D12h\n");
-        if(MSYM_SUCCESS != (ret = msymGetAlignmentTransform(ctx, transform))) goto err;
-        if(MSYM_SUCCESS != (ret = msymSetPointGroupByName(ctx, "D12h"))) goto err;
-        if(MSYM_SUCCESS != (ret = msymSetAlignmentTransform(ctx, transform))) goto err;
+        //double transform[3][3];
+        printf("Changing pointgroup from XXX -> C3v\n");
+        //if(MSYM_SUCCESS != (ret = msymGetAlignmentTransform(ctx, transform))) goto err;
+        if(MSYM_SUCCESS != (ret = msymSetPointGroupByType(ctx, MSYM_POINT_GROUP_TYPE_Cnv,3))) goto err;
+        //if(MSYM_SUCCESS != (ret = msymSetAlignmentTransform(ctx, transform))) goto err;
         if(MSYM_SUCCESS != (ret = msymFindSymmetry(ctx))) goto err;
         if(MSYM_SUCCESS != (ret = msymGetPointGroupName(ctx, sizeof(char[6]), point_group))) goto err;
     }
@@ -147,7 +148,6 @@ int example(const char* in_file, msym_thresholds_t *thresholds){
     
     for(int i = 0; i < msopsl;i++){
         if(msops[i].type == MSYM_SYMMETRY_OPERATION_TYPE_PROPER_ROTATION && msops[i].order == 3 && msops[i].power == 1){
-            
             printf("Found a C3^1 axis, YEY!\n");
         }
     }
