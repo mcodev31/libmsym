@@ -15,6 +15,8 @@
 #include "geometry.h"
 #include "linalg.h"
 
+#include "debug.h"
+
 #define SQR(x) ((x)*(x))
 
 void inertialTensor(int length, msym_element_t *elements[length], double cm[3], double e[3], double v[3][3], msym_thresholds_t *thresholds);
@@ -136,5 +138,5 @@ void printGeometry(msym_geometry_t g){
         case MSYM_GEOMETRY_ASSYMETRIC		: s = "assymetric polyhedron"; break;
         default			: s = "unknown geometry";
     }
-    printf("%s\n",s);
+    clean_debug_printf("%s\n",s);
 }

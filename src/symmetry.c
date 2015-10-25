@@ -659,8 +659,8 @@ msym_error_t findSymmetrySpherical(msym_equivalence_set_t *es, double cm[3], dou
     }
 
     return ret;
-err:
-    return ret;
+//err:
+//    return ret;
     
 }
 
@@ -1242,8 +1242,8 @@ msym_error_t filterSymmetryOperations(int sopsl, msym_symmetry_operation_t sops[
     *isopsl = rsopsl;
     *isops = rsops;
     return ret;
-err:
-    return ret;
+//err:
+//    return ret;
     
 }
 

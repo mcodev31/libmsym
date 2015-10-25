@@ -12,7 +12,6 @@
 #include <math.h>
 #include <string.h>
 #include <float.h>
-#include <stdarg.h>
 
 #include "msym.h"
 #include "linalg.h"
@@ -20,11 +19,9 @@
 #include "permutation.h"
 #include "rsh.h"
 
+#include "debug.h"
+
 #define SQR(x) ((x)*(x))
-void printTransform(int r, int c, double M[r][c]);
-void printSubspace(msym_character_table_t *ct, int l, msym_subrepresentation_space_t srs[l]);
-void tabPrintTransform(int r, int c, double M[r][c],int indent);
-void tabprintf(char *format, int indent, ...);
 
 msym_error_t generateRepresentations(int n, int sopsl, msym_symmetry_operation_t sops[sopsl], int lmax, rsh_representations_t *lrs);
 
@@ -190,6 +187,7 @@ msym_error_t getSplittingFieldCharacters(msym_point_group_t *pg, const msym_subg
     } else {
         ret = MSYM_INVALID_CHARACTER_TABLE;
         msymSetErrorDetails("Cannot determine symmetry decent character of subgroup %s",sg->name);
+        goto err;
     }
     
 err:
@@ -411,7 +409,7 @@ msym_error_t generateSubrepresentationSpaces(msym_point_group_t *pg, int sgl, co
             nirl = mgs(d, lproj, st[pg->order], oirl, thresholds->orthogonalization/basisl);
             
             if(nirl - oirl != vspan){
-                printTransform(d, d, st[pg->order]);
+                debug_printTransform(d, d, st[pg->order]);
                 ret = MSYM_SUBSPACE_ERROR;
                 msymSetErrorDetails("Ortogonal subspace of dimension (%d) inconsistent with span (%d) in %s",nirl - oirl,vspan,ct->s[k].name);
                 goto err;
@@ -463,9 +461,11 @@ msym_error_t generateSubrepresentationSpaces(msym_point_group_t *pg, int sgl, co
     mdfound = malloc(sizeof(int[5][ddim_max]));
     
     
-    printf("decomposed\n");
-    for(int prk = 0;prk < ct->d;prk++) printf(" + %d%s", ispan[prk], ct->s[prk].name);
-    printf("\n");
+    clean_debug_printf("decomposed %d\n", ct->d);
+    for(int prk = 0;prk < ct->d;prk++){
+        if(prk < ct->d - 1) clean_debug_printf("%d%s + ", ispan[prk], ct->s[prk].name);
+        else clean_debug_printf("%d%s\n", ispan[prk], ct->s[prk].name);        
+    }
     
     int dbasisl = 0;
     
@@ -586,7 +586,7 @@ msym_error_t generateSubrepresentationSpaces(msym_point_group_t *pg, int sgl, co
                                 mlscale(1.0/2.0, dd, dproj, dproj);
                                 
                                 //printf("constructed subgroup projection operator %s\n",cs_name[dim]);
-                                //printTransform(dd, dd, dproj);
+                                //debug_printTransform(dd, dd, dproj);
                                 
                                 mmtlmul(dd,dd,dproj,svspan,&sbasis[si],dscal);
                                 
@@ -655,20 +655,8 @@ msym_error_t generateSubrepresentationSpaces(msym_point_group_t *pg, int sgl, co
                                 salc->pf = (double*) pf;
                                 salc->fl = dd;
                                 salc->f = &srsbf[srsbfmap[i][n][l]];
-                                /*salc->fl = 0;
-                                 salc->f = calloc(dd,sizeof(msym_basis_function_t *));
-                                 for(int e = 0;e < es[i].length;e++){
-                                 for(int m = -l;m <= l;m++){
-                                 if(NULL == (salc->f[salc->fl++] = esbfmap[i][e][n][l][m+l])){
-                                 ret = MSYM_SUBSPACE_ERROR;
-                                 msymSetErrorDetails("Missing expected basis function for n = %d, l = %d, m = %d on atom %d when generating subspaces",n,l,m,e);
-                                 goto err;
-                                 }
-                                 }
-                                 }*/
                                 
                                 isalc[sk]++;
-                                //printf("added %d functions\n",salc->fl);
                             }
                         }
                         si += svspan;
@@ -676,18 +664,9 @@ msym_error_t generateSubrepresentationSpaces(msym_point_group_t *pg, int sgl, co
                 }
             }
         }
-        
-        //for(int i = 0; i < d;i++) vlnorm(d, porth[i]);
-        
-        
-        /*
-         for(int k = 0;k < ct->d;k++) printf(" + %d%s", (int) round(pspan[i][k]), ct->s[k].name);
-         printf("\n");
-         printTransform(d, d, porth);
-         */
     }
     
-    //printSubspace(ct,ct->d,srs);
+    debug_printSubspace(ct,ct->d,srs);
     *ospan = ispan;
     *osrsl = ct->d;
     *osrs = srs;
@@ -763,42 +742,6 @@ err:
     return ret;
 }
 
-//Density matrix without occupation numbers
-void densityMatrix(int l, double M[l][l], double D[l][l]){
-    memset(D,0,sizeof(double[l][l]));
-    for(int i = 0; i < l;i++){
-        for(int j = 0;j < l;j++){
-            for(int k = 0;k < l;k++){
-                D[i][j] += M[k][i]*M[k][j];
-            }
-        }
-    }
-}
-
-void printSubspace(msym_character_table_t *ct, int l, msym_subrepresentation_space_t srs[l]){
-    for(int k = 0;k < l;k++){
-        printf("Subspace %d %s\n",k,ct->s[srs[k].s].name);
-        for(int i = 0;i < srs[k].salcl;i++){
-            for(int j = 0;j < srs[k].salc[i].fl;j++){
-                msym_basis_function_t *bf = srs[k].salc[i].f[j];
-                if(bf == NULL){
-                    printf("error bf\n");
-                    exit(1);
-                }
-                printf("\t  %s%s\t\t",bf->element->name,bf->name);
-            }
-            printf("\n");
-            
-            double (*space)[srs[k].salc[i].fl] = (double (*)[srs[k].salc[i].fl]) srs[k].salc[i].pf;
-            if(space == NULL){
-                printf("error space\n");
-                exit(1);
-            }
-            tabPrintTransform(srs[k].salc[i].d,srs[k].salc[i].fl,space,1);
-        }
-    }
-}
-
 void freeSubrepresentationSpaces(int srsl, msym_subrepresentation_space_t *srs){
     for(int i = 0;i < srsl && NULL != srs;i++){
         for(int j = 0;j < srs[i].salcl;j++){
@@ -810,44 +753,3 @@ void freeSubrepresentationSpaces(int srsl, msym_subrepresentation_space_t *srs){
 }
 
 
-void tabprintf(char *format, int indent, ...){
-    for(int i = 0; i < indent;i++) printf("\t");
-    va_list args;
-    va_start (args, indent);
-    vprintf (format, args);
-    va_end (args);
-}
-
-void tabPrintTransform(int r, int c, double M[r][c],int indent) {
-    if(r == 0 || c == 0) {tabprintf("[]\n",indent);return;}
-    //printf("\n");
-    tabprintf("[",indent);
-    for(int i = 0;i < r;i++){
-        for(int j = 0;j<c;j++){
-            char *pre = signbit(M[i][j]) ? "" : " ";
-            char *post1 = "\t";
-            char *post2 = (j == (c - 1)) ? (i == (r - 1)) ? "" : ";" : " ";
-            
-            printf("%s%.8lf%s%s",pre,M[i][j],post1,post2);
-        }
-        printf("%s",(i == (r - 1)) ? "]\n" : "\n ");
-        tabprintf(" ", indent);
-    }
-    printf("\n");
-    
-}
-
-void printTransform(int r, int c, double M[r][c]) {
-    printf("\n[");
-    for(int i = 0;i < r;i++){
-        for(int j = 0;j<c;j++){
-            char *pre = signbit(M[i][j]) ? "" : " ";
-            char *post1 = "";
-            char *post2 = (j == (c - 1)) ? (i == (r - 1)) ? "" : ";" : " ";
-            
-            printf("%s%.8lf%s%s",pre,M[i][j],post1,post2);
-        }
-        printf("%s",(i == (r - 1)) ? "]\n" : "\n ");
-    }
-    
-}

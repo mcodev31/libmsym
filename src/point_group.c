@@ -19,6 +19,8 @@
 #include "point_group.h"
 #include "permutation.h"
 
+#include "debug.h"
+
 #define PHI 1.618033988749894848204586834
 #ifndef M_PI
 #define M_PI 3.14159265358979323846264338327950288419716939937510582
@@ -86,10 +88,6 @@ msym_error_t pointGroupFromName(const char *name, msym_point_group_t *pg);
 
 int classifySymmetryOperations(msym_point_group_t *pg);
 void sortSymmetryOperations(msym_point_group_t *pg, int classes);
-
-void print_transform(double M[3][3], double axis[3]);
-
-
 
 msym_error_t generatePointGroupFromName(const char *name, msym_thresholds_t *thresholds, msym_point_group_t **opg){
     msym_error_t ret = MSYM_SUCCESS;
@@ -560,8 +558,8 @@ msym_error_t determinePointGroup(int sopsl, msym_symmetry_operation_t *sops, msy
     
     return ret;
     
-err:
-    return ret;
+//err:
+//    return ret;
     
 }
 
@@ -1103,7 +1101,6 @@ err:
 }
 
 msym_error_t generateSymmetryOperationsImpliedRot(int sopsl, msym_symmetry_operation_t sops[sopsl], int order, msym_thresholds_t *thresholds, int *osopsl){
-    printf("generateSymmetryOperationsImpliedRot NEED to call this in case some are missing\n");
     int isopsl = sopsl;
     for(msym_symmetry_operation_t *sopi = sops; sopi < (sops + sopsl) && isopsl < order; sopi++){
         if(sopi->type == PROPER_ROTATION){
@@ -1205,7 +1202,7 @@ msym_error_t generateSymmetryOperationsSn(int n, int l, msym_symmetry_operation_
         int index = k + ((i-1) << 1);
         symopPow(&sn, i, &sops[index]);
         sops[index].cla = cla + i - 1;
-        printf("i = %d m = %d index = %d ",i,m,index);
+        clean_debug_printf("i = %d m = %d index = %d ",i,m,index);
         printSymmetryOperation(&sops[index]);
     }
 /*
@@ -1215,21 +1212,21 @@ msym_error_t generateSymmetryOperationsSn(int n, int l, msym_symmetry_operation_
     sops[ri].p.orientation = HORIZONTAL;
     sops[ri].type = REFLECTION;
     vcopy(z,sops[ri].v);
-    printf("replacing symmetry operation %d\n",ri);
+    clean_debug_printf("replacing symmetry operation %d\n",ri);
     printSymmetryOperation(&sops[ri]);*/
     
     for(int i = 1;i < m >> 1;i++){
         int index = k + 1 + ((i-1) << 1);
         symopPow(&sn, m-i, &sops[index]);
         sops[index].cla = cla + i - 1;
-        printf("i = %d m = %d index = %d ",i,m,index);
+        clean_debug_printf("i = %d m = %d index = %d ",i,m,index);
         printSymmetryOperation(&sops[index]);
         
     }
     k += m - 1;
     cla += m >> 1;
     
-    printf("------ Sn %d operations %d classes------\n",k-*pk, cla-*pcla);
+    clean_debug_printf("------ Sn %d operations %d classes------\n",k-*pk, cla-*pcla);
     *pk = k; *pcla = cla;
     
     return ret;
@@ -1251,7 +1248,7 @@ msym_error_t generateSymmetryOperationsCs(int n, int l, msym_symmetry_operation_
     k++;
     cla++;
     
-    printf("------ Cs %d operations %d classes------\n",k-*pk, cla-*pcla);
+    clean_debug_printf("------ Cs %d operations %d classes------\n",k-*pk, cla-*pcla);
     *pk = k; *pcla = cla;
     
     return ret;
@@ -1274,7 +1271,7 @@ msym_error_t generateSymmetryOperationsCi(int n, int l, msym_symmetry_operation_
     k++;
     cla++;
     
-    printf("------ Ci %d operations %d classes------\n",k-*pk, cla-*pcla);
+    clean_debug_printf("------ Ci %d operations %d classes------\n",k-*pk, cla-*pcla);
     *pk = k; *pcla = cla;
     
     return ret;
@@ -1295,7 +1292,7 @@ msym_error_t generateSymmetryOperationsCn(int n, int l, msym_symmetry_operation_
         int index = k + (i << 1) - 2;
         symopPow(&cn, i, &sops[index]);
         sops[index].cla = cla + (index >> 1);
-        printf("i = %d index = %d ",i,index);
+        clean_debug_printf("i = %d index = %d ",i,index);
         printSymmetryOperation(&sops[index]);
     }
     
@@ -1303,14 +1300,14 @@ msym_error_t generateSymmetryOperationsCn(int n, int l, msym_symmetry_operation_
         int index = k + (i << 1) - 1;
         symopPow(&cn, n-i, &sops[index]);
         sops[index].cla = cla + ((index - 1) >> 1);
-        printf("i = %d index = %d ",i,index);
+        clean_debug_printf("i = %d index = %d ",i,index);
         printSymmetryOperation(&sops[index]);
     }
     
     k += n - 1;
     cla += n >> 1;
     
-    printf("------ Cn %d operations %d classes------\n",k-*pk, cla-*pcla);
+    clean_debug_printf("------ Cn %d operations %d classes------\n",k-*pk, cla-*pcla);
     *pk = k; *pcla = cla;
     
     return ret;
@@ -1326,60 +1323,47 @@ msym_error_t generateSymmetryOperationsCnh(int n, int l, msym_symmetry_operation
     msym_symmetry_operation_t sn = {.type = IMPROPER_ROTATION, .order = n, .power = 1, .orientation = HORIZONTAL};
     if(k + (n << 1) - 1 > l){ret = MSYM_POINT_GROUP_ERROR; msymSetErrorDetails("Too many operations when generating C%dh symmetry operations",n); goto err;}
     vcopy(z,cn.v); vcopy(z,sn.v);
-    printf("------ Cnh begin ------\n");
     for(s = n;s % 2 == 0;s = s >> 1){
         cn.order = s;
-        printf("-------- 1s = %d ---------\n",s);
         for(int i = 1;i <= s >> 1;i += 2){
             int index = k + ((i >> 1) << 1);
             symopPow(&cn, i, &sops[index]);
             sops[index].cla = cla + (i >> 1);
-            printf("i = %d s = %d index = %d ",i,s,index);
             printSymmetryOperation(&sops[index]);
         }
-        printf("-------- 2s = %d ---------\n",s);
         for(int i = 1;i < s >> 1;i += 2){
             int index = k + 1 + ((i >> 1) << 1);
             symopPow(&cn, s-i, &sops[index]);
             sops[index].cla = cla + (i >> 1);
-            printf("i = %d s = %d index = %d ",i,s,index);
             printSymmetryOperation(&sops[index]);
         }
         
         k += (s >> 1);
         cla += (s >> 2) + ((s >> 1) & 1);
         
-        printf("-------- 3s = %d ---------\n",s);
         sn.order = s;
         for(int i = 1;i <= s >> 1;i += 2){
             int index = k + ((i >> 1) << 1);
             symopPow(&sn, i, &sops[index]);
             sops[index].cla = cla + (i >> 1);
-            printf("i = %d s = %d index = %d ",i,s,index);
             printSymmetryOperation(&sops[index]);
         }
-        printf("-------- 4s = %d ---------\n",s);
+        
         for(int i = 1;i < s >> 1;i += 2){
             int index = k + 1 + ((i >> 1) << 1);
             symopPow(&sn, s-i, &sops[index]);
             sops[index].cla = cla + (i >> 1);
-            printf("i = %d s = %d index = %d ",i,s,index);
             printSymmetryOperation(&sops[index]);
         }
-        printf("-------- 5s = %d ---------\n",s);
+        
         k += (s >> 1);
         cla += (s >> 2) + ((s >> 1) & 1);
         
     }
     
-    printf("------ Cnh end ------\n");
-    
     if(MSYM_SUCCESS != (ret = generateSymmetryOperationsSn(s,l,sops,&k,&cla))) goto err;
-    //k += (s << (s & 1)) - 1;
-    //cla = sops[k-1].cla + 1;
     
-    
-    printf("------ Cnh %d operations %d classes------\n",k-*pk, cla-*pcla);
+    clean_debug_printf("------ Cnh %d operations %d classes------\n",k-*pk, cla-*pcla);
     *pk = k; *pcla = cla;
     
     return ret;
@@ -1432,7 +1416,7 @@ msym_error_t generateSymmetryOperationsCnv(int n, int l, msym_symmetry_operation
         k += n0;
         cla += 1;
         
-        printf("\n------ C0v %d operations %d classes------\n",k-*pk, cla-*pcla);
+        clean_debug_printf("\n------ C0v %d operations %d classes------\n",k-*pk, cla-*pcla);
     } else {
         if(k + (n << 1) - 1 > l){
             ret = MSYM_POINT_GROUP_ERROR;
@@ -1441,7 +1425,7 @@ msym_error_t generateSymmetryOperationsCnv(int n, int l, msym_symmetry_operation
         }
         if(MSYM_SUCCESS != (ret = generateSymmetryOperationsCn(n,l,sops,&k,&cla))) goto err;
         if(MSYM_SUCCESS != (ret = generateReflectionPlanes(n,l,sops,&k,&cla))) goto err;
-        printf("------ Cnv %d operations %d classes------\n",k-*pk, cla-*pcla);
+        clean_debug_printf("------ Cnv %d operations %d classes------\n",k-*pk, cla-*pcla);
         
     }
     
@@ -1465,7 +1449,7 @@ msym_error_t generateSymmetryOperationsDn(int n, int l, msym_symmetry_operation_
     //k += n;
     //cla = sops[k-1].cla + 1;
     
-    printf("\n------ Dn %d operations %d classes------\n",k-*pk, cla-*pcla);
+    clean_debug_printf("\n------ Dn %d operations %d classes------\n",k-*pk, cla-*pcla);
     *pk = k; *pcla = cla;
     
     return ret;
@@ -1516,7 +1500,7 @@ msym_error_t generateSymmetryOperationsDnh(int n, int l, msym_symmetry_operation
             memcpy(&(sops[index]), &sigma, sizeof(msym_symmetry_operation_t));
             vrotate(i*M_PI/n0, sigma.v, z, sops[index].v);
             sops[index].cla = cla;
-            printf("generated sigma at %d\n",index);
+            clean_debug_printf("generated sigma at %d\n",index);
             index += n0;
             memcpy(&(sops[index]), &c2, sizeof(msym_symmetry_operation_t));
             vrotate(i*M_PI/n0, c2.v, z, sops[index].v);
@@ -1526,7 +1510,7 @@ msym_error_t generateSymmetryOperationsDnh(int n, int l, msym_symmetry_operation
         k += n0 << 1;
         cla += 2;
 
-        printf("\n------ D0h %d operations %d classes------\n",k-*pk, cla-*pcla);
+        clean_debug_printf("\n------ D0h %d operations %d classes------\n",k-*pk, cla-*pcla);
     } else {
         
         if(k + (n << 2) - 1 > l){
@@ -1537,7 +1521,7 @@ msym_error_t generateSymmetryOperationsDnh(int n, int l, msym_symmetry_operation
         if(MSYM_SUCCESS != (ret = generateSymmetryOperationsCnh(n,l,sops,&k,&cla))) goto err;
         if(MSYM_SUCCESS != (ret = generateReflectionPlanes(n,l,sops,&k,&cla))) goto err;
         if(MSYM_SUCCESS != (ret = generateC2Axes(n,l,sops,&k,&cla))) goto err;
-        printf("\n------ Dnh %d operations %d classes------\n",k-*pk, cla-*pcla);
+        clean_debug_printf("\n------ Dnh %d operations %d classes------\n",k-*pk, cla-*pcla);
         
     }
     
@@ -1578,7 +1562,7 @@ msym_error_t generateSymmetryOperationsDnd(int n, int l, msym_symmetry_operation
     cla += 1;
     
     
-    printf("\n------ Dnd %d operations %d classes------\n",k-*pk, cla-*pcla);
+    clean_debug_printf("\n------ Dnd %d operations %d classes------\n",k-*pk, cla-*pcla);
     *pk = k; *pcla = cla;
     
     return ret;
@@ -1603,7 +1587,7 @@ msym_error_t generateSymmetryOperationsT(int n, int l, msym_symmetry_operation_t
     
     cla += 2;
     
-    printf("------ T %d operations %d classes------\n",k-*pk, cla-*pcla);
+    clean_debug_printf("------ T %d operations %d classes------\n",k-*pk, cla-*pcla);
     *pk = k; *pcla = cla;
     
     return ret;
@@ -1634,7 +1618,7 @@ msym_error_t generateSymmetryOperationsTd(int n, int l, msym_symmetry_operation_
     
     cla += 4;
     
-    printf("------ Td %d operations %d classes------\n",k-*pk, cla-*pcla);
+    clean_debug_printf("------ Td %d operations %d classes------\n",k-*pk, cla-*pcla);
     *pk = k; *pcla = cla;
     
     return ret;
@@ -1671,7 +1655,7 @@ msym_error_t generateSymmetryOperationsTh(int n, int l, msym_symmetry_operation_
     
     cla += 5;
     
-    printf("------ Th %d operations %d classes------\n",k-*pk, cla-*pcla);
+    clean_debug_printf("------ Th %d operations %d classes------\n",k-*pk, cla-*pcla);
     *pk = k; *pcla = cla;
     
     return ret;
@@ -1702,7 +1686,7 @@ msym_error_t generateSymmetryOperationsO(int n, int l, msym_symmetry_operation_t
     
     cla += 4;
     
-    printf("------ O %d operations %d classes------\n",k-*pk, cla-*pcla);
+    clean_debug_printf("------ O %d operations %d classes------\n",k-*pk, cla-*pcla);
     *pk = k; *pcla = cla;
     
     return ret;
@@ -1748,7 +1732,7 @@ msym_error_t generateSymmetryOperationsOh(int n, int l, msym_symmetry_operation_
     
     cla += 9;
     
-    printf("------ O %d operations %d classes------\n",k-*pk, cla-*pcla);
+    clean_debug_printf("------ O %d operations %d classes------\n",k-*pk, cla-*pcla);
     *pk = k; *pcla = cla;
     
     return ret;
@@ -1780,7 +1764,7 @@ msym_error_t generateSymmetryOperationsI(int n, int l, msym_symmetry_operation_t
     
     cla += 4;
     
-    printf("------ I %d operations %d classes------\n",k-*pk, cla-*pcla);
+    clean_debug_printf("------ I %d operations %d classes------\n",k-*pk, cla-*pcla);
     *pk = k; *pcla = cla;
     
     return ret;
@@ -1829,7 +1813,7 @@ msym_error_t generateSymmetryOperationsIh(int n, int l, msym_symmetry_operation_
     
     cla += 9;
     
-    printf("------ Ih %d operations %d classes------\n",k-*pk, cla-*pcla);
+    clean_debug_printf("------ Ih %d operations %d classes------\n",k-*pk, cla-*pcla);
     *pk = k; *pcla = cla;
     
     return ret;
@@ -1891,7 +1875,7 @@ msym_error_t generateSymmetryOperationsTetrahedral(int l, msym_symmetry_operatio
         }
     }
     
-    printf("------ Tetra %d operations 0 classes------\n",k-*pk);
+    clean_debug_printf("------ Tetra %d operations 0 classes------\n",k-*pk);
     *pk = k;
     
     return ret;
@@ -1952,7 +1936,7 @@ msym_error_t generateSymmetryOperationsOctahedral(int l, msym_symmetry_operation
         }
     }
     
-    printf("------ Octa %d operations 0 classes------\n",k-*pk);
+    clean_debug_printf("------ Octa %d operations 0 classes------\n",k-*pk);
     *pk = k;
     
     return ret;
@@ -2032,7 +2016,7 @@ msym_error_t generateSymmetryOperationsIcosahedral(int l, msym_symmetry_operatio
         }
     }    
     
-    printf("------ Icosa %d operations 0 classes------\n",k-*pk);
+    clean_debug_printf("------ Icosa %d operations 0 classes------\n",k-*pk);
     *pk = k;
     
     return ret;
@@ -2060,7 +2044,7 @@ msym_error_t generateReflectionPlanes(int n, int l, msym_symmetry_operation_t so
     
     k += n;
     cla += 1 << (~n & 1); //1 or 2 added classes
-    printf("------ R %d operations %d classes------\n",k-*pk, cla-*pcla);
+    clean_debug_printf("------ R %d operations %d classes------\n",k-*pk, cla-*pcla);
     *pk = k; *pcla = cla;
     
     return ret;
@@ -2087,7 +2071,7 @@ msym_error_t generateC2Axes(int n, int l, msym_symmetry_operation_t sops[l], int
     
     k += n;
     cla += 1 << (~n & 1); //1 or 2 added classes
-    printf("------ C2 %d operations %d classes------\n",k-*pk, cla-*pcla);
+    clean_debug_printf("------ C2 %d operations %d classes------\n",k-*pk, cla-*pcla);
     *pk = k; *pcla = cla;
     
     return ret;
@@ -2226,37 +2210,3 @@ int numberOfSubgroups(msym_point_group_t *pg){
     return size;
 }
 
-
-void printPointGroup(msym_point_group_t *pg){
-    char buf[64];
-    if(pg == NULL){
-        printf("No point group\n");
-        return;
-    }
-    printf("PointGroup %s (%d,%d)\nPrimary:\n",pg->name, pg->order, pg->order);
-    if(pg->primary != NULL) {
-        symmetryOperationName(pg->primary, 64, buf);
-        printf("%s\n",buf);
-    } else {
-        printf("No primary rotation axis\n");
-    }
-    for(int i = 0; i < pg->order;i++){
-        symmetryOperationName(&pg->sops[i], 64, buf);
-        printf("\t%s\n",buf);
-    }
-}
-
-
-void print_transform(double M[3][3], double axis[3]){
-    
-    fprintf(stderr,"M = \n");
-    fprintf(stderr,"[[%lf, %lf, %lf], ",M[0][0],M[0][1],M[0][2]);
-    fprintf(stderr,"[%lf, %lf, %lf], ",M[1][0],M[1][1],M[1][2]);
-    fprintf(stderr,"[%lf, %lf, %lf]]\n",M[2][0],M[2][1],M[2][2]);
-    
-    double v[3];
-    mvmul(axis,M,v);
-    fprintf(stderr,"After transform:\n");
-    fprintf(stderr,"[%lf, %lf, %lf]\n",v[0],v[1],v[2]);
-    
-}

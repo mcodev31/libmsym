@@ -299,16 +299,6 @@ err:
     return ret;
 }
 
-msym_error_t msymGetPointGroup(msym_context ctx, msym_point_group_t **pg){
-    msym_error_t ret = MSYM_SUCCESS;
-    if(NULL == ctx) {ret = MSYM_INVALID_CONTEXT;goto err;}
-    if(NULL == ctx->pg){ret = MSYM_INVALID_POINT_GROUP;goto err;}
-    *pg = ctx->pg;    
-err:
-    return ret;
-    
-}
-
 msym_error_t msymGetCharacterTable(msym_context ctx, const msym_character_table_t **ct){
     msym_error_t ret = MSYM_SUCCESS;
     if(NULL == ctx) {ret = MSYM_INVALID_CONTEXT;goto err;}
@@ -820,7 +810,7 @@ msym_error_t ctxDestroySubgroups(msym_context ctx){
     free(ctx->sg);
     ctx->sg = NULL;
     ctx->sgl = 0;
-err:
+//err:
     return ret;
 }
 

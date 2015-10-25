@@ -11,7 +11,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "msym.h"
 #include "basis_function.h"
 
 //These are real shperical harmonics cannot handle complex

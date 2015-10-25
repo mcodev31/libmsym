@@ -16,6 +16,7 @@
 #include <math.h>
 #include "linalg.h"
 
+#include "debug.h"
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846264338327950288419716939937510582
@@ -474,14 +475,6 @@ void kron2(int ar, int ac, const double A[ar][ac], int br, int bc, const double 
         }
     }
 }
-
-void vlprint(int l, const double v[l]) {
-    printf("[");
-    for(int i = 0;i < l;i++){
-        printf("%lf%s",v[i],(i == (l - 1)) ? "]\n" : ";");
-    }
-}
-
 
 /* Graam-Schmidt */
 int mgs(int l, const double M[l][l], double O[l][l], int n, double t){

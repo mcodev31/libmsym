@@ -1,5 +1,5 @@
 LELEMENTS = msym msym_error context symmetry symmetrize linalg point_group character_table geometry \
-		permutation symop equivalence_set elements subspace basis_function rsh
+		permutation symop equivalence_set elements subspace basis_function rsh debug
 
 SRC = example.c msym_example.c tex_character_table.c
 OBJDIR = ../obj
@@ -14,6 +14,7 @@ LOBJS = $(foreach I,$(LELEMENTS),$(OBJDIR)/$I.o)
 CC = gcc
 EXAMPLE_EXE = $(BINDIR)/msym_example
 TEX_EXE = $(BINDIR)/tex_character_table
+#CFLAGS = -g -O2 -flto -std=c99 -pedantic -Wall -DLIBMSYM_DEBUG=1
 CFLAGS = -g -O2 -flto -std=c99 -pedantic -Wall
 INC = ../src
 LIBS = -lm

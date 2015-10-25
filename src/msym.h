@@ -159,31 +159,6 @@ extern "C" {
         void *table;  //double[d][d]
     } msym_character_table_t;
 
-    //There are better ways of representing a permutation (lika a Lehmer code) but I'll leave that for later
-    typedef struct _msym_permutation_cycle_t {
-        int l;
-        int s;
-    } msym_permutation_cycle_t;
-    
-    typedef struct _msym_permutation {
-        int *p;
-        int p_length;
-        msym_permutation_cycle_t *c;
-        int c_length;
-    } msym_permutation_t;
-    
-    typedef struct {
-        msym_point_group_type_t type;
-        int n;
-        int order;
-        msym_symmetry_operation_t *primary;
-        msym_symmetry_operation_t *sops;
-        msym_permutation_t *perm;
-        double transform[3][3];
-        msym_character_table_t *ct;
-        char name[8];
-    } msym_point_group_t;
-    
     
     msym_context msymCreateContext();
     msym_error_t msymReleaseContext(msym_context ctx);
@@ -195,7 +170,6 @@ extern "C" {
     msym_error_t msymGetElements(msym_context ctx, int *length, msym_element_t **elements);
     msym_error_t msymSetBasisFunctions(msym_context ctx, int length, msym_basis_function_t *basis);
     msym_error_t msymGetBasisFunctions(msym_context ctx, int *length, msym_basis_function_t **basis);
-    msym_error_t msymGetPointGroup(msym_context ctx, msym_point_group_t **pg);
     msym_error_t msymGetPointGroupType(msym_context ctx, msym_point_group_type_t *t, int *n);
     msym_error_t msymSetPointGroupByName(msym_context ctx, const char *name);
     msym_error_t msymGetPointGroupName(msym_context ctx, int l, char *buf);

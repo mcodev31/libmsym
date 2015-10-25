@@ -35,7 +35,7 @@ msym_error_t copyEquivalenceSets(int length, msym_equivalence_set_t es[length], 
     memcpy(nes, es, sizeof(msym_equivalence_set_t[length]) + sizeof(msym_element_t *[el]));
     for(int i = 0;i < length;i++) nes[i].elements = nes[i].elements - ep + nep;
     *ces = nes;
-err:
+//err:
     return ret;
 }
 

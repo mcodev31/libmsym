@@ -13,6 +13,7 @@
 
 #include "elements.h"
 
+#include "debug.h"
 
 const struct _periodic_table {
     int n;
@@ -142,7 +143,7 @@ const struct _periodic_table {
 };
 
 void printElement(msym_element_t *element){
-    printf("%s (nuclear charge:%d, mass:%lf) [%lf;%lf;%lf]\n",element->name, element->n, element->m, element->v[0], element->v[1], element->v[2]);
+    clean_debug_printf("%s (nuclear charge:%d, mass:%lf) [%lf;%lf;%lf]\n",element->name, element->n, element->m, element->v[0], element->v[1], element->v[2]);
 }
 
 msym_error_t complementElementData(msym_element_t *element){

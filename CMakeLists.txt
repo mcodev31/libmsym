@@ -33,6 +33,7 @@ if (BUILD_SHARED_LIBS)
                 POSITION_INDEPENDENT_CODE "TRUE")
 endif ()
 set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99")
+set (CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -Wall -DLIBMSYM_DEBUG")
 #set_target_properties (msym PROPERTIES
 #        C_STANDARD 99
 #        C_STANDARD_REQUIRED ON)

@@ -16,9 +16,10 @@
 #include "symmetrize.h"
 #include "linalg.h"
 
+#include "debug.h"
+
 #define SQR(x) ((x)*(x))
 
-//msym_error_t addProjectionOntoSubspace(int d, double orb[d], msym_subspace_t *ss, msym_orbital_t basis[d], double mem[d], double proj[d]);
 
 msym_error_t symmetrizeMoleculeProject(msym_point_group_t *pg, int esl, msym_equivalence_set_t *es, msym_permutation_t **perm, msym_thresholds_t *thresholds, double *err);
 msym_error_t symmetrizeMoleculeLinear(msym_point_group_t *pg, int esl, msym_equivalence_set_t *es, msym_permutation_t **perm, msym_thresholds_t *thresholds, double *err);
@@ -288,7 +289,7 @@ msym_error_t symmetrizeWavefunctions(msym_point_group_t *pg, int srsl, msym_subr
     for(int o = 0;o < basisl;o++){
         int dim = pg->ct->s[species[o]].d;
         if(abs(pf[o][0])+1 != dim){
-            for(int i = 0;i < md;i++) printf("%d = %d\n",i,pf[o][i]);
+            for(int i = 0;i < md;i++) clean_debug_printf("%d = %d\n",i,pf[o][i]);
             msymSetErrorDetails("Unexpected number of partner functions for wave function %d in %s (expected %d got %d)", o, pg->ct->s[species[o]].name, dim, abs(pf[o][0])+1);
             ret = MSYM_SYMMETRIZATION_ERROR;
             goto err;
@@ -304,9 +305,9 @@ msym_error_t symmetrizeWavefunctions(msym_point_group_t *pg, int srsl, msym_subr
         
         /*printf("basis %d (%s) partner functions = %d",o,pg->ct->s[species[o]].name,o);
         for(int i = 1;i < dim;i++){
-            printf(",%d",pf[o][i]);
+            clean_debug_printf(",%d",pf[o][i]);
         }
-        printf("\n");*/
+        clean_debug_printf("\n");*/
         
     }
     
@@ -347,7 +348,7 @@ msym_error_t symmetrizeWavefunctions(msym_point_group_t *pg, int srsl, msym_subr
         }
         
         /*for(int i = 0;i < dim;i++){
-            printf("partner function %d has maximum component in dimension %d\n",i,pf[basisl][i]);
+            clean_debug_printf("partner function %d has maximum component in dimension %d\n",i,pf[basisl][i]);
         }*/
         
         /* calculate average component in each salc subspace and rotate onto the partner functions with largest component */
@@ -411,7 +412,7 @@ msym_error_t symmetrizeTranslation(msym_point_group_t *pg, msym_equivalence_set_
         vadd(es->elements[i]->v,v[i],es->elements[i]->v);
     }
     
-err:
+//err:
     free(v);
     return ret;
 }

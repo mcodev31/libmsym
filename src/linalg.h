@@ -44,7 +44,6 @@ void mlscale(double s,int l, const double m[l][l], double mr[l][l]);
 void vproj_plane(double v[3], double plane[3], double proj[3]);
 void vproj(const double v[3], const double u[3], double vo[3]);
 void vlproj(int l, const double v[l], const double u[l], double vo[l]);
-void vlprint(int l, const double v[l]);
 void vcomplement(const double v1[3], double v2[3]);
 double vangle(const double[3], const double[3]);
 void vrotate(double theta, const double v[3], const double axis[3], double vr[3]);

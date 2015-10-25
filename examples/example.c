@@ -205,7 +205,7 @@ int example(const char* in_file, msym_thresholds_t *thresholds){
     }
     
     printf("salcs =");
-    printTransform(bfsl,bfsl,salcs);*/
+    debug_printTransform(bfsl,bfsl,salcs);*/
     
     /* Reorder the SALCs */
     for(int i = 0;i < bfsl;i++){
@@ -229,7 +229,7 @@ int example(const char* in_file, msym_thresholds_t *thresholds){
     }
     
     //printf("in=\n");
-    //printTransform(bfsl,bfsl,salcs);
+    //debug_printTransform(bfsl,bfsl,salcs);
     /* Symmetrize wavefunctions */
     if(MSYM_SUCCESS != (ret = msymSymmetrizeWavefunctions(ctx, bfsl, salcs, species, pf))) goto err;
     
@@ -243,7 +243,7 @@ int example(const char* in_file, msym_thresholds_t *thresholds){
     printf("\n");
     
     //printf("out=\n");
-    //printTransform(bfsl,bfsl,salcs);
+    //debug_printTransform(bfsl,bfsl,salcs);
     
     printf("Wave function symmetrization returned new linear combinations:\n");
     for(int i = 0;i < bfsl;i++){

@@ -17,6 +17,18 @@
 #include "character_table.h"
 #include "permutation.h"
 
+typedef struct {
+    msym_point_group_type_t type;
+    int n;
+    int order;
+    msym_symmetry_operation_t *primary;
+    msym_symmetry_operation_t *sops;
+    msym_permutation_t *perm;
+    double transform[3][3];
+    msym_character_table_t *ct;
+    char name[8];
+} msym_point_group_t;
+
 
 int isLinearPointGroup(msym_point_group_t *pg);
 int isLinearSubgroup(msym_point_group_t *pg);

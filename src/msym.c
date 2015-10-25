@@ -11,7 +11,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <time.h>
 #include "msym.h"
 #include "context.h"
 #include "symmetry.h"
@@ -20,6 +19,8 @@
 #include "symmetrize.h"
 #include "linalg.h"
 #include "subspace.h"
+
+#include "debug.h"
 
 msym_error_t msymFindSymmetry(msym_context ctx){
     msym_error_t ret = MSYM_SUCCESS;
@@ -34,11 +35,6 @@ msym_error_t msymFindSymmetry(msym_context ctx){
     int sesl = 0;
     msym_point_group_t *fpg = NULL;
     
-    clock_t start, end;
-
-    double time;
-    
-    
     if(MSYM_SUCCESS != (ret = ctxGetElements(ctx, &elementsl, &elements))) goto err;
     
     if(MSYM_SUCCESS != (ret = ctxGetThresholds(ctx, &t))) goto err;
@@ -49,47 +45,29 @@ msym_error_t msymFindSymmetry(msym_context ctx){
     
     if(MSYM_SUCCESS != (ret = ctxGetEquivalenceSets(ctx, &esl, &es))) goto err;
     if(MSYM_SUCCESS != (ret = ctxGetPointGroup(ctx, &pg))){
-        start = clock();
         if(MSYM_SUCCESS != (ret = findSymmetryOperations(esl,es,t,&sopsl,&sops))) goto err;
-        end = clock();
-        time = (double)(end - start) / CLOCKS_PER_SEC;
-        printf("time: %lf seconds to find %d symmetry operations in %d equivalence sets\n",time,sopsl,esl);
-        start = clock();
         if(MSYM_SUCCESS != (ret = findPointGroup(sopsl, sops, t, &fpg))) goto err;
         pg = fpg;
-        end = clock();
-        time = (double)(end - start) / CLOCKS_PER_SEC;
-        printf("time: %lf seconds to find point group %s\n",time,pg->name);
         if(MSYM_SUCCESS != (ret = ctxSetPointGroup(ctx, pg))) {
             free(pg);
             goto err;
         }
         
-        printf("reducing linear\n");
         if(MSYM_SUCCESS != (ret = ctxReduceLinearPointGroup(ctx))) goto err;
         
     }
     
     if(NULL != fpg || isLinearSubgroup(pg)){
         // Reuild equivalence sets after determining poing group in case they are very similar
-        start = clock();
-        //if(MSYM_SUCCESS != (ret = msymFindEquivalenceSets(ctx))) goto err;
         if(MSYM_SUCCESS != (ret = splitPointGroupEquivalenceSets(pg, esl, es, &sesl, &ses, t))) goto err;
         if(MSYM_SUCCESS != (ret = ctxSetEquivalenceSets(ctx, sesl, ses))) goto err;
         ses = NULL; sesl = 0;
         if(MSYM_SUCCESS != (ret = ctxGetEquivalenceSets(ctx, &esl, &es))) goto err;
-        end = clock();
-        time = (double)(end - start) / CLOCKS_PER_SEC;
-        printf("time: %lf seconds to regenerate %d equivalence sets\n",time,esl);
     }
     
-    start = clock();
     if(MSYM_SUCCESS != (ret = msymFindEquivalenceSetPermutations(ctx))) goto err;
     
-    end = clock();
-    time = (double)(end - start) / CLOCKS_PER_SEC;
     if(MSYM_SUCCESS != (ret = ctxGetEquivalenceSets(ctx, &esl, &es))) goto err; //This is only for printing, since permutation may regenerate sets
-    printf("time: %lf seconds to find permutations of %d symmetry operations in %d equivalence sets\n",time,pg->order,esl);
     
     free(sops);
     return ret;
@@ -170,18 +148,11 @@ msym_error_t msymFindEquivalenceSets(msym_context ctx){
     int esl = 0;
     msym_equivalence_set_t *es;
     
-    clock_t start, end;
-    double time;
-    
     if(MSYM_SUCCESS != (ret = ctxGetElementPtrs(ctx, &pelementsl, &pelements))) goto err;
     if(MSYM_SUCCESS != (ret = ctxGetThresholds(ctx, &t))) goto err;
     if(MSYM_SUCCESS != (ret = ctxGetPointGroup(ctx, &pg))) {
         if(MSYM_SUCCESS != (ret = ctxGetGeometry(ctx, &g, eigval, eigvec))) goto err;
-        start = clock();
         if(MSYM_SUCCESS != (ret = findEquivalenceSets(pelementsl, pelements, g, &esl, &es, t))) goto err;
-        end = clock();
-        time = (double)(end - start) / CLOCKS_PER_SEC;
-        printf("time: %lf seconds to find %d equivalence sets in %d element molecule\n",time,esl,pelementsl);
     } else {
         if(MSYM_SUCCESS != (ret = findPointGroupEquivalenceSets(pg, pelementsl, pelements, &esl, &es, t))) goto err;
     }
@@ -405,16 +376,10 @@ msym_error_t msymSymmetrizeElements(msym_context ctx, double *oerr){
         goto err;
     }
     
-    clock_t start = clock();
-    
     if(MSYM_SUCCESS != (ret = symmetrizeMolecule(pg, esl, es, perm, t, &error))) goto err;
     
     if(MSYM_SUCCESS != (ret = ctxUpdateExternalElementCoordinates(ctx))) goto err;
     
-    clock_t end = clock();
-    double time = (double)(end - start) / CLOCKS_PER_SEC;
-    printf("time: %lf seconds to symmetrize %d equivalence sets in %d element molecule\n",time,esl,elementsl);
-        
     *oerr = error;
 err:
     return ret;
@@ -494,7 +459,6 @@ msym_error_t msymGenerateSubrepresentationSpaces(msym_context ctx){
     const msym_subgroup_t *sg = NULL;
     int *span = NULL;
     
-    clock_t start = clock();
     int basisl = 0, esl = 0, perml = 0, sopsl = 0, srsl = 0, elementsl = 0, sgl = 0;
     
     if(MSYM_SUCCESS != (ret = ctxGetThresholds(ctx, &t))) goto err;
@@ -514,15 +478,6 @@ msym_error_t msymGenerateSubrepresentationSpaces(msym_context ctx){
     if(MSYM_SUCCESS != (ret = generateSubrepresentationSpaces(pg, sgl, sg, esl, es, perm, basisl, basis, elements, eesmap, t, &srsl, &srs, &srsbf, &span))) goto err;
     
     if(MSYM_SUCCESS != (ret = ctxSetSubrepresentationSpaces(ctx,srsl,srs,srsbf,span))) goto err;
-    
-    
-    clock_t end = clock();
-    double time = (double)(end - start) / CLOCKS_PER_SEC;
-    printf("time: %lf seconds to generate %d representation spaces from %d basis functions\n",time,srsl,basisl);
-    
-    //for(int i = 0;i < ssl;i++) printSubspace(pg->ct, &ss[i]);
-    
-    //if(MSYM_SUCCESS != (ret = ctxSetOrbitalSubspaces(ctx, ssl, ss, span))) goto err;
     
     return ret;
 err:
@@ -636,10 +591,6 @@ msym_error_t msymSymmetrizeWavefunctions(msym_context ctx, int l, double c[l][l]
     
     int srsl = 0, basisl = 0;
     
-    clock_t start;
-    clock_t end;
-    double time;
-    
     if(MSYM_SUCCESS != (ret = ctxGetPointGroup(ctx, &pg))) goto err;
     if(pg->ct == NULL){
         if(MSYM_SUCCESS != (ret = generateCharacterTable(pg->type, pg->n, pg->order, pg->sops, &pg->ct))) goto err;
@@ -659,17 +610,7 @@ msym_error_t msymSymmetrizeWavefunctions(msym_context ctx, int l, double c[l][l]
         if(MSYM_SUCCESS != (ret = ctxGetSubrepresentationSpaces(ctx, &srsl, &srs, &span))) goto err;
     }
     
-    
-    
-    start = clock();
-    
     if(MSYM_SUCCESS != (ret = symmetrizeWavefunctions(pg, srsl, srs, span, basisl, basis, c , c, species, pf))) goto err;
-    
-    end = clock();
-    
-    time = (double)(end - start) / CLOCKS_PER_SEC;
-    
-    printf("time: %lf seconds to symmetrize %d wave functions\n",time,basisl);
     
 err:
     return ret;

@@ -15,6 +15,7 @@
 #include "permutation.h"
 #include "linalg.h"
 
+#include "debug.h"
 
 msym_error_t setPermutationCycles(msym_permutation_t *perm);
 
@@ -187,7 +188,7 @@ msym_error_t findPermutationSubgroups(int l, msym_permutation_t perm[l], int sgm
     *subgroup = mgroup;
     *subgroupl = gl;
     
-err:
+//err:
     for(int i = 0;i < gl;i++){
         free(group[i].sops);
     }
@@ -316,26 +317,3 @@ void permutationMatrix(msym_permutation_t *perm, double m[perm->p_length][perm->
     }
 }
 
-void printPermutation(msym_permutation_t *perm){
-    int l = perm->p_length;
-    printf("(");
-    for(int j = 0; j < l; j++){
-        printf(j == l -1 ? "%d" : "%d\t",j);
-    }
-    printf(")\n(");
-    for(int j = 0; j < l; j++){
-        printf(j == l -1 ? "%d" : "%d\t",perm->p[j]);
-    }
-    printf(")\n");
-    
-    for(msym_permutation_cycle_t* c = perm->c; c < (perm->c + perm->c_length);c++){
-        printf("(");
-        for(int next = c->s, j = 0;j < c->l;j++){
-            printf(j == c->l -1 ? "%d" : "%d ",next);
-            next = perm->p[next];
-        }
-        printf(")");
-    }
-    
-    printf("\n");
-}

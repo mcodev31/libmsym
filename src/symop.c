@@ -15,6 +15,8 @@
 #include "symop.h"
 #include "linalg.h"
 
+#include "debug.h"
+
 #ifndef M_PI
 #define M_PI 3.14159265358979323846264338327950288419716939937510582
 #endif
@@ -182,7 +184,7 @@ double symmetryOperationCharacter2(msym_symmetry_operation_t *sop, int dim, int 
                         }
                     };
                     
-                    printf("in %d dimensions ev[%d][%d][%d] = %lf\n",dim,d,sop->order-1,l,ev[d][sop->order-1][l]);
+                    clean_debug_printf("in %d dimensions ev[%d][%d][%d] = %lf\n",dim,d,sop->order-1,l,ev[d][sop->order-1][l]);
                     
                     x = ev[d][sop->order-1][l];
                 }
@@ -366,9 +368,9 @@ void printSymmetryOperation(msym_symmetry_operation_t *sop){
     char buf[12];
     symmetryOperationName(sop, 12, buf);
     if(sop->type == INVERSION || sop->type == IDENTITY)
-        printf("%s(%d)\n",buf,sop->cla);
+        clean_debug_printf("%s(%d)\n",buf,sop->cla);
     else
-        printf("%s(%d) [%lf;%lf;%lf]\n",buf,sop->cla, sop->v[0],sop->v[1],sop->v[2]);
+        clean_debug_printf("%s(%d) [%lf;%lf;%lf]\n",buf,sop->cla, sop->v[0],sop->v[1],sop->v[2]);
 }
 
 int igcd(int a, int b) {

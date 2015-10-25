@@ -14,7 +14,8 @@
 
 #include "character_table.h"
 #include "point_group.h"
-#include "linalg.h"
+
+#include "debug.h"
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846264338327950288419716939937510582
@@ -166,27 +167,8 @@ msym_error_t generateCharacterTable(msym_point_group_type_t type, int n, int sop
             }
         }
     }
-    
-    int nc = -1;
-    printf("\t");
-    for(int j = 0;j < sopsl;j++){
-        if(nc < sops[j].cla){
-            nc = sops[j].cla;
-            char buf[12];
-            symmetryOperationName(&sops[j], 12, buf);
-            printf("%d%s",ct->classc[sops[j].cla],buf);
-            printf("\t\t");
-        }
-    }
-    printf("\n");
-    for(int i = 0;i < ct->d;i++){
-        
-        printf("%s\t",ct->s[i].name);
-        for(int j = 0;j < ct->d;j++){
-            printf("% .3lf\t\t",table[i][j]);
-        }
-        printf("\n");
-    }
+
+    debug_printCharacterTable(ct);
     
     if(!linear && MSYM_SUCCESS != (ret = verifyCharacterTable(ct))) goto err;
     
@@ -199,7 +181,6 @@ err:
     free(ct);
     return ret;
 }
-
 
 #define CHARACTER_TABLE_VERIFICATION_THRESHOLD 1e-10
 msym_error_t verifyCharacterTable(msym_character_table_t *ct){
@@ -234,8 +215,8 @@ msym_error_t getRepresentationsCi(int n, int rl, msym_representation_t rep[rl]){
     r++;
     
     return ret;
-err:
-    return ret;
+//err:
+//    return ret;
 }
 
 msym_error_t getRepresentationsCs(int n, int rl, msym_representation_t rep[rl]){
@@ -252,8 +233,8 @@ msym_error_t getRepresentationsCs(int n, int rl, msym_representation_t rep[rl]){
     r++;
     
     return ret;
-err:
-    return ret;
+//err:
+//    return ret;
 }
 
 msym_error_t getRepresentationsCn(int n, int rl, msym_representation_t rep[rl]){
@@ -278,8 +259,8 @@ msym_error_t getRepresentationsCn(int n, int rl, msym_representation_t rep[rl]){
     }
     
     return ret;
-err:
-    return ret;
+//err:
+//    return ret;
 }
 
 msym_error_t getRepresentationsCnh(int n, int rl, msym_representation_t rep[rl]){
@@ -325,8 +306,8 @@ msym_error_t getRepresentationsCnh(int n, int rl, msym_representation_t rep[rl])
     }
     
     return ret;
-err:
-    return ret;
+//err:
+//    return ret;
 }
 
 msym_error_t getRepresentationsCnv(int n, int rl, msym_representation_t rep[rl]){
@@ -362,8 +343,8 @@ msym_error_t getRepresentationsCnv(int n, int rl, msym_representation_t rep[rl])
     }
     
     return ret;
-err:
-    return ret;
+//err:
+//    return ret;
 }
 
 msym_error_t getRepresentationsSn(int n, int rl, msym_representation_t rep[rl]){
@@ -405,8 +386,8 @@ msym_error_t getRepresentationsSn(int n, int rl, msym_representation_t rep[rl]){
     }
     
     return ret;
-err:
-    return ret;
+//err:
+//    return ret;
 }
 
 msym_error_t getRepresentationsDn(int n, int rl, msym_representation_t rep[rl]){
@@ -441,8 +422,8 @@ msym_error_t getRepresentationsDn(int n, int rl, msym_representation_t rep[rl]){
     }
     
     return ret;
-err:
-    return ret;
+//err:
+//    return ret;
 }
 
 msym_error_t getRepresentationsDnh(int n, int rl, msym_representation_t rep[rl]){
@@ -513,8 +494,8 @@ msym_error_t getRepresentationsDnh(int n, int rl, msym_representation_t rep[rl])
     }
     
     return ret;
-err:
-    return ret;
+//err:
+//    return ret;
 }
 
 msym_error_t getRepresentationsDnd(int n, int rl, msym_representation_t rep[rl]){
@@ -577,8 +558,8 @@ msym_error_t getRepresentationsDnd(int n, int rl, msym_representation_t rep[rl])
     
     
     return ret;
-err:
-    return ret;
+//err:
+//    return ret;
 }
 
 
@@ -673,7 +654,7 @@ msym_error_t getCharacterTableUnknown(int sopsl, msym_symmetry_operation_t sops[
     msymSetErrorDetails("Character table NYI");
     ret = MSYM_INVALID_CHARACTER_TABLE;
     
-err:
+//err:
     return ret;
 }
 
