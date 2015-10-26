@@ -10,5 +10,5 @@ if(NOT TARGET msym AND NOT LIBMSYM_BINARY_DIR)
   include("${LIBMSYM_CMAKE_DIR}/libmsymTargets.cmake")
 endif()
    
-# These are IMPORTED targets created by FooBarTargets.cmake
+# These are IMPORTED targets created by libmsymTargets.cmake
 set(LIBMSYM_LIBRARIES msym)

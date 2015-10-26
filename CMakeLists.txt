@@ -2,6 +2,10 @@ cmake_minimum_required (VERSION 2.8.11)
 
 project(libmsym C)
 
+# EXPORT HEADER
+#project(libmsym)
+#include (GenerateExportHeader)
+
 set(LIBMSYM_MAJOR_VERSION 0)
 set(LIBMSYM_MINOR_VERSION 2)
 set(LIBMSYM_PATCH_VERSION 0)
@@ -28,10 +32,23 @@ include_directories("${PROJECT_SOURCE_DIR}")
 
 file (GLOB source src/*.c)
 add_library (msym ${source})
+
 if (BUILD_SHARED_LIBS)
-        set_target_properties (msym PROPERTIES
-                POSITION_INDEPENDENT_CODE "TRUE")
+	set_target_properties (msym PROPERTIES
+		POSITION_INDEPENDENT_CODE "TRUE")
+#	EXPORT HEADER
+#	set(CMAKE_C_VISIBILITY_PRESET hidden)
+#	set(CMAKE_VISIBILITY_INLINES_HIDDEN 1)
 endif ()
+
+# EXPORT HEADER
+#set(CMAKE_INCLUDE_CURRENT_DIR ON)
+#generate_export_header(msym
+#             BASE_NAME msym
+#             EXPORT_MACRO_NAME MSYM_EXPORT
+#             EXPORT_FILE_NAME msym_EXPORTS.h
+#	     STATIC_DEFINE MSYM_EXPORTS_BUILT_AS_STATIC)
+
 set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99")
 set (CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -Wall -DLIBMSYM_DEBUG")
 #set_target_properties (msym PROPERTIES
@@ -55,6 +72,9 @@ install(FILES
     "${PROJECT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/libmsymConfig.cmake"
     "${PROJECT_BINARY_DIR}/libmsymConfigVersion.cmake"
     DESTINATION "${INSTALL_CMAKE_DIR}")
+
+# EXPORT HEADER
+#install(FILES "${PROJECT_BINARY_DIR}/msym_EXPORTS.h" DESTINATION "${INSTALL_INCLUDE_DIR}/libmsym")
 
 install(TARGETS msym
         EXPORT libmsymTargets
