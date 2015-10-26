@@ -1,10 +1,9 @@
 cmake_minimum_required (VERSION 2.8.11)
 
-project(libmsym C)
+#project(libmsym C)
 
-# EXPORT HEADER
-#project(libmsym)
-#include (GenerateExportHeader)
+project(libmsym)
+include (GenerateExportHeader)
 
 set(LIBMSYM_MAJOR_VERSION 0)
 set(LIBMSYM_MINOR_VERSION 2)
@@ -30,27 +29,34 @@ endforeach()
 
 include_directories("${PROJECT_SOURCE_DIR}")
 
+add_subdirectory(examples)
+
+if (BUILD_SHARED_LIBS)
+	set(CMAKE_C_VISIBILITY_PRESET hidden)
+	set(CMAKE_VISIBILITY_INLINES_HIDDEN 1)
+endif()
+
 file (GLOB source src/*.c)
 add_library (msym ${source})
 
 if (BUILD_SHARED_LIBS)
 	set_target_properties (msym PROPERTIES
 		POSITION_INDEPENDENT_CODE "TRUE")
-#	EXPORT HEADER
-#	set(CMAKE_C_VISIBILITY_PRESET hidden)
-#	set(CMAKE_VISIBILITY_INLINES_HIDDEN 1)
+else()
+	set_target_properties(msym PROPERTIES COMPILE_FLAGS -DMSYM_EXPORTS_BUILT_AS_STATIC)
 endif ()
 
-# EXPORT HEADER
-#set(CMAKE_INCLUDE_CURRENT_DIR ON)
-#generate_export_header(msym
-#             BASE_NAME msym
-#             EXPORT_MACRO_NAME MSYM_EXPORT
-#             EXPORT_FILE_NAME msym_EXPORTS.h
-#	     STATIC_DEFINE MSYM_EXPORTS_BUILT_AS_STATIC)
+set(CMAKE_INCLUDE_CURRENT_DIR ON)
+generate_export_header(msym
+             BASE_NAME msym
+             EXPORT_MACRO_NAME MSYM_EXPORT
+             EXPORT_FILE_NAME msym_EXPORTS.h
+	     STATIC_DEFINE MSYM_EXPORTS_BUILT_AS_STATIC)
 
 set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99")
+#set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 -flto")
 set (CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -Wall -DLIBMSYM_DEBUG")
+#set (CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} -flto" )
 #set_target_properties (msym PROPERTIES
 #        C_STANDARD 99
 #        C_STANDARD_REQUIRED ON)
@@ -74,7 +80,7 @@ install(FILES
     DESTINATION "${INSTALL_CMAKE_DIR}")
 
 # EXPORT HEADER
-#install(FILES "${PROJECT_BINARY_DIR}/msym_EXPORTS.h" DESTINATION "${INSTALL_INCLUDE_DIR}/libmsym")
+install(FILES "${PROJECT_BINARY_DIR}/msym_EXPORTS.h" DESTINATION "${INSTALL_INCLUDE_DIR}/libmsym")
 
 install(TARGETS msym
         EXPORT libmsymTargets
@@ -84,3 +90,5 @@ install(TARGETS msym
         LIBRARY DESTINATION "${INSTALL_LIB_DIR}" )
 
 install(EXPORT libmsymTargets DESTINATION "${INSTALL_CMAKE_DIR}")
+
+target_include_directories (msym PUBLIC "${INSTALL_INCLUDE_DIR}/libmsym")

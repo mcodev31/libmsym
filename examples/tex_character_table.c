@@ -14,6 +14,7 @@
 #include <float.h>
 #include <math.h>
 
+// Use <libmsym/msym.h> if installed
 #include "msym.h"
 
 void characterTableToTex(FILE *fp, msym_point_group_type_t type, int n, const char *name, const msym_character_table_t *ct);

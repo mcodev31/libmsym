@@ -302,6 +302,9 @@ class Context(object):
 
     libmsym.msymReleaseContext.restype = _ReturnCode
     libmsym.msymReleaseContext.argtypes = [_Context]
+
+    libmsym.msymGetErrorDetails.restype = c_char_p
+    libmsym.msymGetErrorDetails.argtypes = []
     
     libmsym.msymFindSymmetry.restype = _ReturnCode
     libmsym.msymFindSymmetry.argtypes = [_Context]
@@ -436,8 +439,9 @@ class Context(object):
             
         self._assert_success(_func(self._ctx, size, (BasisFunction*size)(*basis_functions)))
         self._basis_functions = basis_functions
-        self._update_symmetry_operations() #in case it's linear
-        self._update_character_table()
+        if not self._point_group is None:
+            self._update_symmetry_operations()
+            self._update_character_table()
         
     def _update_elements(self, _func=libmsym.msymGetElements):
         if not self._ctx:

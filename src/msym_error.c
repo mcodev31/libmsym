@@ -52,13 +52,13 @@ void msymSetErrorDetails(const char *format, ...){
     va_end(args);
 }
 
-const char *msymGetErrorDetails(){
+const char MSYM_EXPORT *msymGetErrorDetails(){
     snprintf(err_details_ext, sizeof(err_details_ext), "%s",err_details); // Not really neccessary
     msymSetErrorDetails("");
     return err_details_ext;
 }
 
-const char *msymErrorString(msym_error_t error){
+const char MSYM_EXPORT *msymErrorString(msym_error_t error){
     const char *ret = invalid;
     int length = sizeof(error_desc) / sizeof(error_desc[0]);
     for(int i = 0; i < length;i++){

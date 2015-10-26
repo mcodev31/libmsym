@@ -12,7 +12,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include "msym.h"
 #include "example.h"
 
 int read_xyz(const char *name, msym_element_t **ratoms);
