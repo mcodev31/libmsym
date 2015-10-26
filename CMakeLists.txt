@@ -92,4 +92,3 @@ install(TARGETS msym
 
 install(EXPORT libmsymTargets DESTINATION "${INSTALL_CMAKE_DIR}")
 
-target_include_directories (msym PUBLIC "${PROJECT_SOURCE_DIR}/src" ${PROJECT_BINARY_DIR})

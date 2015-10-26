@@ -1,5 +1,7 @@
 cmake_minimum_required (VERSION 2.8.11)
 
+include_directories(${PROJECT_BINARY_DIR} "${PROJECT_SOURCE_DIR}/src")
+
 add_executable (msym_example msym_example.c example.c)
 add_executable (msym_tex tex_character_table)
 
