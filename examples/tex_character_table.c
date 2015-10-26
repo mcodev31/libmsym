@@ -65,7 +65,7 @@ int main(int argc, const char * argv[]) {
         if(MSYM_SUCCESS != (ret = msymGetCharacterTable(ctx, &ct))) goto err;
         characterTableToTex(fp,pg_type,pg_n,argv[1],ct);
     } else {
-        fprintf(stderr, "usage tex_character_table <point group name> <filename>");
+        fprintf(stderr, "usage msym_tex <point group name> <filename> [angular momentum]");
     }
     msymReleaseContext(ctx);
     return 0;
