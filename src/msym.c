@@ -52,13 +52,12 @@ msym_error_t msymFindSymmetry(msym_context ctx){
             free(pg);
             goto err;
         }
-        
-        if(MSYM_SUCCESS != (ret = ctxReduceLinearPointGroup(ctx))) goto err;
-        
     }
     
-    if(NULL != fpg || isLinearSubgroup(pg)){
+    if(NULL != fpg || isLinearPointGroup(pg)){
         // Reuild equivalence sets after determining poing group in case they are very similar
+        if(MSYM_SUCCESS != (ret = ctxReduceLinearPointGroup(ctx))) goto err;
+        
         if(MSYM_SUCCESS != (ret = splitPointGroupEquivalenceSets(pg, esl, es, &sesl, &ses, t))) goto err;
         if(MSYM_SUCCESS != (ret = ctxSetEquivalenceSets(ctx, sesl, ses))) goto err;
         ses = NULL; sesl = 0;
@@ -407,7 +406,9 @@ msym_error_t msymSymmetrizeElements(msym_context ctx, double *oerr){
         goto err;
     }
     
-    if(MSYM_SUCCESS != (ret = symmetrizeMolecule(pg, esl, es, perm, t, &error))) goto err;
+    if(MSYM_SUCCESS != (ret = symmetrizeElements(pg, esl, es, perm, t, &error))) goto err;
+    
+    if(MSYM_SUCCESS != (ret = ctxUpdateGeometry(ctx))) goto err;
     
     if(MSYM_SUCCESS != (ret = ctxUpdateExternalElementCoordinates(ctx))) goto err;
     

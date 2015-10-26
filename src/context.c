@@ -19,6 +19,7 @@
 #include "geometry.h"
 #include "linalg.h"
 #include "subspace.h"
+#include "debug.h"
 
 const msym_thresholds_t default_thresholds = {
     .zero = DEFAULT_ZERO_THRESHOLD,
@@ -164,7 +165,11 @@ err:
 msym_error_t msymGetBasisFunctions(msym_context ctx, int *length, msym_basis_function_t **basis){
     msym_error_t ret = MSYM_SUCCESS;
     if(ctx == NULL) {ret = MSYM_INVALID_CONTEXT;goto err;}
-    if(ctx->basis == NULL) {ret = MSYM_INVALID_BASIS_FUNCTIONS;goto err;}
+    if(ctx->basis == NULL) {
+        msymSetErrorDetails("Found no basis functions");
+        ret = MSYM_INVALID_BASIS_FUNCTIONS;
+        goto err;
+    }
     
     *length = ctx->basisl;
     *basis = ctx->basis;
@@ -191,6 +196,7 @@ msym_error_t msymSetBasisFunctions(msym_context ctx, int length, msym_basis_func
         }
         
         if(bf->type != MSYM_BASIS_TYPE_REAL_SPHERICAL_HARMONIC){
+            msymSetErrorDetails("Only supported basis function type a is real spherical harmonic");
             ret = MSYM_INVALID_BASIS_FUNCTIONS;
             goto err;
         }
@@ -207,10 +213,9 @@ msym_error_t msymSetBasisFunctions(msym_context ctx, int length, msym_basis_func
     ctx->basisl = length;
     
     if(NULL != ctx->pg && isLinearPointGroup(ctx->pg)){
-        if(MSYM_SUCCESS != (ret = ctxReduceLinearPointGroup(ctx))) goto err;
         free(ctx->pg->ct);
         ctx->pg->ct = NULL;
-        if(MSYM_SUCCESS != (ret = msymFindSymmetry(ctx))) goto err; // This will only do eq set building
+        if(MSYM_SUCCESS != (ret = msymFindSymmetry(ctx))) goto err; // This will only do eq set building and linear reduction
     }
     
     return ret;
@@ -288,7 +293,11 @@ msym_error_t msymGetSubrepresentationSpaces(msym_context ctx, int *l, const msym
     if(NULL == ctx) {ret = MSYM_INVALID_CONTEXT;goto err;}
     if(NULL == ctx->srs){
         if(MSYM_SUCCESS != (ret = msymGenerateSubrepresentationSpaces(ctx))) goto err;
-        if(NULL == ctx->srs){ret = MSYM_INVALID_BASIS_FUNCTIONS;goto err;}
+        if(NULL == ctx->srs){
+            msymSetErrorDetails("Found no subrepresentation spaces");
+            ret = MSYM_INVALID_BASIS_FUNCTIONS;
+            goto err;
+        }
     }
     
     *srs = ctx->srs;
@@ -514,7 +523,6 @@ err:
     return ret;
 }
 
-
 msym_error_t ctxGetInternalElement(msym_context ctx, msym_element_t *ext, msym_element_t **element){
     msym_error_t ret = MSYM_SUCCESS;
     if(ctx == NULL) {ret = MSYM_INVALID_CONTEXT;goto err;}
@@ -563,7 +571,11 @@ err:
 msym_error_t ctxGetBasisFunctions(msym_context ctx, int *l, msym_basis_function_t **basis){
     msym_error_t ret = MSYM_SUCCESS;
     if(ctx == NULL) {ret = MSYM_INVALID_CONTEXT; goto err;}
-    if(ctx->basis == NULL) {ret = MSYM_INVALID_BASIS_FUNCTIONS; goto err;}
+    if(ctx->basis == NULL) {
+        msymSetErrorDetails("Found no subrepresentation spaces in context");
+        ret = MSYM_INVALID_BASIS_FUNCTIONS;
+        goto err;
+    }
     *basis = (msym_basis_function_t *) ctx->basis;
     *l = ctx->basisl;
 err:
@@ -711,6 +723,15 @@ msym_error_t ctxSetSubrepresentationSpaces(msym_context ctx, int srsl, msym_subr
     ctx->srs = srs;
     ctx->srsbf = srsbf;
     ctx->srs_span = span;
+err:
+    return ret;
+}
+
+msym_error_t ctxUpdateGeometry(msym_context ctx){
+    msym_error_t ret = MSYM_SUCCESS;
+    if(ctx == NULL) {ret = MSYM_INVALID_CONTEXT; goto err;}
+    double zero[3] = {0,0,0};
+    if(MSYM_SUCCESS != (ret = findGeometry(ctx->elementsl, ctx->pelements, zero, ctx->thresholds, &ctx->geometry, ctx->eigval, ctx->eigvec))) goto err;
 err:
     return ret;
 }

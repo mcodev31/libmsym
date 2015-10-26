@@ -43,9 +43,9 @@ int example(const char* in_file, msym_thresholds_t *thresholds){
     int msgl = 0, msopsl = 0, mlength = 0, msrsl = 0, mbfsl = 0;
     int orbitalsl = 0, bfsl = 0;
     
-    char *orbitals[15] = {"2px", "2py", "2pz", "3d2-", "3d1-", "3d0", "3d1+", "3d2+","4f3-", "4f2-", "4f1-", "4f0", "4f1+", "4f2+", "4f3+"};
+    //char *orbitals[15] = {"2px", "2py", "2pz", "3d2-", "3d1-", "3d0", "3d1+", "3d2+","4f3-", "4f2-", "4f1-", "4f0", "4f1+", "4f2+", "4f3+"};
     
-    //char *orbitals[13] = {"7i6-", "7i5-", "7i4-", "7i3-", "7i2-", "7i1-", "7i0", "7i1+", "7i2+", "7i3+", "7i4+", "7i5+", "7i6+"};
+    char *orbitals[13] = {"7i6-", "7i5-", "7i4-", "7i3-", "7i2-", "7i1-", "7i0", "7i1+", "7i2+", "7i3+", "7i4+", "7i5+", "7i6+"};
     
     /* This function reads xyz files.
      * It initializes an array of msym_element_t to 0,
@@ -131,8 +131,7 @@ int example(const char* in_file, msym_thresholds_t *thresholds){
     /* Set pointgroup to the C3v subgroup if it has XXX symmetry
      * using the same alignment as the original.
      * If specific axes are wanted the alignment axes/transform can be set using:
-     * msym Get/Set Alignment Transform/Axes
-     * And of course you can keep Th if you want =D */
+     * msym Get/Set Alignment Transform/Axes */
     if(0 == strncmp(point_group, "XXX", 3) && ssg == 0){
         //double transform[3][3];
         printf("Changing pointgroup from XXX -> C3v\n");
@@ -177,7 +176,7 @@ int example(const char* in_file, msym_thresholds_t *thresholds){
                melements[i].v[1],
                melements[i].v[2]);
     }
-    
+
     if(MSYM_SUCCESS != (ret = msymGetBasisFunctions(ctx, &mbfsl, &mbfs))) goto err;
     if(MSYM_SUCCESS != (ret = msymGetSubrepresentationSpaces(ctx, &msrsl, &msrs))) goto err;
     if(MSYM_SUCCESS != (ret = msymGetCharacterTable(ctx, &mct))) goto err;
@@ -327,7 +326,7 @@ int read_xyz(const char *name, msym_element_t **ratoms) {
         printf("Comment: %.*s", (int)sizeof(buf), buf);
     }
     
-    for (int i = 0; fgets(buf, sizeof(buf), fp) && sscanf(buf, "%s %lf %lf %lf", a[i].name, &(a[i].v[0]),  &(a[i].v[1]),  &(a[i].v[2])) == 4 && i < l; i++) {}
+    for (int i = 0; i < l && fgets(buf, sizeof(buf), fp) && sscanf(buf, "%s %lf %lf %lf", a[i].name, &(a[i].v[0]),  &(a[i].v[1]),  &(a[i].v[2])) == 4 && i < l; i++) {}
     *ratoms = a;
     fclose(fp);
     return l;

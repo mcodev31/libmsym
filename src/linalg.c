@@ -398,10 +398,21 @@ void mmmul(const double A[3][3], const double B[3][3], double C[3][3]){
 }
 
 void mmtlmul(int rla, int cla, const double A[rla][cla], int rlb, const double B[rlb][cla], double C[rla][rlb]){
-    double (*T)[rlb] = malloc(sizeof(double[cla][rlb]));
-    mltranspose(rlb, cla, B, T);
-    mmlmul(rla,cla,A,rlb,T,C);
-    free(T);
+    if(A == C || B == C){
+        double (*T)[rlb] = malloc(sizeof(double[cla][rlb]));
+        mltranspose(rlb, cla, B, T);
+        mmlmul(rla,cla,A,rlb,T,C);
+        free(T);
+    } else {
+        for(int r=0; r < rla; r++){
+            for(int c=0; c < rlb; c++){
+                C[r][c] = 0.0;
+                for(int k=0; k < cla; k++){
+                    C[r][c]+=A[r][k]*B[c][k]; //Possibly thrashing cashe, but better than repeated mallocs if reasonably small
+                }
+            }
+        }
+    }
 }
 
 void mmlmul(int rla, int cla, double const A[rla][cla], int clb, const double B[cla][clb], double C[rla][clb]){
@@ -424,11 +435,7 @@ void mmlmul(int rla, int cla, double const A[rla][cla], int clb, const double B[
         }
     }
     if(A == C || B == C){
-        for(int r=0; r < rla; r++){
-            for(int c=0; c < clb; c++){
-                C[r][c] = T[r][c];
-            }
-        }
+        memcpy(C, T, sizeof(double[rla][clb]));
         free(T);
     }
 }

@@ -20,20 +20,6 @@
 
 #define SQR(x) ((x)*(x))
 
-
-msym_error_t symmetrizeMoleculeProject(msym_point_group_t *pg, int esl, msym_equivalence_set_t *es, msym_permutation_t **perm, msym_thresholds_t *thresholds, double *err);
-msym_error_t symmetrizeMoleculeLinear(msym_point_group_t *pg, int esl, msym_equivalence_set_t *es, msym_permutation_t **perm, msym_thresholds_t *thresholds, double *err);
-
-msym_error_t symmetrizeMolecule(msym_point_group_t *pg, int esl, msym_equivalence_set_t *es, msym_permutation_t **perm, msym_thresholds_t *thresholds, double *err){
-    msym_error_t ret = MSYM_SUCCESS;
-    if(isLinearPointGroup(pg)){
-        ret = symmetrizeMoleculeLinear(pg,esl,es,perm,thresholds,err);
-    } else {
-        ret = symmetrizeMoleculeProject(pg,esl,es,perm,thresholds,err);
-    }
-    
-    return ret;
-}
 /* This is a projection into the fully symmetric space.
  * A little more computation than if we just recreate it from one atom,
  * but it is independant of the chosen atom and we can get the size
@@ -41,7 +27,7 @@ msym_error_t symmetrizeMolecule(msym_point_group_t *pg, int esl, msym_equivalenc
  * The sizes of the individual equivalence sets are rather small anyways.
  */
 
-msym_error_t symmetrizeMoleculeProject(msym_point_group_t *pg, int esl, msym_equivalence_set_t *es, msym_permutation_t **perm, msym_thresholds_t *thresholds, double *err){
+msym_error_t symmetrizeElements(msym_point_group_t *pg, int esl, msym_equivalence_set_t *es, msym_permutation_t **perm, msym_thresholds_t *thresholds, double *err){
     msym_error_t ret = MSYM_SUCCESS;
     double e = 0.0;
     double (*v)[3] = malloc(sizeof(double[pg->order][3]));
@@ -73,74 +59,6 @@ msym_error_t symmetrizeMoleculeProject(msym_point_group_t *pg, int esl, msym_equ
     *err = sqrt(fmax(e,0.0)); //should never be < 0, but it's a dumb way to die
 err:
     free(v);
-    return ret;
-}
-
-msym_error_t symmetrizeMoleculeLinear(msym_point_group_t *pg, int esl, msym_equivalence_set_t *es, msym_permutation_t **perm, msym_thresholds_t *thresholds, double *err){
-    msym_error_t ret = MSYM_SUCCESS;
-    double e = 0.0;
-    double (*v)[3] = malloc(sizeof(double[pg->order][3]));
-    double (*vinf)[3] = malloc(sizeof(double[pg->order][3]));
-    msym_symmetry_operation_t *cinf = NULL;
-    msym_symmetry_operation_t *cinfsub = NULL;
-    int sub = isLinearSubgroup(pg);
-    
-    for(int i = 0; i < pg->order;i++){
-        if(pg->sops[i].type == PROPER_ROTATION && pg->sops[i].order == 0) {
-            cinf = &pg->sops[i];
-            break;
-        }
-        
-        if(sub && pg->sops[i].type == PROPER_ROTATION && pg->sops[i].orientation == HORIZONTAL){
-            cinfsub = &pg->sops[i];
-        }
-    }
-    
-    cinf = (cinf == NULL ? cinfsub : cinf);
-    
-    if(cinf == NULL){
-        ret = MSYM_SYMMETRIZATION_ERROR;
-        msymSetErrorDetails("Cannot find Cinf operation in linear point group");
-        goto err;
-    }
-    
-    for(int i = 0; i < esl;i++){
-        if(es[i].length > pg->order){
-            ret = MSYM_SYMMETRIZATION_ERROR;
-            msymSetErrorDetails("Equivalence set (%d elements) larger than order of point group (%d)",es[i].length,pg->order);
-            goto err;
-        }
-        
-        memset(v, 0, sizeof(double[pg->order][3]));
-        
-        for(int k = 0; k < es[i].length;k++){
-            vproj(es[i].elements[k]->v, cinf->v, vinf[k]);
-        }
-        
-        for(int j = 0; j < pg->order;j++){
-            for(int k = 0; k < es[i].length;k++){
-                int p = perm[i][j].p[k];
-                double sv[3];
-                applySymmetryOperation(&pg->sops[j], vinf[k], sv);
-                vadd(sv, v[p], v[p]);
-            }
-        }
-        double sl = 0.0, ol = 0.0;
-        for(int j = 0; j < es[i].length;j++){
-            ol += vdot(es[i].elements[j]->v,es[i].elements[j]->v);
-            sl += vdot(v[j],v[j]);
-            vscale(1.0/((double)pg->order), v[j], es[i].elements[j]->v);
-        }
-        sl /= SQR((double)pg->order);
-        if(!(es[i].length == 1 && ol <= thresholds->zero)) e = fmax(e,(ol-sl)/ol);
-
-        
-    }
-    
-    *err = sqrt(e);
-err:
-    free(v);
-    free(vinf);
     return ret;
 }
 

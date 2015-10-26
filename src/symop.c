@@ -173,8 +173,13 @@ void symmetryOperationShortName(msym_symmetry_operation_t* sop, int l, char buf[
 void applySymmetryOperation(msym_symmetry_operation_t *sop,double iv[3], double ov[3]){
     switch (sop->type) {
         case PROPER_ROTATION   : {
-            double theta = (sop->order == 0 ? 0.0 : sop->power*2*M_PI/sop->order);
-            vrotate(theta, iv, sop->v, ov);
+            if(sop->order){
+                double theta = sop->power*2*M_PI/sop->order;
+                vrotate(theta, iv, sop->v, ov);
+            } else {
+                // Treat C0 as a sum over all Cn operations i.e. a projection
+                vproj(iv, sop->v, ov);
+            }
             break;
         }
         case IMPROPER_ROTATION : {
@@ -224,8 +229,13 @@ void invertSymmetryOperation(msym_symmetry_operation_t *sop, msym_symmetry_opera
 void symmetryOperationMatrix(msym_symmetry_operation_t *sop, double m[3][3]){
     switch (sop->type) {
         case PROPER_ROTATION   : {
-            double theta = (sop->order == 0 ? 0.0 : sop->power*2*M_PI/sop->order);
-            mrotate(theta, sop->v, m);
+            if(sop->order){
+                double theta = sop->power*2*M_PI/sop->order;
+                mrotate(theta, sop->v, m);
+            } else {
+                // Treat C0 as a sum over all Cn operations i.e. a projection
+                kron2(3, 1, &sop->v, 1, 3, &sop->v, m);
+            }
             break;
         }
         case IMPROPER_ROTATION : {
