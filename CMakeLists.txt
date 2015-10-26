@@ -46,7 +46,8 @@ else()
 	set_target_properties(msym PROPERTIES COMPILE_FLAGS -DMSYM_EXPORTS_BUILT_AS_STATIC)
 endif ()
 
-set(CMAKE_INCLUDE_CURRENT_DIR ON)
+include_directories("${PROJECT_BINARY_DIR}")
+
 generate_export_header(msym
              BASE_NAME msym
              EXPORT_MACRO_NAME MSYM_EXPORT
