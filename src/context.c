@@ -115,7 +115,7 @@ err:
     return ret;
 }
 
-msym_error_t msymGetThresholds(msym_context ctx, msym_thresholds_t **thresholds){
+msym_error_t msymGetThresholds(msym_context ctx, const msym_thresholds_t **thresholds){
     msym_error_t ret = MSYM_SUCCESS;
     if(ctx == NULL) {ret = MSYM_INVALID_CONTEXT;goto err;}
     if(ctx->thresholds == NULL) ret = MSYM_INVALID_THRESHOLD;
@@ -201,7 +201,7 @@ msym_error_t msymSetBasisFunctions(msym_context ctx, int length, msym_basis_func
             goto err;
         }
         
-        msym_spherical_harmonic_t *sh = &bf->f.sh;
+        msym_real_spherical_harmonic_t *sh = &bf->f.rsh;
         
         if(sh->n <= 0){
             if(MSYM_SUCCESS != (ret = basisFunctionFromName(bf->name,bf))) goto err;
@@ -596,7 +596,7 @@ msym_error_t ctxReduceLinearPointGroup(msym_context ctx){
     if(ctx->pg == NULL) {ret = MSYM_INVALID_POINT_GROUP; goto err;}
     if(isLinearPointGroup(ctx->pg) && NULL != ctx->basis && 0 != ctx->basisl){
         int lmax = 0;
-        for(int i = 0;i < ctx->basisl;i++) lmax = lmax > ctx->basis[i].f.sh.l ? lmax : ctx->basis[i].f.sh.l;
+        for(int i = 0;i < ctx->basisl;i++) lmax = lmax > ctx->basis[i].f.rsh.l ? lmax : ctx->basis[i].f.rsh.l;
         if(MSYM_SUCCESS != (ret = reduceLinearPointGroup(ctx->pg, 2*lmax, ctx->thresholds))) goto err;
         ctxDestroySubgroups(ctx);
     }

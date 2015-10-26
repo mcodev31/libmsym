@@ -18,9 +18,9 @@ msym_error_t basisFunctionFromQuantumNumbers(int n, int l, int m, msym_basis_fun
     
     if(l > n || abs(m) > l) goto err;
     
-    bf->f.sh.n = n;
-    bf->f.sh.l = l;
-    bf->f.sh.m = m;
+    bf->f.rsh.n = n;
+    bf->f.rsh.l = l;
+    bf->f.rsh.m = m;
     
     memset(bf->name,0,sizeof(bf->name));
     

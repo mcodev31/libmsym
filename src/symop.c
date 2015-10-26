@@ -95,7 +95,7 @@ double symmetryOperationCharacter(msym_symmetry_operation_t *sop, msym_basis_fun
     double c = 0.0;
     switch (f->type) {
         case MSYM_BASIS_TYPE_REAL_SPHERICAL_HARMONIC:
-            c = symmetryOperationYCharacter(sop,f->f.sh.l);
+            c = symmetryOperationYCharacter(sop,f->f.rsh.l);
             break;
         case MSYM_BASIS_TYPE_CARTESIAN :
             c = symmetryOperationCartesianCharacter(sop);

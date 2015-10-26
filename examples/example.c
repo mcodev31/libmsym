@@ -190,7 +190,7 @@ int example(const char* in_file, msym_thresholds_t *thresholds){
             msym_salc_t *salc = &msrs[i].salc[j];
             msym_basis_function_t *bf = salc->f[0];
             if(bf->type == MSYM_BASIS_TYPE_REAL_SPHERICAL_HARMONIC) type = "real spherical harmonic ";
-            printf("\tSALC %d was constructed from %d %sbasis functions on %s with quantum numbers n=%d and l=%d\n",j,salc->fl,type,bf->element->name,bf->f.sh.n,bf->f.sh.l);
+            printf("\tSALC %d was constructed from %d %sbasis functions on %s with quantum numbers n=%d and l=%d\n",j,salc->fl,type,bf->element->name,bf->f.rsh.n,bf->f.rsh.l);
         }
     }
     

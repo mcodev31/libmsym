@@ -101,7 +101,7 @@ class _RealSphericalHarmonic(Structure):
                 ("m", c_int)]
 
 class _BasisFunctionUnion(Union):
-    _fields_ = [("_sh", _RealSphericalHarmonic)]
+    _fields_ = [("_rsh", _RealSphericalHarmonic)]
 
 class BasisFunction(Structure):
     _fields_ = [("_id", c_void_p),
@@ -130,31 +130,31 @@ class RealSphericalHarmonic(BasisFunction):
     def __init__(self, element=None, n=0, l=0, m=0, name=""):
         super().__init__(element=element)
         self._type = 0
-        self._f._sh.n = n
-        self._f._sh.l = l
-        self._f._sh.m = m
+        self._f._rsh.n = n
+        self._f._rsh.l = l
+        self._f._rsh.m = m
         self.name = name
 
     @property
     def n(self):
-        return self._f._sh.n
+        return self._f._rsh.n
     @n.setter
     def n(self, n):
-        self._f._sh.n = n
+        self._f._rsh.n = n
 
     @property
     def l(self):
-        return self._f._sh.l
+        return self._f._rsh.l
     @l.setter
     def l(self, n):
-        self._f._sh.n = l
+        self._f._rsh.n = l
 
     @property
     def m(self):
-        return self._f._sh.m
+        return self._f._rsh.m
     @m.setter
     def m(self, n):
-        self._f._sh.n = m
+        self._f._rsh.n = m
 
 class SALC(Structure):
     _fields_ = [("_d", c_int),

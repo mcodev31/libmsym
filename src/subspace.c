@@ -233,8 +233,8 @@ msym_error_t generateSubrepresentationSpaces(msym_point_group_t *pg, int sgl, co
     enum _msym_basis_type ftype = basis[0].type;
     for(int i = 0;i < basisl;i++){
         if(basis[i].type != ftype) {nmax = -1; break;}
-        lmax = basis[i].f.sh.l > lmax ? basis[i].f.sh.l : lmax;
-        nmax = basis[i].f.sh.n > nmax ? basis[i].f.sh.n : nmax;
+        lmax = basis[i].f.rsh.l > lmax ? basis[i].f.rsh.l : lmax;
+        nmax = basis[i].f.rsh.n > nmax ? basis[i].f.rsh.n : nmax;
     }
     
     if(lmax < 0 || nmax < 1){
@@ -294,7 +294,7 @@ msym_error_t generateSubrepresentationSpaces(msym_point_group_t *pg, int sgl, co
     
     /* determine number of l-type basis functions in each ES */
     for(int o = 0;o < basisl;o++){
-        les[esmap[basis[o].element - elements] - es][basis[o].f.sh.l] += basis[o].f.sh.m == 0;
+        les[esmap[basis[o].element - elements] - es][basis[o].f.rsh.l] += basis[o].f.rsh.m == 0;
     }
     
     if(MSYM_SUCCESS != (ret = generateRepresentations(pg->order+1, pg->order, pg->sops, lmax, lts))) goto err;
@@ -318,8 +318,8 @@ msym_error_t generateSubrepresentationSpaces(msym_point_group_t *pg, int sgl, co
             msymSetErrorDetails("Basis function does not map to any equivalence set");
             goto err;
         }
-        if(bf->f.sh.n > esnmax[e - es]) esnmax[e - es] = bf->f.sh.n;
-        esbfmap[e - es][esi][bf->f.sh.n][bf->f.sh.l][bf->f.sh.m+bf->f.sh.l] = bf;
+        if(bf->f.rsh.n > esnmax[e - es]) esnmax[e - es] = bf->f.rsh.n;
+        esbfmap[e - es][esi][bf->f.rsh.n][bf->f.rsh.l][bf->f.rsh.m+bf->f.rsh.l] = bf;
     }
     
     int srsbfi = 0;
@@ -358,7 +358,7 @@ msym_error_t generateSubrepresentationSpaces(msym_point_group_t *pg, int sgl, co
     /* calculate span of irreducible representations for basis functions and permutations */
     for(int s = 0; s < pg->order;s++){
         for(int l = 0; l <= lmax;l++){
-            dbf.f.sh.l = l; //TODO: function type based
+            dbf.f.rsh.l = l; //TODO: function type based
             double c = symmetryOperationCharacter(&pg->sops[s], &dbf);
             for(int k = 0;k < ct->d;k++){
                 bspan[l][k] += c*ctable[k][pg->sops[s].cla];

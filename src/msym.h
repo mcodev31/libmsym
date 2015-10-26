@@ -107,11 +107,11 @@ extern "C" {
         int length;                             // Number of elements
     } msym_equivalence_set_t ;
     
-    typedef struct _msym_spherical_harmonic {
+    typedef struct _msym_real_spherical_harmonic {
         int n;                                  // Principal
         int l;                                  // Azimuthal
         int m;                                  // Liniear combination of magnetic quantum number (e.g. 2pz = 0, 2px = 1, 2py = -1)
-    } msym_spherical_harmonic_t;
+    } msym_real_spherical_harmonic_t;
     
     typedef struct _msym_basis_function {
         void *id;                               // custom identifier
@@ -121,15 +121,15 @@ extern "C" {
         } type;
         msym_element_t *element;
         union {
-            msym_spherical_harmonic_t sh;       // Atomic orbital basis
+            msym_real_spherical_harmonic_t rsh;       // Atomic orbital basis
         } f;
         char name[8];
     
     } msym_basis_function_t;
     
     typedef struct _msym_partner_function {
-        int i;
-        int d;
+        int i;          // index of partner 0
+        int d;          // component (dimension)
     } msym_partner_function_t;
     
     typedef struct _msym_salc {
@@ -165,7 +165,7 @@ extern "C" {
     
     const msym_thresholds_t *msymGetDefaultThresholds();
     msym_error_t msymSetThresholds(msym_context ctx, const msym_thresholds_t *thresholds);
-    msym_error_t msymGetThresholds(msym_context ctx, msym_thresholds_t **thresholds);
+    msym_error_t msymGetThresholds(msym_context ctx, const msym_thresholds_t **thresholds);
     msym_error_t msymSetElements(msym_context ctx, int length, msym_element_t *elements);
     msym_error_t msymGetElements(msym_context ctx, int *length, msym_element_t **elements);
     msym_error_t msymSetBasisFunctions(msym_context ctx, int length, msym_basis_function_t *basis);

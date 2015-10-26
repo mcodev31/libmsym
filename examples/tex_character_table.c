@@ -51,9 +51,9 @@ int main(int argc, const char * argv[]) {
                 int i = m+l;
                 basis[i].type = MSYM_BASIS_TYPE_REAL_SPHERICAL_HARMONIC;
                 basis[i].element = &element;
-                basis[i].f.sh.n = l+1;
-                basis[i].f.sh.l = l;
-                basis[i].f.sh.m = m;
+                basis[i].f.rsh.n = l+1;
+                basis[i].f.rsh.l = l;
+                basis[i].f.rsh.m = m;
             }
             if(MSYM_SUCCESS != (ret = msymSetBasisFunctions(ctx, 2*l+1, basis))) {
                 free(basis);
