@@ -3,6 +3,9 @@ cmake_minimum_required (VERSION 2.8.11)
 #project(libmsym C) # unfortunately GenerateExportHeader doesn't support C projects, which sort of makes this project reqire c++ =/
 
 project(libmsym)
+
+option(MSYM_BUILD_EXAMPLES "Build example executables" OFF)
+
 include (GenerateExportHeader)
 
 set(LIBMSYM_MAJOR_VERSION 0)
@@ -29,19 +32,15 @@ endforeach()
 
 include_directories("${PROJECT_SOURCE_DIR}")
 
-add_subdirectory(examples)
-
-if (BUILD_SHARED_LIBS)
-	set(CMAKE_C_VISIBILITY_PRESET hidden)
-	set(CMAKE_VISIBILITY_INLINES_HIDDEN 1)
-endif()
-
 file (GLOB source src/*.c)
 add_library (msym ${source})
 
 if (BUILD_SHARED_LIBS)
 	set_target_properties(msym PROPERTIES
-		POSITION_INDEPENDENT_CODE "TRUE")
+		POSITION_INDEPENDENT_CODE TRUE
+		C_VISIBILITY_PRESET hidden
+		VISIBILITY_INLINES_HIDDEN 1)
+
 else()
 	set_target_properties(msym PROPERTIES COMPILE_FLAGS -DMSYM_EXPORTS_BUILT_AS_STATIC)
 endif ()
@@ -101,3 +100,6 @@ install(TARGETS msym
 
 install(EXPORT libmsymTargets DESTINATION "${INSTALL_CMAKE_DIR}")
 
+if(MSYM_BUILD_EXAMPLES)
+	add_subdirectory(examples)
+endif()
