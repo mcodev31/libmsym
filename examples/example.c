@@ -149,10 +149,7 @@ int example(const char* in_file, msym_thresholds_t *thresholds){
             printf("Found a C3^1 axis, YEY!\n");
         }
     }
-    
-    /* Aligning axes prior to orbital symmetrization will
-     * change the orientation of orbitals with l >= 1 */
-    if(MSYM_SUCCESS != (ret = msymAlignAxes(ctx))) goto err;
+
     
     /* Symmetrize the molecule.
      * You can do this before orbital symmetrization as well,
@@ -245,6 +242,11 @@ int example(const char* in_file, msym_thresholds_t *thresholds){
         }
         printf("\n");
     }
+    
+    /* Aligning axes prior to orbital symmetrization will
+     * change the orientation of orbitals with l >= 1
+     * relative to the molecular orientation */
+    // if(MSYM_SUCCESS != (ret = msymAlignAxes(ctx))) goto err;
     
     /* Make a new element with the same type as the first one we read */
     msym_element_t myelement;

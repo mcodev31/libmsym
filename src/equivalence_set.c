@@ -42,17 +42,19 @@ msym_error_t copyEquivalenceSets(int length, msym_equivalence_set_t es[length], 
 }
 
 //TODO: Use a preallocated pointer array instead of multiple mallocs
-msym_error_t generateEquivalenceSet(msym_point_group_t *pg, int length, msym_element_t elements[length], int *glength, msym_element_t **gelements, int *esl, msym_equivalence_set_t **es,msym_thresholds_t *thresholds){
+msym_error_t generateEquivalenceSet(msym_point_group_t *pg, int length, msym_element_t elements[length], double cm[3], int *glength, msym_element_t **gelements, int *esl, msym_equivalence_set_t **es,msym_thresholds_t *thresholds){
     msym_error_t ret = MSYM_SUCCESS;
     msym_element_t *ge = calloc(length,sizeof(msym_element_t[pg->order]));
     msym_equivalence_set_t *ges = calloc(length,sizeof(msym_equivalence_set_t));
     int gel = 0;
     int gesl = 0;
     for(int i = 0;i < length;i++){
+        double ev[3];
+        vsub(elements[i].v, cm, ev);
         msym_equivalence_set_t *aes = NULL;
         int f;
         for(f = 0;f < gel;f++){
-            if(ge[f].n == elements[i].n && ge[f].m == elements[i].m && 0 == strncmp(ge[f].name, elements[i].name, sizeof(ge[f].name)) && vequal(ge[f].v, elements[i].v, thresholds->permutation)){
+            if(ge[f].n == elements[i].n && ge[f].m == elements[i].m && 0 == strncmp(ge[f].name, elements[i].name, sizeof(ge[f].name)) && vequal(ge[f].v, ev, thresholds->permutation)){
                 break;
             }
         }
@@ -66,7 +68,7 @@ msym_error_t generateEquivalenceSet(msym_point_group_t *pg, int length, msym_ele
 
         for(msym_symmetry_operation_t *s = pg->sops;s < (pg->sops + pg->order);s++){
             double v[3];
-            applySymmetryOperation(s, elements[i].v, v);
+            applySymmetryOperation(s, ev, v);
             
             for(f = 0;f < gel;f++){
                 if(ge[f].n == elements[i].n && ge[f].m == elements[i].m && 0 == strncmp(ge[f].name, elements[i].name, sizeof(ge[f].name)) && vequal(ge[f].v, v, thresholds->permutation)){
@@ -75,6 +77,7 @@ msym_error_t generateEquivalenceSet(msym_point_group_t *pg, int length, msym_ele
             }
             if(f == gel){
                 memcpy(&ge[gel],&elements[i],sizeof(msym_element_t));
+                ge[gel].id = NULL;
                 vcopy(v, ge[gel].v);
                 aes->elements[aes->length++] = &ge[gel++];
             }

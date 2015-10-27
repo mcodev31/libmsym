@@ -134,12 +134,14 @@ msym_error_t msymGenerateElements(msym_context ctx, int length, msym_element_t e
     msym_equivalence_set_t *es = NULL;
     msym_element_t **pelements = NULL;
     double err = 0.0;
-    
+    double cm[3];
     
     int glength = 0, plength = 0, esl = 0;
     if(MSYM_SUCCESS != (ret = ctxGetThresholds(ctx, &t))) goto err;
+    if(MSYM_SUCCESS != (ret = msymGetCenterOfMass(ctx, cm))) goto err;
+
     if(MSYM_SUCCESS != (ret = ctxGetPointGroup(ctx, &pg))) goto err;
-    if(MSYM_SUCCESS != (ret = generateEquivalenceSet(pg, length, elements, &glength, &gelements, &esl, &es,t))) goto err;
+    if(MSYM_SUCCESS != (ret = generateEquivalenceSet(pg, length, elements, cm, &glength, &gelements, &esl, &es,t))) goto err;
     if(MSYM_SUCCESS != (ret = ctxSetElements(ctx, glength, gelements))) goto err;
     if(MSYM_SUCCESS != (ret = ctxGetElementPtrs(ctx, &plength, &pelements))) goto err;
     if(plength != glength){
@@ -157,6 +159,7 @@ msym_error_t msymGenerateElements(msym_context ctx, int length, msym_element_t e
     es = NULL; esl = 0;
     if(MSYM_SUCCESS != (ret = msymFindEquivalenceSetPermutations(ctx))) goto err;
     if(MSYM_SUCCESS != (ret = msymSymmetrizeElements(ctx, &err))) goto err;
+    if(MSYM_SUCCESS != (ret = msymSetCenterOfMass(ctx, cm))) goto err;
     free(gelements);
     return ret;
     
