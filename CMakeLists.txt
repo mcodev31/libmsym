@@ -63,6 +63,8 @@ set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99")
 
 #set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 -flto")
 #set (CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} -flto" )
+#set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 -fsanitize=address -fno-omit-frame-pointer")
+#set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 -fsanitize=memory -fno-omit-frame-pointer -fsanitize-memory-track-origins")
 
 set (CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -Wall -DLIBMSYM_DEBUG")
 

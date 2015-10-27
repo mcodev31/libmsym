@@ -294,6 +294,7 @@ err:
     fprintf(stderr,"Error %s: ",error);
     error = msymGetErrorDetails();
     fprintf(stderr,"%s\n",error);
+    msymReleaseContext(ctx);
     return ret;
 }
 
