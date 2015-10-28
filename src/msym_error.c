@@ -8,6 +8,7 @@
 //  Distributed under the MIT License ( See LICENSE file or copy at http://opensource.org/licenses/MIT )
 //
 
+#include <stdio.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include "msym_error.h"
@@ -29,19 +30,20 @@ const struct _errordesc {
     { MSYM_INVALID_CONTEXT, "Invalid context" },
     { MSYM_INVALID_THRESHOLD, "Invalid threshold" },
     { MSYM_INVALID_ELEMENTS, "Invalid elements" },
-    { MSYM_INVALID_ORBITALS, "Invalid orbitals" },
+    { MSYM_INVALID_BASIS_FUNCTIONS, "Invalid basis functions" },
     { MSYM_INVALID_POINT_GROUP, "Invalid point group" },
     { MSYM_INVALID_PERMUTATION, "Invalid permutation" },
     { MSYM_INVALID_EQUIVALENCE_SET, "Invalid equivalence set" },
     { MSYM_INVALID_GEOMETRY, "Invalid geometry" },
     { MSYM_INVALID_CHARACTER_TABLE, "Invalid character table" },
     { MSYM_INVALID_SUBSPACE, "Invalid subspace" },
+    { MSYM_INVALID_SUBGROUPS, "Invalid subgroups" },
     { MSYM_INVALID_AXES, "Invalid axes" },
     { MSYM_SYMMETRY_ERROR, "Error determining symmetry operations" },
     { MSYM_PERMUTATION_ERROR, "Error determining permutation" },
     { MSYM_POINT_GROUP_ERROR, "Error determining point group" },
     { MSYM_SYMMETRIZATION_ERROR, "Error symmetrizing molecule/orbtials" },
-    { MSYM_ORBITAL_ERROR, "Error generating orbital subspaces" }
+    { MSYM_SUBSPACE_ERROR, "Error generating subspaces" }
 };
 
 void msymSetErrorDetails(const char *format, ...){
@@ -51,13 +53,13 @@ void msymSetErrorDetails(const char *format, ...){
     va_end(args);
 }
 
-const char *msymGetErrorDetails(){
+const char MSYM_EXPORT *msymGetErrorDetails(){
     snprintf(err_details_ext, sizeof(err_details_ext), "%s",err_details); // Not really neccessary
     msymSetErrorDetails("");
     return err_details_ext;
 }
 
-const char *msymErrorString(msym_error_t error){
+const char MSYM_EXPORT *msymErrorString(msym_error_t error){
     const char *ret = invalid;
     int length = sizeof(error_desc) / sizeof(error_desc[0]);
     for(int i = 0; i < length;i++){

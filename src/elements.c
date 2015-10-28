@@ -13,6 +13,7 @@
 
 #include "elements.h"
 
+#include "debug.h"
 
 const struct _periodic_table {
     int n;
@@ -39,7 +40,7 @@ const struct _periodic_table {
     { 16, "S", 32 },
     { 17, "Cl", 35 },
     { 18, "Ar", 40 },
-    { 19, "K", 30 },
+    { 19, "K", 39 },
     { 20, "Ca", 40 },
     { 21, "Sc", 45 },
     { 22, "Ti", 48 },
@@ -142,12 +143,13 @@ const struct _periodic_table {
 };
 
 void printElement(msym_element_t *element){
-    printf("%s (nuclear charge:%d, mass:%lf) [%lf;%lf;%lf]\n",element->name, element->n, element->m, element->v[0], element->v[1], element->v[2]);
+    clean_debug_printf("%s (nuclear charge:%d, mass:%lf) [%lf;%lf;%lf]\n",element->name, element->n, element->m, element->v[0], element->v[1], element->v[2]);
 }
 
 msym_error_t complementElementData(msym_element_t *element){
     msym_error_t ret = MSYM_SUCCESS;
-    size_t strl = strnlen(element->name, sizeof(element->name));
+    element->name[sizeof(element->name)-1] = '\0';
+    size_t strl = strlen(element->name);
     if(strl <= 0 && element->n <= 0 && element->m <= 0.0){
         msymSetErrorDetails("Element has no mass, name or nuclear charge");
         ret = MSYM_INVALID_ELEMENTS;
@@ -176,8 +178,25 @@ msym_error_t complementElementData(msym_element_t *element){
         }
     } else if(strl > 0 && (element->m <= 0.0 || element->n <= 0)){
         int fi, fil = sizeof(periodic_table)/sizeof(periodic_table[0]);
+        
         for(fi = 0; fi < fil;fi++){
-            if(0 == strncmp(periodic_table[fi].name, element->name, strnlen(periodic_table[fi].name, sizeof(element->name)))) {
+            int stre = 0;
+            for(int i = 0;i < sizeof(element->name) && i < sizeof(periodic_table[fi].name);i++){
+                char ec = element->name[i], ep = periodic_table[fi].name[i];
+                char cmp[2] = {
+                    ec >= 'A' && ec <= 'Z' ? ec | 0x60 : ec,
+                    ep >= 'A' && ep <= 'Z' ? ep | 0x60 : ep
+                };
+                if(cmp[0] != cmp[1]){
+                    stre = cmp[0] - cmp[1];
+                    break;
+                } else if (cmp[0] == '\0'){
+                    break;
+                }
+            }
+            
+            //if(0 == strncmp(periodic_table[fi].name, element->name, strnlen(periodic_table[fi].name, sizeof(element->name)))) {
+            if(0 == stre){
                 if(element->m <= 0.0) element->m = (double) periodic_table[fi].massnr;
                 if(element->n <= 0) element->n = periodic_table[fi].n;
                 break;
@@ -192,24 +211,17 @@ msym_error_t complementElementData(msym_element_t *element){
             goto err;
         }
     } else if(element->m > 0.0 && (strl <= 0 || element->n <= 0)){
-        int fi, fil = sizeof(periodic_table)/sizeof(periodic_table[0]);
+        int fim = 0, fil = sizeof(periodic_table)/sizeof(periodic_table[0]);
         double last = -1.0;
-        for(fi = 0; fi < fil;fi++){
+        for(int fi = 0; fi < fil;fi++){
             double diff = fabs(periodic_table[fi].massnr - element->m);
             if(diff < last || last < 0.0){
                 last = diff;
-            } else {
-                if(strl <= 0) snprintf(element->name, sizeof(element->name), "%s",periodic_table[fi].name);
-                if(element->n <= 0) element->n = periodic_table[fi].n;
-                break;
+                fim = fi;
             }
         }
-        
-        if(fi == fil){
-            msymSetErrorDetails("Cannot determine element from mass %lf",element->m); //This won't happen, but may want to have some other checking later
-            ret = MSYM_INVALID_ELEMENTS;
-            goto err;
-        }
+        if(strl <= 0) snprintf(element->name, sizeof(element->name), "%s",periodic_table[fim].name);
+        if(element->n <= 0) element->n = periodic_table[fim].n;
     }
     
 err:

@@ -15,6 +15,8 @@
 #include "symop.h"
 #include "linalg.h"
 
+#include "debug.h"
+
 #ifndef M_PI
 #define M_PI 3.14159265358979323846264338327950288419716939937510582
 #endif
@@ -25,6 +27,7 @@ void symopPow(msym_symmetry_operation_t *A, int pow, msym_symmetry_operation_t *
     double origo[3] = {0.0,0.0,0.0};
     int apow, gcd;
     O->power = 1;
+    O->orientation = A->orientation;
     switch (A->type){
         case IDENTITY :
             O->type = IDENTITY;
@@ -86,11 +89,70 @@ void symopPow(msym_symmetry_operation_t *A, int pow, msym_symmetry_operation_t *
     }
 }
 
-void symmetryOperationName(msym_symmetry_operation_t* sop, int l, char buf[l]){
+#define PHI 1.618033988749894848204586834
+
+double symmetryOperationCharacter(msym_symmetry_operation_t *sop, msym_basis_function_t *f){
+    double c = 0.0;
+    switch (f->type) {
+        case MSYM_BASIS_TYPE_REAL_SPHERICAL_HARMONIC:
+            c = symmetryOperationYCharacter(sop,f->f.rsh.l);
+            break;
+        case MSYM_BASIS_TYPE_CARTESIAN :
+            c = symmetryOperationCartesianCharacter(sop);
+            break;
+        default:
+            break;
+    }
+    return c;
+}
+
+double symmetryOperationCartesianCharacter(msym_symmetry_operation_t *sop){
+    double x = 0.0;
     switch (sop->type) {
-        case PROPER_ROTATION   : snprintf(buf, l, "C%d^%d",sop->order,sop->power); break;
+        case IDENTITY          : x = 3; break;
+        case INVERSION         : x = -3; break;
+        case REFLECTION        : x = 1; break;
+        case PROPER_ROTATION   : x = 2*cos(sop->power*2*M_PI/sop->order) + 1; break;
+        case IMPROPER_ROTATION : x = 2*cos(sop->power*2*M_PI/sop->order) - 1; break;
+        default:
+            break;
+    }
+    return x;
+}
+
+/* character of spherical harmonics basis */
+double symmetryOperationYCharacter(msym_symmetry_operation_t *sop, int l){
+    double x = 0.0, a = sop->power*2*M_PI/sop->order;
+    switch (sop->type) {
+        case IDENTITY          : x = 2*l+1; break;
+        case INVERSION         : x = (2*l+1)*(1 - ((l & 1) << 1)); break;
+        case REFLECTION        : x = 1; break;
+        case PROPER_ROTATION   : x = sin((l+0.5)*a)/sin(a/2); break;
+        case IMPROPER_ROTATION : x = cos((l+0.5)*a)/cos(a/2); break;
+        default:
+            break;
+    }
+    return x;
+    
+
+}
+
+void symmetryOperationName(msym_symmetry_operation_t* sop, int l, char buf[l]){
+    char *rn = "";
+    char *cn = "";
+    switch(sop->orientation){
+        case HORIZONTAL : rn = "h"; break;
+        case VERTICAL   : rn = "v"; cn = "'"; break;
+        case DIHEDRAL   : rn = "d"; cn = "''"; break;
+        default: break;
+    }
+    switch (sop->type) {
+        case PROPER_ROTATION   :
+            if(sop->order == 2) snprintf(buf, l, "C%d%s",sop->order,cn);
+            else snprintf(buf, l, "C%d%s^%d",sop->order,cn,sop->power);
+            break;
         case IMPROPER_ROTATION : snprintf(buf, l, "S%d^%d",sop->order,sop->power); break;
-        case REFLECTION        : snprintf(buf, l, "R"); break;
+        case REFLECTION        : snprintf(buf, l, "R%s",rn); break;
         case INVERSION         : snprintf(buf, l, "i"); break;
         case IDENTITY          : snprintf(buf, l, "E"); break;
         default                : snprintf(buf, l, "?"); break;
@@ -111,8 +173,13 @@ void symmetryOperationShortName(msym_symmetry_operation_t* sop, int l, char buf[
 void applySymmetryOperation(msym_symmetry_operation_t *sop,double iv[3], double ov[3]){
     switch (sop->type) {
         case PROPER_ROTATION   : {
-            double theta = (sop->order == 0 ? 0.0 : sop->power*2*M_PI/sop->order);
-            vrotate(theta, iv, sop->v, ov);
+            if(sop->order){
+                double theta = sop->power*2*M_PI/sop->order;
+                vrotate(theta, iv, sop->v, ov);
+            } else {
+                // Treat C0 as a sum over all Cn operations i.e. a projection
+                vproj(iv, sop->v, ov);
+            }
             break;
         }
         case IMPROPER_ROTATION : {
@@ -162,8 +229,13 @@ void invertSymmetryOperation(msym_symmetry_operation_t *sop, msym_symmetry_opera
 void symmetryOperationMatrix(msym_symmetry_operation_t *sop, double m[3][3]){
     switch (sop->type) {
         case PROPER_ROTATION   : {
-            double theta = (sop->order == 0 ? 0.0 : sop->power*2*M_PI/sop->order);
-            mrotate(theta, sop->v, m);
+            if(sop->order){
+                double theta = sop->power*2*M_PI/sop->order;
+                mrotate(theta, sop->v, m);
+            } else {
+                // Treat C0 as a sum over all Cn operations i.e. a projection
+                kron2(3, 1, &sop->v, 1, 3, &sop->v, m);
+            }
             break;
         }
         case IMPROPER_ROTATION : {
@@ -177,7 +249,7 @@ void symmetryOperationMatrix(msym_symmetry_operation_t *sop, double m[3][3]){
         case REFLECTION        :
             mreflect(sop->v, m);
             break;
-        case INVERSION         :
+        case INVERSION         : //TODO: fix this
             for(int i = 0; i < 3; i++){
                 for(int j = 0; j < 3; j++){
                     m[i][j] = -(i == j);
@@ -200,6 +272,7 @@ void copySymmetryOperation(msym_symmetry_operation_t *dst, msym_symmetry_operati
     dst->order = src->order;
     dst->power = src->power;
     dst->cla = src->cla;
+    dst->orientation = src->orientation;
     vcopy(src->v, dst->v);
 }
 
@@ -211,7 +284,7 @@ msym_symmetry_operation_t *findSymmetryOperation(msym_symmetry_operation_t *sop,
             break;
         }
         
-        else if(vparallel(s->v, sop->v,thresholds->angle) && s->type == sop->type && ((sop->type != PROPER_ROTATION && sop->type != IMPROPER_ROTATION) || (s->order == sop->order && s->power == sop->power))){
+        else if(s->type == sop->type && ((sop->type != PROPER_ROTATION && sop->type != IMPROPER_ROTATION) || (s->order == sop->order && s->power == sop->power)) && vparallel(s->v, sop->v,thresholds->angle)){
             fsop = s;
             break;
         }
@@ -224,9 +297,9 @@ void printSymmetryOperation(msym_symmetry_operation_t *sop){
     char buf[12];
     symmetryOperationName(sop, 12, buf);
     if(sop->type == INVERSION || sop->type == IDENTITY)
-        printf("%s(%d)\n",buf,sop->cla);
+        clean_debug_printf("%s(%d)\n",buf,sop->cla);
     else
-        printf("%s(%d) [%lf;%lf;%lf]\n",buf,sop->cla, sop->v[0],sop->v[1],sop->v[2]);
+        clean_debug_printf("%s(%d) [%lf;%lf;%lf]\n",buf,sop->cla, sop->v[0],sop->v[1],sop->v[2]);
 }
 
 int igcd(int a, int b) {

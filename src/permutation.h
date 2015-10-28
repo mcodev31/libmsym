@@ -48,6 +48,4 @@ void freePermutationData(msym_permutation_t *perm);
 void permutationMatrix(msym_permutation_t *perm, double m[perm->p_length][perm->p_length]);
 msym_error_t findPermutationSubgroups(int l, msym_permutation_t perm[l], int sgmax, msym_symmetry_operation_t *sops, int *subgroupl, msym_subgroup_t **subgroup);
 
-void printPermutation(msym_permutation_t *perm);
-
 #endif /* defined(__MSYM__PERMUTATION_h) */

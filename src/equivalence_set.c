@@ -17,6 +17,8 @@
 #include "context.h"
 #include "elements.h"
 
+#include "debug.h"
+
 #define SQR(x) ((x)*(x))
 
 msym_error_t partitionEquivalenceSets(int length, msym_element_t *elements[length], msym_element_t *pelements[length], msym_geometry_t g, int *esl, msym_equivalence_set_t **es, msym_thresholds_t *thresholds);
@@ -35,22 +37,24 @@ msym_error_t copyEquivalenceSets(int length, msym_equivalence_set_t es[length], 
     memcpy(nes, es, sizeof(msym_equivalence_set_t[length]) + sizeof(msym_element_t *[el]));
     for(int i = 0;i < length;i++) nes[i].elements = nes[i].elements - ep + nep;
     *ces = nes;
-err:
+//err:
     return ret;
 }
 
 //TODO: Use a preallocated pointer array instead of multiple mallocs
-msym_error_t generateEquivalenceSet(msym_point_group_t *pg, int length, msym_element_t elements[length], int *glength, msym_element_t **gelements, int *esl, msym_equivalence_set_t **es,msym_thresholds_t *thresholds){
+msym_error_t generateEquivalenceSet(msym_point_group_t *pg, int length, msym_element_t elements[length], double cm[3], int *glength, msym_element_t **gelements, int *esl, msym_equivalence_set_t **es,msym_thresholds_t *thresholds){
     msym_error_t ret = MSYM_SUCCESS;
     msym_element_t *ge = calloc(length,sizeof(msym_element_t[pg->order]));
     msym_equivalence_set_t *ges = calloc(length,sizeof(msym_equivalence_set_t));
     int gel = 0;
     int gesl = 0;
     for(int i = 0;i < length;i++){
+        double ev[3];
+        vsub(elements[i].v, cm, ev);
         msym_equivalence_set_t *aes = NULL;
         int f;
         for(f = 0;f < gel;f++){
-            if(ge[f].n == elements[i].n && ge[f].m == elements[i].m && 0 == strncmp(ge[f].name, elements[i].name, sizeof(ge[f].name)) && vequal(ge[f].v, elements[i].v, thresholds->permutation)){
+            if(ge[f].n == elements[i].n && ge[f].m == elements[i].m && 0 == strncmp(ge[f].name, elements[i].name, sizeof(ge[f].name)) && vequal(ge[f].v, ev, thresholds->permutation)){
                 break;
             }
         }
@@ -61,15 +65,10 @@ msym_error_t generateEquivalenceSet(msym_point_group_t *pg, int length, msym_ele
         } else {
             continue;
         }
-        
-        if(elements[i].aol > 0 || elements[i].ao != NULL){
-            msymSetErrorDetails("Cannot (currently) generate equivalence sets from elements with orbitals");
-            ret = MSYM_INVALID_ELEMENTS;
-            goto err;
-        }
-        for(msym_symmetry_operation_t *s = pg->sops;s < (pg->sops + pg->sopsl);s++){
+
+        for(msym_symmetry_operation_t *s = pg->sops;s < (pg->sops + pg->order);s++){
             double v[3];
-            applySymmetryOperation(s, elements[i].v, v);
+            applySymmetryOperation(s, ev, v);
             
             for(f = 0;f < gel;f++){
                 if(ge[f].n == elements[i].n && ge[f].m == elements[i].m && 0 == strncmp(ge[f].name, elements[i].name, sizeof(ge[f].name)) && vequal(ge[f].v, v, thresholds->permutation)){
@@ -78,6 +77,7 @@ msym_error_t generateEquivalenceSet(msym_point_group_t *pg, int length, msym_ele
             }
             if(f == gel){
                 memcpy(&ge[gel],&elements[i],sizeof(msym_element_t));
+                ge[gel].id = NULL;
                 vcopy(v, ge[gel].v);
                 aes->elements[aes->length++] = &ge[gel++];
             }
@@ -206,7 +206,7 @@ msym_error_t partitionPointGroupEquivalenceSets(msym_point_group_t *pg, int leng
         
         msym_equivalence_set_t *aes = &ges[gesl++];
         aes->elements = &pelements[pelementsl];
-        for(msym_symmetry_operation_t *s = pg->sops;s < (pg->sops + pg->sopsl);s++){
+        for(msym_symmetry_operation_t *s = pg->sops;s < (pg->sops + pg->order);s++){
             double v[3];
             int f;
             applySymmetryOperation(s, elements[i]->v, v);
@@ -223,11 +223,11 @@ msym_error_t partitionPointGroupEquivalenceSets(msym_point_group_t *pg, int leng
                 ret = MSYM_INVALID_EQUIVALENCE_SET;
                 goto err;
             } else if(f < length && eqi[f] == gesl-1){
-                //printf("element[%d] %s belongs to equivalence set %d, but already added\n",f,elements[f]->name, eqi[f]);
+                //clean_debug_printf("element[%d] %s belongs to equivalence set %d, but already added\n",f,elements[f]->name, eqi[f]);
             } else if(f < length){
                 eqi[f] = gesl - 1;
                 aes->elements[aes->length++] = elements[f];
-                //printf("element[%d] %s belongs to equivalence set %d, adding\n",f,elements[f]->name, eqi[f]);
+                //clean_debug_printf("element[%d] %s belongs to equivalence set %d, adding\n",f,elements[f]->name, eqi[f]);
             } else {
                 char buf[64];
                 symmetryOperationName(s, 64, buf);

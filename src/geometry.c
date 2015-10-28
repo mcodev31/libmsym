@@ -15,6 +15,8 @@
 #include "geometry.h"
 #include "linalg.h"
 
+#include "debug.h"
+
 #define SQR(x) ((x)*(x))
 
 void inertialTensor(int length, msym_element_t *elements[length], double cm[3], double e[3], double v[3][3], msym_thresholds_t *thresholds);
@@ -73,27 +75,27 @@ msym_geometry_t eigenvaluesToGeometry(double e[3], msym_thresholds_t *thresholds
     }
     
     if(e12 && e23) {
-        return SPHERICAL;
+        return MSYM_GEOMETRY_SPHERICAL;
     } else if (e01 && e23) {
-        return LINEAR;
+        return MSYM_GEOMETRY_LINEAR;
     } else if (planar) {
         if(e12){
-            return PLANAR_REGULAR;
+            return MSYM_GEOMETRY_PLANAR_REGULAR;
         } else {
-            return PLANAR_IRREGULAR;
+            return MSYM_GEOMETRY_PLANAR_IRREGULAR;
         }
     } else if (e12) {
-        return POLYHEDRAL_OBLATE;
+        return MSYM_GEOMETRY_POLYHEDRAL_OBLATE;
     } else if (e23) {
-        return POLYHEDRAL_PROLATE;
+        return MSYM_GEOMETRY_POLYHEDRAL_PROLATE;
     } else {
-        return ASSYMETRIC;
+        return MSYM_GEOMETRY_ASSYMETRIC;
     }
     
 }
 
 int geometryDegenerate(msym_geometry_t g){
-    return !(g == PLANAR_IRREGULAR || g == ASSYMETRIC) && g != GEOMETRY_UNKNOWN;
+    return !(g == MSYM_GEOMETRY_PLANAR_IRREGULAR || g == MSYM_GEOMETRY_ASSYMETRIC) && g != MSYM_GEOMETRY_UNKNOWN;
 }
 
 void inertialTensor(int length, msym_element_t *elements[length], double cm[3], double e[3], double v[3][3], msym_thresholds_t *thresholds){
@@ -127,14 +129,14 @@ void inertialTensor(int length, msym_element_t *elements[length], double cm[3], 
 void printGeometry(msym_geometry_t g){
     char *s;
     switch(g) {
-        case SPHERICAL		: s = "spherical"; break;
-        case LINEAR		: s = "linear"; break;
-        case PLANAR_REGULAR	: s = "planar regular polygon"; break;
-        case PLANAR_IRREGULAR	: s = "planar irregular polygon"; break;
-        case POLYHEDRAL_PROLATE	: s = "prolate symmetric polyhedron"; break;
-        case POLYHEDRAL_OBLATE	: s = "oblate symmetric polyhedron"; break;
-        case ASSYMETRIC		: s = "assymetric polyhedron"; break;
+        case MSYM_GEOMETRY_SPHERICAL		: s = "spherical"; break;
+        case MSYM_GEOMETRY_LINEAR		: s = "linear"; break;
+        case MSYM_GEOMETRY_PLANAR_REGULAR	: s = "planar regular polygon"; break;
+        case MSYM_GEOMETRY_PLANAR_IRREGULAR	: s = "planar irregular polygon"; break;
+        case MSYM_GEOMETRY_POLYHEDRAL_PROLATE	: s = "prolate symmetric polyhedron"; break;
+        case MSYM_GEOMETRY_POLYHEDRAL_OBLATE	: s = "oblate symmetric polyhedron"; break;
+        case MSYM_GEOMETRY_ASSYMETRIC		: s = "assymetric polyhedron"; break;
         default			: s = "unknown geometry";
     }
-    printf("%s\n",s);
+    clean_debug_printf("%s\n",s);
 }

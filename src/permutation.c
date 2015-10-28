@@ -15,6 +15,7 @@
 #include "permutation.h"
 #include "linalg.h"
 
+#include "debug.h"
 
 msym_error_t setPermutationCycles(msym_permutation_t *perm);
 
@@ -31,7 +32,7 @@ msym_error_t findPermutation(msym_symmetry_operation_t *sop, int l, double (*v[l
     symmetryOperationMatrix(sop, m);
     
     perm->p = malloc(sizeof(int[l]));
-    memset(perm->p, -1, sizeof(int[l]));
+    memset(perm->p, -1, sizeof(int[l])); //TODO: 2s complement
     perm->p_length = l;
     
     for(int i = 0; i < l;i++){
@@ -76,14 +77,17 @@ msym_error_t findPermutationSubgroups(int l, msym_permutation_t perm[l], int sgm
     
     int *isops = malloc(sizeof(int[l]));
     int *msops = malloc(sizeof(int[l]));
-    int gl = 0;
+    int gl = 0, glm = 0;
     
     for(int i = 0;i < l;i++){
         if((sops[i].power == 1 && (sops[i].type == PROPER_ROTATION || sops[i].type == IMPROPER_ROTATION)) || sops[i].type == INVERSION || sops[i].type == REFLECTION){
             msym_permutation_cycle_t* c = perm[i].c;
+            glm = gl;
             memset(msops, 0, sizeof(int[l]));
             group[gl].sopsl = c->l;
-            group[gl].sops = calloc(c->l, sizeof(int));
+            group[gl].sops = realloc(group[gl].sops, sizeof(int[c->l]));
+            memset(group[gl].sops,0,sizeof(int[c->l]));
+            //group[gl].sops = calloc(c->l, sizeof(int));
             group[gl].subgroup[0] = group[gl].subgroup[1] = -1;
             for(int next = c->s, j = 0;j < c->l;j++){
                 msops[next] = 1;
@@ -100,6 +104,10 @@ msym_error_t findPermutationSubgroups(int l, msym_permutation_t perm[l], int sgm
             }
             gl += n < l;
         }
+    }
+    
+    if(glm == gl){
+        free(group[gl].sops);
     }
         
     for(int i = 0;i < gl && gl < sgmax;i++){
@@ -168,9 +176,9 @@ msym_error_t findPermutationSubgroups(int l, msym_permutation_t perm[l], int sgm
     msym_subgroup_t *mgroup = calloc(gl, sizeof(msym_subgroup_t));
     for(int i = 0;i < gl;i++){
         mgroup[i].sops = calloc(group[i].sopsl, sizeof(msym_symmetry_operation_t *));
-        mgroup[i].sopsl = group[i].sopsl;
-        mgroup[i].subgroup[0] = group[i].subgroup[0] < 0 ? NULL : &mgroup[group[i].subgroup[0]];
-        mgroup[i].subgroup[1] = group[i].subgroup[1] < 0 ? NULL : &mgroup[group[i].subgroup[1]];
+        mgroup[i].order = group[i].sopsl;
+        mgroup[i].generators[0] = group[i].subgroup[0] < 0 ? NULL : &mgroup[group[i].subgroup[0]];
+        mgroup[i].generators[1] = group[i].subgroup[1] < 0 ? NULL : &mgroup[group[i].subgroup[1]];
         
         for(int j = 0;j < group[i].sopsl;j++){
             mgroup[i].sops[j] = &sops[group[i].sops[j]];
@@ -180,7 +188,7 @@ msym_error_t findPermutationSubgroups(int l, msym_permutation_t perm[l], int sgm
     *subgroup = mgroup;
     *subgroupl = gl;
     
-err:
+//err:
     for(int i = 0;i < gl;i++){
         free(group[i].sops);
     }
@@ -262,7 +270,7 @@ msym_error_t setPermutationCycles(msym_permutation_t *perm){
     int *lcycle = malloc(sizeof(int[l]));
     
     int cl = 0;
-    memset(icycle, -1,sizeof(int[l]));
+    memset(icycle, -1,sizeof(int[l])); //TODO: 2s complement
     memset(lcycle,  0,sizeof(int[l]));
     
     perm->c = NULL;
@@ -291,6 +299,7 @@ msym_error_t setPermutationCycles(msym_permutation_t *perm){
         perm->c[c].s = pcycle[c];
     }
     
+    
 err:
     free(icycle);
     free(pcycle);
@@ -308,26 +317,3 @@ void permutationMatrix(msym_permutation_t *perm, double m[perm->p_length][perm->
     }
 }
 
-void printPermutation(msym_permutation_t *perm){
-    /*int l = perm->p_length;
-    printf("(");
-    for(int j = 0; j < l; j++){
-        printf(j == l -1 ? "%d" : "%d\t",j);
-    }
-    printf(")\n(");
-    for(int j = 0; j < l; j++){
-        printf(j == l -1 ? "%d" : "%d\t",perm->p[j]);
-    }
-    printf(")\n");*/
-    
-    for(msym_permutation_cycle_t* c = perm->c; c < (perm->c + perm->c_length);c++){
-        printf("(");
-        for(int next = c->s, j = 0;j < c->l;j++){
-            printf(j == c->l -1 ? "%d" : "%d ",next);
-            next = perm->p[next];
-        }
-        printf(")");
-    }
-    
-    printf("\n");
-}

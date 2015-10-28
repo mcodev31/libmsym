@@ -1,5 +1,4 @@
-/obj
-/bin
+build
 
 *.swp
 *.exe
