@@ -34,6 +34,9 @@ def set_basis(element):
 
 basis_functions = [set_basis(e) for e in elements]
 
+
+#msym.init(library_location='/path_to_libmsym_library/libmsym.dylib') # e.g. for OS X without libmsym in dload path
+
 #with msym.Context() as ctx:
 #    ctx.elements = elements
 #    point_group = ctx.find_symmetry()
