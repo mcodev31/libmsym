@@ -17,10 +17,13 @@ try:
 except ImportError:
     np = None
 
-libmsym = CDLL(find_library('msym'))
+libmsym_path = find_library('msym')
+if libmsym_path is None:
+    raise Error("Cannot find libmsym shared library")
 
-if libmsym is None:
-    raise Error("Cannot load libmsym shared library")
+libmsym = CDLL(libmsym_path)
+
+
 
 class SymmetryOperation(Structure):
 

@@ -345,6 +345,8 @@ msym_error_t generateSubrepresentationSpaces(msym_point_group_t *pg, int sgl, co
                         }
                     }
                 }
+                //when this is moved to a separate function it can be used and availability check (replace esbfmap)
+                //if(srsbfmap[i][n][l] == srsbfi) srsbfmap[i][n][l] = -1;
             }
         }
     }
@@ -574,6 +576,8 @@ msym_error_t generateSubrepresentationSpaces(msym_point_group_t *pg, int sgl, co
                                 memset(dproj, 0, sizeof(double[dd][dd]));
                                 for(int s = 0;s < pg->order;s++){
                                     if(sgc[sk][dim][s] == 0) continue;
+                                    // we really should have precomputed this by now, it's the third time,
+                                    // or a better approach would be a an optimized function
                                     permutationMatrix(&perm[i][s], mperm);
                                     kron(d, mperm, ld, lst[s], dd, dscal);
                                     mlscale(sgc[sk][dim][s], dd, dscal, dscal);
