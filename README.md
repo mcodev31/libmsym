@@ -1,20 +1,16 @@
-# LIBrary for Molecular SYMmetry
+# libmsym v0.2.0
+libmsym is a C library dealing with point group symmetry in molecules.
 
-libmsym is a C library dealing with point group symmetry in molecules. It can determine, symmetrize and generate molecules of any point group. It can also generate symmetry adapted linear combinations of atomic orbitals for a subset of all point groups and orbital angular momentum (l), and project orbitals into the irreducible representation with the larges component.
+# molecules
+Determine, symmetrize and generate molecules of any point group as well determine/select subgroups.
+Get symmetrically equivalent elements and symmetrize translation of any any element in a molecule.
 
-## Performance
+#character tables
+Generate character tables for any point group (complex characters form reducible representations)
 
-120 (Ih) symmetry operations in C-720 fullerene found in ~30ms (2012 macbook air).
-Detection, generation of permutation information and symmetrisation of above in ~70ms.
-T point group protein with 15k+ elements detected and symmetrized in ~6s.
-300 symmetry adapted orbitals of minimal basis C-60 buckminster fullerene generated in 0.18s
+#wave functions
+Generate SALCs of real spherical harmonics for non icosahedral point groups with real characters (Ci, Cs, Cnv, Dn, Dnh, Dnd, Td, O and Oh) for any angular momentum, as well as symmetrize orbitals, determine partner functions etc.
 
-## Development
+# Notes
 
-This was initially developed as part of a masters, and is now a hobby project.
-There is no stable release yet, although the master branch will be kept as stable as possible.
-API is still subject to change (especially changes related to basis functions and irreducible representations).
-
-There are several additions/changes related to LCAO/SALC generation, orbital symmetrization, and vibrational symmetry under development.
-
-
+v0.1.0 is not compatible with v0.2.0
