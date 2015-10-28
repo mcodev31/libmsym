@@ -24,7 +24,9 @@ make
 # sudo only required if installing in directory not owned by user
 # use -DCMAKE_INSTALL_PREFIX:PATH=<libmsym installation path> to change
 sudo make install
-
+# run examples
+./examples/msym_example <input xyz-file>
+./examples/msym_tex D13h D13h.tex
 ```
 
 ### python
@@ -36,6 +38,7 @@ cd ../bindings/python
 python3 setup.py build
 # install in user directory
 python3 setup.py install --user
+# run example
 python3 ./examples/msympy_example.py <input xyz-file> <output xyz-file>
 ```
 python requires that libmsym is built as a shared library and either installed or initialized before use e.g. on os x:
