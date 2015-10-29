@@ -1,4 +1,5 @@
-# libmsympy
+# libmsym
 
-libmsympy is a python module c binding for libmsym. It is in early stages of developement, and should only be used for testing.
-
+libmsym is a python module c binding for libmsym that uses ctypes.
+It requires numpy for some functionality.
+See project README.md for installation instructions and the ./examples/ directory for usage examples
