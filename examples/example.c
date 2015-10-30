@@ -45,7 +45,7 @@ int example(const char* in_file, msym_thresholds_t *thresholds){
     //char *orbitals[15] = {"2px", "2py", "2pz", "3d2-", "3d1-", "3d0", "3d1+", "3d2+","4f3-", "4f2-", "4f1-", "4f0", "4f1+", "4f2+", "4f3+"};
     
     char *orbitals[13] = {"7i6-", "7i5-", "7i4-", "7i3-", "7i2-", "7i1-", "7i0", "7i1+", "7i2+", "7i3+", "7i4+", "7i5+", "7i6+"};
-    
+        
     /* This function reads xyz files.
      * It initializes an array of msym_element_t to 0,
      * then sets the coordinates and name of the elements */
