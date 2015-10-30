@@ -1,3 +1,13 @@
+#
+#  libmsym.py
+#  libmsym
+#
+#  Created by Marcus Johansson on 07/10/15.
+#  Copyright (c) 2015 Marcus Johansson.
+#
+#  Distributed under the MIT License ( See LICENSE file or copy at http://opensource.org/licenses/MIT )
+#
+
 from ctypes import *
 from ctypes.util import find_library
 from enum import Enum
@@ -47,9 +57,6 @@ class SymmetryOperation(Structure):
     @property
     def vector(self):
         return self._v[0:3]
-    @vector.setter
-    def vector(self, vector):
-        self._v = (c_double*3)(*vector)
 
     def __str__(self):
         orientation = ""
@@ -180,6 +187,8 @@ class SALC(Structure):
         
         if self._pf_array is None:
             self._pf_array = np.ctypeslib.as_array(self._pf, shape = (self._d,self._fl))
+
+        return self._pf_array
 
         
 

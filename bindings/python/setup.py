@@ -1,6 +1,6 @@
 #
 #  setup.py
-#  libmsympy
+#  libmsym
 #
 #  Created by Marcus Johansson on 07/10/15.
 #  Copyright (c) 2015 Marcus Johansson.

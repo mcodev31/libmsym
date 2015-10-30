@@ -249,6 +249,13 @@ msym_error_t findSymmetryOperationPermutations(int l, msym_symmetry_operation_t 
     
     free(msops);
     *rperm = permutations;
+    
+    for(int i = 0; i < l;i++){
+        printSymmetryOperation(&sops[i]);
+        debug_printPermutation(&permutations[i]);
+    }
+    
+    
     return ret;
     
 err:
