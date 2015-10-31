@@ -9,7 +9,7 @@ Get symmetrically equivalent elements and symmetrize translation of any any elem
 Generate character tables for any point group (complex characters form reducible representations)
 
 ## wave functions
-Generate SALCs of real spherical harmonics for non icosahedral point groups with real characters (Ci, Cs, Cnv, Dn, Dnh, Dnd, Td, O and Oh) for any angular momentum, as well as symmetrize orbitals, determine partner functions etc.
+Generate SALCs of real spherical harmonics with any angular momentum for point groups with real characters (Ci, Cs, Cnv, Dn, Dnh, Dnd, Td, O, Oh, I and Ih), as well as symmetrize orbitals, determine partner functions etc.
 
 ## installing
 
