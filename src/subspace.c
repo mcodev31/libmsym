@@ -667,7 +667,7 @@ msym_error_t generateSubrepresentationSpaces(msym_point_group_t *pg, int sgl, co
                         double (*sbasis)[dd] = mbasis;
                         double (*sdec)[dd] = mdec;
                         if(ct->s[sk].d > 1){
-                            //icosahedral symmetry. this is a bit of a slow and ugly hack
+                            //icosahedral symmetry map (dependant on getSplittingFieldCharacters)
                             int ihdim[] = {0,1,1,2,2};
                             int ihsub[] = {0,3,4,3,4};
                             double (*ihproj)[dd] = mpih;
@@ -679,7 +679,6 @@ msym_error_t generateSubrepresentationSpaces(msym_point_group_t *pg, int sgl, co
                             for(int dim = 0, doirl = 0, dnirl = 0;dim < ct->s[sk].d;dim++, doirl = dnirl){
                                 int pdim = ct->s[sk].d == 5 ? ihdim[dim] : dim; //icosahedral symmetry has split character table
                                 memset(dproj, 0, sizeof(double[dd][dd]));
-                                //printf("projecting into %d (%d) dimensional subspace dim = %d, pdim = %d\n",sgd[sk][pdim],ct->s[sk].d,dim,pdim);
                                 for(int s = 0;s < pg->order;s++){
                                     if(sgc[sk][pdim][s] == 0) continue;
                                     // we really should have precomputed this by now, it's the third time,
@@ -689,10 +688,10 @@ msym_error_t generateSubrepresentationSpaces(msym_point_group_t *pg, int sgl, co
                                     mlscale(sgc[sk][pdim][s], dd, dscal, dscal);
                                     mladd(dd, dscal, dproj, dproj);
                                 }
-                                if(sgd[sk][pdim] == 2){
+                                if(sgd[sk][pdim] == 2){ // only icosahedral
                                     int c2dim = ihsub[dim];
                                     memset(ihproj, 0, sizeof(double[dd][dd]));
-                                    //printf("projecting into %d dimensional subsubspace dim = %d, c2dim = %d\n",sgd[sk][pdim],dim,c2dim);
+                                    //getting rediculous
                                     for(int s = 0;s < pg->order;s++){
                                         if(sgc[sk][c2dim][s] == 0) continue;
                                         permutationMatrix(&perm[i][s], mperm);
@@ -700,8 +699,8 @@ msym_error_t generateSubrepresentationSpaces(msym_point_group_t *pg, int sgl, co
                                         mlscale(sgc[sk][c2dim][s], dd, dscal, dscal);
                                         mladd(dd, dscal, ihproj, ihproj);
                                     }
-                                    mlscale(1.0/2, dd, ihproj, ihproj);
-                                    mmlmul(dd, dd, ihproj, dd, dproj, dproj);
+                                    mmlmul(dd, dd, ihproj, dd, dproj, dscal); //avoid the mul malloc
+                                    memcpy(dproj, dscal, sizeof(double[dd][dd]));
                                 }
                                 
                                 
@@ -810,6 +809,7 @@ msym_error_t generateSubrepresentationSpaces(msym_point_group_t *pg, int sgl, co
     free(mdec);
     free(rsg);
     free(sgc);
+    free(sgd);
     free(mdcomp);
     free(mdproj);
     free(mdfound);
