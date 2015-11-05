@@ -42,7 +42,8 @@ const struct _errordesc {
     { MSYM_PERMUTATION_ERROR, "Error determining permutation" },
     { MSYM_POINT_GROUP_ERROR, "Error determining point group" },
     { MSYM_SYMMETRIZATION_ERROR, "Error symmetrizing molecule/orbtials" },
-    { MSYM_SUBSPACE_ERROR, "Error generating subspaces" }
+    { MSYM_SUBSPACE_ERROR, "Error generating subspaces" },
+    { MSYM_MEMORY_ERROR, "Error allocating memory" }
 };
 
 void msymSetErrorDetails(const char *format, ...){
