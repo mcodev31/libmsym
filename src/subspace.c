@@ -124,6 +124,7 @@ msym_error_t generateSubspaces(msym_point_group_t *pg, msym_permutation_t perm[p
     msym_character_table_t *ct = pg->ct;
     double (*ctable)[ct->d] = ct->table;
     double (*projpg)[dim] = pmem[0], (*projsg)[dim] = pmem[1], (*projig)[dim] = pmem[2], (*mem)[dim] = pmem[3];
+    double trace = 0.0;
     msym_symmetry_operation_t *sops = pg->sops;
     int sopsl = pg->order;
     int icosahedral = MSYM_POINT_GROUP_TYPE_I == pg->type || MSYM_POINT_GROUP_TYPE_Ih == pg->type;
@@ -154,6 +155,8 @@ msym_error_t generateSubspaces(msym_point_group_t *pg, msym_permutation_t perm[p
                 
                 if(MSYM_SUCCESS != (ret = generateProjectionOperator(1,sopsl,sgc[k][d],perm,ld,lrsops,projsg))) goto err;
                 mmlmul(dim, dim, projsg, dim, projpg, mem);
+                trace = mltrace(dim, mem);
+                mlscale(span[k]/trace, dim, mem, mem);
                 
                 nirl = mgs(dim, mem, ss, oirl, thresholds->orthogonalization/dim);
                 if(nirl - oirl != span[k]){
@@ -176,10 +179,12 @@ msym_error_t generateSubspaces(msym_point_group_t *pg, msym_permutation_t perm[p
                         int sid = sdim[sd];
                         if(MSYM_SUCCESS != (ret = generateProjectionOperator(1,sopsl,sgc[k][sid],perm,ld,lrsops,projsg))) goto err;
                         mmlmul(dim, dim, projsg, dim, projig, mem);
+                        trace = mltrace(dim, mem);
+                        mlscale(span[k]/trace, dim, mem, mem); // We might have small components in these subspaces
                         
                         nirl = mgs(dim, mem, ss, oirl, thresholds->orthogonalization/dim);
                         if(nirl - oirl != span[k]){
-                            debug_printTransform(dim, dim, ss);
+                            debug_printTransform(dim, dim, mem);
                             ret = MSYM_SUBSPACE_ERROR;
                             msymSetErrorDetails("Ortogonal icosahedral subsubspace of dimension (%d) inconsistent with span (%d) in %s",nirl - oirl,span[k],ct->s[k].name);
                             goto err;
