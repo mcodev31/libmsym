@@ -185,23 +185,23 @@ int example(const char* in_file, msym_thresholds_t *thresholds){
     irrep = calloc(mct->d, sizeof(*irrep));
     
     for(int i = 0; i < msrsl;i++){
-        printf("Got %d SALCs with %d partner functions of symmetry species %s\n",msrs[i].salcl,mct->s[msrs[i].s].d, mct->s[msrs[i].s].name);
+        //printf("Got %d SALCs with %d partner functions of symmetry species %s\n",msrs[i].salcl,mct->s[msrs[i].s].d, mct->s[msrs[i].s].name);
         for(int j = 0;j < msrs[i].salcl;j++){
             char *type = "";
             msym_salc_t *salc = &msrs[i].salc[j];
             msym_basis_function_t *bf = salc->f[0];
             if(bf->type == MSYM_BASIS_TYPE_REAL_SPHERICAL_HARMONIC) type = "real spherical harmonic ";
-            printf("\tSALC %d was constructed from %d %sbasis functions on %s with quantum numbers n=%d and l=%d\n",j,salc->fl,type,bf->element->name,bf->f.rsh.n,bf->f.rsh.l);
+            //printf("\tSALC %d was constructed from %d %sbasis functions on %s with quantum numbers n=%d and l=%d\n",j,salc->fl,type,bf->element->name,bf->f.rsh.n,bf->f.rsh.l);
         }
     }
     
     if(MSYM_SUCCESS != (ret = msymGetSALCs(ctx, bfsl, salcs, species, pf))) goto err;
     
-    printf("Species: ");
+    //printf("Species: ");
     for(int i = 0;i < bfsl;i++){
-        printf("%s",mct->s[species[i]].name);
-        if(i == bfsl - 1) printf("\n");
-        else printf(", ");
+        //printf("%s",mct->s[species[i]].name);
+        //if(i == bfsl - 1) printf("\n");
+        //else printf(", ");
     }
 
     
@@ -241,11 +241,11 @@ int example(const char* in_file, msym_thresholds_t *thresholds){
     printf("Wave function symmetrization returned new linear combinations:\n");
     for(int i = 0;i < bfsl;i++){
         int s = species[i];
-        printf("\t wf:%d is of symmetry species %s",i,mct->s[s].name);
+        //printf("\t wf:%d is of symmetry species %s",i,mct->s[s].name);
         if(mct->s[s].d > 1){
-            printf(" partner function %d to wf:%d",pf[i].d, pf[i].i);
+            //printf(" partner function %d to wf:%d",pf[i].d, pf[i].i);
         }
-        printf("\n");
+        //printf("\n");
     }
     
     /* Aligning axes prior to orbital symmetrization will

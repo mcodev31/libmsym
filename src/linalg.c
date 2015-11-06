@@ -415,6 +415,20 @@ void mmtlmul(int rla, int cla, const double A[rla][cla], int rlb, const double B
     }
 }
 
+
+void mmlsymmul(int dim, const double m1[dim][dim], const double m2[dim][dim], double mr[dim][dim]){
+    for(int r=0; r < dim; r++){
+        for(int c=0; c < dim; c++){
+            for(int k=0; k < dim; k++)
+            {
+                mr[r][c]+=m1[r][k]*m2[c][k];
+                
+            }
+        }
+    }
+}
+
+
 void mmlmul(int rla, int cla, double const A[rla][cla], int clb, const double B[cla][clb], double C[rla][clb]){
     
     double (*T)[clb];
@@ -484,7 +498,7 @@ void kron2(int ar, int ac, const double A[ar][ac], int br, int bc, const double 
 }
 
 /* Graam-Schmidt */
-int mgs(int l, const double M[l][l], double O[l][l], int n, double t){
+int mgsold(int l, const double M[l][l], double O[l][l], int n, double t){
     double *tmp = malloc(sizeof(double[l]));
     for(int i = 0; i < l;i++){
         if(vlabs(l,M[i]) < t){
@@ -503,6 +517,44 @@ int mgs(int l, const double M[l][l], double O[l][l], int n, double t){
         }
     }
     free(tmp);
+    return n;
+}
+
+
+int mgs(int l, const double m[l][l], double o[l][l], int n, double t){
+    return mgs2(l,l,m,o,n,t);
+}
+
+#ifdef LIBMSYM_DEBUG
+#define MGS_ADD 1
+#else
+#define MGS_ADD 0
+#endif
+
+/* Graam-Schmidt */
+int mgs2(int l, int lm, const double m[l][l], double o[l][l], int n, double t){
+    
+    int nm = n + lm + MGS_ADD;
+    for(int i = 0; i < l && n < nm;i++){
+        if(vlabs(l, m[i]) < t){
+            continue;
+        }
+        if(n == 0){
+            vlnorm2(l, m[i], o[n]);
+            n++;
+        } else if (n < l) {
+            double c = vldot(l,m[i],o[0]);
+            for(int k = 0;k < l;k++) o[n][k] = m[i][k] - c*o[0][k];
+            for(int j = 1; j < n;j++){
+                c = vldot(l,o[n],o[j]);
+                for(int k = 0;k < l;k++) o[n][k] -= c*o[j][k];
+            }
+            if(vlabs(l, o[n]) >= t){
+                vlnorm(l, o[n]);
+                n++;
+            }
+        }
+    }
     return n;
 }
 

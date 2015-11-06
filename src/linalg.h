@@ -55,6 +55,7 @@ void mvlmul(int r, int c, const double M[r][c], const double v[c], double vo[r])
 void mmmul(const double A[3][3], const double B[3][3], double C[3][3]);
 void mmlmul(int rla, int cla, const double A[rla][cla], int clb, const double B[cla][clb], double C[rla][clb]);
 void mmtlmul(int rla, int cla, const double A[rla][cla], int rlb, const double B[rlb][cla], double C[rla][rlb]);
+void mmlsymmul(int dim, const double m1[dim][dim], const double m2[dim][dim], double mr[dim][dim]);
 void minv(const double M[3][3], double I[3][3]);
 double mdet(const double M[3][3]);
 void mcopy(const double A[3][3], double B[3][3]);
@@ -66,6 +67,7 @@ int mequal(const double A[3][3], const double B[3][3], double t);
 void malign(const double v[3], const double axis[3], double m[3][3]);
 int ipow(int b, int e);
 int mgs(int l, const double M[l][l], double O[l][l], int n, double t);
+int mgs2(int l, int lm, const double m[l][l], double o[l][l], int n, double t);
 void kron(int al, const double A[al][al], int bl, const double B[bl][bl], int cl, double C[cl][cl]);
 void kron2(int ar, int ac, const double A[ar][ac], int br, int bc, const double B[br][bc], double C[ar*br][ac*bc]);
 void mlFilterSmall(int l, double A[l][l]);
