@@ -647,7 +647,7 @@ msym_error_t projectLinearlyIndependent(int dim, int vdim, double v[vdim][dim], 
     return ret;
 }
 
-msym_error_t generateSplittingOperation(msym_point_group_t *pg, msym_permutation_t perm[pg->order], int ld, double (*lrsops)[ld][ld], int sgl, const msym_subgroup_t *sg, const msym_subgroup_t **rsg, double rsop[perm->p_length*ld][perm->p_length*ld]){
+msym_error_t generateSplittingOperation(msym_point_group_t *pg, msym_permutation_t perm[pg->order], int ld, double (*lrsops)[ld][ld], int sgl, const msym_subgroup_t *sg, const msym_subgroup_t **rsg, double rsop[perm->p_length*ld][perm->p_length*ld], msym_symmetry_operation_t **osop){
     msym_error_t ret = MSYM_SUCCESS;
     
     int pd = perm->p_length, dim = pd*ld;
@@ -658,6 +658,11 @@ msym_error_t generateSplittingOperation(msym_point_group_t *pg, msym_permutation
     switch(pg->type){
         case MSYM_POINT_GROUP_TYPE_Cs  :
         case MSYM_POINT_GROUP_TYPE_Ci  :
+        case MSYM_POINT_GROUP_TYPE_T   :
+        case MSYM_POINT_GROUP_TYPE_Td  :
+        case MSYM_POINT_GROUP_TYPE_Th  :
+        case MSYM_POINT_GROUP_TYPE_O   :
+        case MSYM_POINT_GROUP_TYPE_Oh  :
             break;
         case MSYM_POINT_GROUP_TYPE_Cnv :
         case MSYM_POINT_GROUP_TYPE_Dn  :
@@ -672,39 +677,13 @@ msym_error_t generateSplittingOperation(msym_point_group_t *pg, msym_permutation
             
             break;
         }
-        case MSYM_POINT_GROUP_TYPE_T   :
-        case MSYM_POINT_GROUP_TYPE_Td  :
-        case MSYM_POINT_GROUP_TYPE_Th  :
-        case MSYM_POINT_GROUP_TYPE_O   :
-        case MSYM_POINT_GROUP_TYPE_Oh  : {
-            for(int i = 0;i < sgl;i++){
-                if(MSYM_POINT_GROUP_TYPE_Cn == sg[i].type && sg[i].n == 3){
-                    msym_symmetry_operation_t **sgsops = sg[i].sops;
-                    for(int j = 0; j < sg[i].order; j++){
-                        if(PROPER_ROTATION == sgsops[j]->type && 3 == sgsops[j]->order && 1 == sgsops[j]->power){
-                            sop = sgsops[j];
-                            break;
-                        }
-                    }
-                    break;
-                }
-            }
-            
-            if(NULL == sop){
-                ret = MSYM_SUBSPACE_ERROR;
-                msymSetErrorDetails("Cannot determine splitting operation for point group %s", pg->name);
-                goto err;
-            }
-            
-            break;
-        }
         case MSYM_POINT_GROUP_TYPE_I   :
         case MSYM_POINT_GROUP_TYPE_Ih  : {
             for(int i = 0;i < sgl;i++){
                 int f = 0;
                 for(f = 0; f < pg->ct->d && &sg[i] != rsg[f];f++);
 
-                if(f == pg->ct->d && MSYM_POINT_GROUP_TYPE_Cn == sg[i].type && sg[i].n == 5){
+                if(f == pg->ct->d && MSYM_POINT_GROUP_TYPE_Dn == sg[i].type && sg[i].n == 5){
                     msym_symmetry_operation_t **sgsops = sg[i].sops;
                     for(int j = 0; j < sg[i].order; j++){
                         if(PROPER_ROTATION == sgsops[j]->type && 5 == sgsops[j]->order && 1 == sgsops[j]->power){
@@ -735,6 +714,8 @@ msym_error_t generateSplittingOperation(msym_point_group_t *pg, msym_permutation
             goto err;
     }
     
+    *osop = sop;
+    
     if(NULL != sop){
         int s = (int) (sop - pg->sops);
         
@@ -756,10 +737,88 @@ err:
 }
 
 
-
-msym_error_t determinePartnerFunctions(int dim, int sd, int sspan, double (*sdss)[dim], int sdvi[5], double (*split)[dim], double (*mem)[dim], int *li, double (*pf)[dim]){
+msym_error_t determinePartnerFunctionsSearch(msym_point_group_t *pg, msym_permutation_t perm[pg->order], int ld, double (*lrsops)[ld][ld], int dim, int sd, int sspan, double (*sdss)[dim], int sdvi[5], double (*split)[dim], double (*mem)[dim], int *li, double (*pf)[dim]){
     msym_error_t ret = MSYM_SUCCESS;
     
+    int pd = perm->p_length;
+    
+    //need at least 3 dimensions
+    double *f = mem[0];
+    double *proj = mem[1];
+    
+    if(sd == 1){
+        memcpy(pf, sdss, sspan*sizeof(*pf));
+        return ret;
+    }
+    
+    if(dim < 2){
+        ret = MSYM_SUBSPACE_ERROR;
+        msymSetErrorDetails("Unexpected dimension %d < 2 when determining partner functions", dim);
+        goto err;
+    }
+    
+    
+    
+    memset(pf, 0, dim*sizeof(*pf));
+    
+    for(int i = 0;i < sspan;i++){
+        int found[5] = {1,0,0,0,0};
+        int s = 0;
+        for(s = 0; s < pg->order;s++){
+            int df = 0;
+            for(int d = 0; d < sd; d++) df += found[d];
+            if(df == sd) break;
+
+            if(IDENTITY == pg->sops[s].type) continue;
+            // build symmetry operation
+            memset(split, 0, dim*sizeof(*split));
+            for(int pi = 0, po = 0;pi < pd;pi++, po += ld){
+                int pr = perm[s].p[pi]*ld;
+                for(int li = 0;li < ld;li++){
+                    int r = pr + li;
+                    for(int lj = 0;lj < ld;lj++){
+                        split[r][po+lj] += lrsops[s][li][lj];
+                    }
+                }
+            }
+            
+            memcpy(pf[i*sd], sdss[i], dim*sizeof(*sdss[i]));
+            mvlmul(dim, dim, split, sdss[i], f);
+            
+            for(int d = 1; d < sd; d++){
+                if(found[d]) continue;
+                int pfi = i*sd+d;
+                for(int j = 0; j < sspan;j++){
+                    int pi = sdvi[d] + j;
+                    vlproj(dim, f, sdss[pi], proj);
+                    vladd(dim, proj, pf[pfi], pf[pfi]);
+                }
+                if(vlabs(dim, pf[pfi]) >= PARTNER_THRESHOLD){
+                    vlnorm(dim, pf[pfi]);
+                    found[d] = 1;
+                }
+            }
+        }
+        
+        if(s == pg->order){
+            ret = MSYM_SUBSPACE_ERROR;
+            msymSetErrorDetails("Could not determine partner functions in %d dimensional space", sd);
+            goto err;
+            
+        }
+    }
+err:
+    return ret;
+}
+
+
+
+
+msym_error_t determinePartnerFunctions(msym_point_group_t *pg, msym_permutation_t perm[pg->order], int ld, double (*lrsops)[ld][ld], int dim, int sd, int sspan, double (*sdss)[dim], int sdvi[5], double (*split)[dim], msym_symmetry_operation_t *splitop, double (*mem)[dim], int *li, double (*pf)[dim]){
+    msym_error_t ret = MSYM_SUCCESS;
+    
+    if(NULL == splitop) return determinePartnerFunctionsSearch(pg, perm, ld, lrsops, dim, sd, sspan, sdss, sdvi, split, mem, li, pf);
+        
     //need at least 3 dimensions
     double *f = mem[0];
     double *proj = mem[1];
@@ -1117,6 +1176,7 @@ msym_error_t generateSubrepresentationSpaces(msym_point_group_t *pg, int sgl, co
             double (**pssp)[esd] = psspmem;
             double (*pss)[esd] = pssmem;
             double (*split)[dim] = splitmem;
+            msym_symmetry_operation_t *splitop = NULL;
             
             clean_debug_printf("e decomposed %d\n", ct->d);
             for(int prk = 0;prk < ct->d;prk++){
@@ -1125,7 +1185,7 @@ msym_error_t generateSubrepresentationSpaces(msym_point_group_t *pg, int sgl, co
             }
             
             decomposeSubRepresentation(pg, rsg, sgc, iespan[i][l], sgd);
-            if(MSYM_SUCCESS != (ret = generateSplittingOperation(pg, perm[i], ld, lrsops, sgl, sg, rsg, split))) goto err;
+            if(MSYM_SUCCESS != (ret = generateSplittingOperation(pg, perm[i], ld, lrsops, sgl, sg, rsg, split, &splitop))) goto err;
             if(MSYM_SUCCESS != (ret = generateSubspaces(pg, perm[i], ld, lrsops, iespan[i][l], sgc, sgd, thresholds, cmem, pmem, ssp, ss))) goto err;
             // Must be done after generateSubspaces since memory overlaps with pss for icosahedral groups
             if(MSYM_SUCCESS != (ret = generatePermutationSubspaces(pg, perm[i], ipspan[i], thresholds, pmem, pssp, pss))) goto err;
@@ -1173,7 +1233,7 @@ msym_error_t generateSubrepresentationSpaces(msym_point_group_t *pg, int sgl, co
                         
                         double (*pf)[dim] = pfmem;
                         
-                        if(MSYM_SUCCESS != (ret = determinePartnerFunctions(dim, sd, sspan, sdss, sdvi, split, pmem[0], &li, pf))) goto err;
+                        if(MSYM_SUCCESS != (ret = determinePartnerFunctions(pg, perm[i], ld, lrsops, dim, sd, sspan, sdss, sdvi, split, splitop, pmem[0], &li, pf))) goto err;
                         
                         for(int si = 0, pfi = 0; si < sspan;si++){
                             for(int n = l+1; n <= esnmax[i];n++){
