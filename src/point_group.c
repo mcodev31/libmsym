@@ -840,6 +840,7 @@ msym_error_t reduceLinearPointGroup(msym_point_group_t *pg, int n, msym_threshol
     int order = 0;
     msym_permutation_t *perm = NULL;
     msym_symmetry_operation_t *sops = NULL;
+    msym_symmetry_operation_t *primary = NULL;
     if(!isLinearPointGroup(pg)){
         msymSetErrorDetails("Trying to reduce non linear point group");
         ret = MSYM_POINT_GROUP_ERROR;
@@ -851,6 +852,20 @@ msym_error_t reduceLinearPointGroup(msym_point_group_t *pg, int n, msym_threshol
     if(MSYM_SUCCESS != (ret = getPointGroupOrder(pg->type, n, &order))) goto err;
     
     if(MSYM_SUCCESS != (ret = generateSymmetryOperations(pg->type, 0, order, &sops))) goto err;
+    
+    for(int i = 0;i < order;i++){
+        if(PROPER_ROTATION == sops[i].type && n == sops[i].order && HORIZONTAL == sops[i].orientation && 1 == sops[i].power){
+            primary = &sops[i];
+            break;
+        }
+    }
+    
+    if(NULL == primary){
+        msymSetErrorDetails("Cannot find primary axis when reducing linear group");
+        ret = MSYM_POINT_GROUP_ERROR;
+        goto err;
+    }
+    
     
     double T[3][3];
     minv(pg->transform, T);
@@ -869,9 +884,11 @@ msym_error_t reduceLinearPointGroup(msym_point_group_t *pg, int n, msym_threshol
     
     free(pg->sops);
     
+    
     pg->sops = sops;
     pg->order = order;
     pg->perm = perm;
+    pg->primary = primary;
     
     return ret;
 err:

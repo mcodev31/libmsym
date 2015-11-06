@@ -653,8 +653,6 @@ msym_error_t generateSplittingOperation(msym_point_group_t *pg, msym_permutation
     int pd = perm->p_length, dim = pd*ld;
     msym_symmetry_operation_t *sop = NULL;
     
-    memset(rsop, 0, dim*sizeof(*rsop));
-    
     switch(pg->type){
         case MSYM_POINT_GROUP_TYPE_Cs  :
         case MSYM_POINT_GROUP_TYPE_Ci  :
@@ -718,7 +716,7 @@ msym_error_t generateSplittingOperation(msym_point_group_t *pg, msym_permutation
     
     if(NULL != sop){
         int s = (int) (sop - pg->sops);
-        
+        memset(rsop, 0, dim*sizeof(*rsop));
         for(int pi = 0, po = 0;pi < pd;pi++, po += ld){
             int pr = perm[s].p[pi]*ld;
             for(int li = 0;li < ld;li++){
@@ -758,6 +756,7 @@ msym_error_t determinePartnerFunctionsSearch(msym_point_group_t *pg, msym_permut
     }
     
     
+    debug_printTransform(sspan*sd, dim, sdss);
     
     memset(pf, 0, dim*sizeof(*pf));
     
@@ -802,9 +801,8 @@ msym_error_t determinePartnerFunctionsSearch(msym_point_group_t *pg, msym_permut
         
         if(s == pg->order){
             ret = MSYM_SUBSPACE_ERROR;
-            msymSetErrorDetails("Could not determine partner functions in %d dimensional space", sd);
+            msymSetErrorDetails("Could not find partner functions in %d dimensional space", sd);
             goto err;
-            
         }
     }
 err:
@@ -814,19 +812,22 @@ err:
 
 
 
-msym_error_t determinePartnerFunctions(msym_point_group_t *pg, msym_permutation_t perm[pg->order], int ld, double (*lrsops)[ld][ld], int dim, int sd, int sspan, double (*sdss)[dim], int sdvi[5], double (*split)[dim], msym_symmetry_operation_t *splitop, double (*mem)[dim], int *li, double (*pf)[dim]){
+msym_error_t determinePartnerFunctions(msym_point_group_t *pg, int r, msym_permutation_t perm[pg->order], int ld, double (*lrsops)[ld][ld], int dim, int sd, int sspan, double (*sdss)[dim], int sdvi[5], double (*split)[dim], msym_symmetry_operation_t *splitop, double (*mem)[dim], int *li, double (*pf)[dim]){
     msym_error_t ret = MSYM_SUCCESS;
     
+    
+    if(sd/r == 1){
+        memcpy(pf, sdss, r*sspan*sizeof(*pf));
+        return ret;
+    }
+    
     if(NULL == splitop) return determinePartnerFunctionsSearch(pg, perm, ld, lrsops, dim, sd, sspan, sdss, sdvi, split, mem, li, pf);
-        
+    
     //need at least 3 dimensions
     double *f = mem[0];
     double *proj = mem[1];
     
-    if(sd == 1){
-        memcpy(pf, sdss, sspan*sizeof(*pf));
-        return ret;
-    }
+    
 
     if(dim < 2){
         ret = MSYM_SUBSPACE_ERROR;
@@ -1233,7 +1234,7 @@ msym_error_t generateSubrepresentationSpaces(msym_point_group_t *pg, int sgl, co
                         
                         double (*pf)[dim] = pfmem;
                         
-                        if(MSYM_SUCCESS != (ret = determinePartnerFunctions(pg, perm[i], ld, lrsops, dim, sd, sspan, sdss, sdvi, split, splitop, pmem[0], &li, pf))) goto err;
+                        if(MSYM_SUCCESS != (ret = determinePartnerFunctions(pg, ct->s[dk].r, perm[i], ld, lrsops, dim, sd, sspan, sdss, sdvi, split, splitop, pmem[0], &li, pf))) goto err;
                         
                         for(int si = 0, pfi = 0; si < sspan;si++){
                             for(int n = l+1; n <= esnmax[i];n++){
@@ -1746,6 +1747,7 @@ msym_error_t generateSubrepresentationSpacesOld(msym_point_group_t *pg, int sgl,
                             
                             memset(found,0,sizeof(int[ct->s[sk].d][mdim]));
                             for(int s = 0;s < pg->order ;s++){
+                                printf("loop\n");
                                 permutationMatrix(&perm[i][s], mperm);
                                 kron(d, mperm, ld, lst[s], dd, dscal);
                                 for(int dim = 0;dim < mdim;dim++){
