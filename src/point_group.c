@@ -897,12 +897,13 @@ err:
 
 }
 
+/* Really should split the orientation and class from the symmetry operation
+ * and move it to the group so we don't have to regenerate */
 msym_error_t pointGroupFromSubgroup(const msym_subgroup_t *sg, msym_thresholds_t *thresholds, msym_point_group_t **opg){
     msym_error_t ret = MSYM_SUCCESS;
     *opg = calloc(1,sizeof(msym_point_group_t));
     msym_point_group_t *pg = *opg;
     pg->type = sg->type;
-    pg->primary = sg->primary;
     pg->n = sg->n;
     pg->sops = malloc(sizeof(msym_symmetry_operation_t[sg->order]));
     memcpy(pg->name,sg->name,sizeof(pg->name));
@@ -941,6 +942,15 @@ msym_error_t pointGroupFromSubgroup(const msym_subgroup_t *sg, msym_thresholds_t
     minv(pg->transform, T);
     
     for(int i = 0; i < pg->order;i++){
+        // vector and orientation may not be equal
+        if(NULL != sg->primary &&
+           NULL == pg->primary &&
+           pg->sops[i].type == sg->primary->type &&
+           pg->sops[i].order == sg->primary->order &&
+           pg->sops[i].power == sg->primary->power){
+            
+            pg->primary = &pg->sops[i];
+        }
         mvmul(pg->sops[i].v,T,pg->sops[i].v);
     }
     

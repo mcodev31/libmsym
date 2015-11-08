@@ -135,7 +135,7 @@ extern "C" {
     } msym_partner_function_t;
     
     typedef struct _msym_salc {
-        int d;              // dimension of space (same as msym_character_table_t.s[msym_subspace_t.s].d)
+        int d;              // dimension of space (same as msym_character_table_t.s[msym_subrepresentation_space_t.s].d)
         int fl;             // number of basis functions
         void *pf;           // partner functions double[d][fl]
         msym_basis_function_t **f;
@@ -180,6 +180,7 @@ extern "C" {
     msym_error_t MSYM_EXPORT msymSelectSubgroup(msym_context ctx, const msym_subgroup_t *subgroup);
     msym_error_t MSYM_EXPORT msymGetSymmetryOperations(msym_context ctx, int *sopsl, const msym_symmetry_operation_t **sops);
     msym_error_t MSYM_EXPORT msymGetEquivalenceSets(msym_context ctx, int *l, const msym_equivalence_set_t **es);
+    msym_error_t MSYM_EXPORT msymGetEquivalenceSetByElement(msym_context ctx, msym_element_t *element, const msym_equivalence_set_t **es);
     msym_error_t MSYM_EXPORT msymGetSubrepresentationSpaces(msym_context ctx, int *l, const msym_subrepresentation_space_t **srs);
     msym_error_t MSYM_EXPORT msymGetCharacterTable(msym_context ctx, const msym_character_table_t **ct);
     

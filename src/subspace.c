@@ -666,11 +666,13 @@ msym_error_t generateSplittingOperation(msym_point_group_t *pg, msym_permutation
         case MSYM_POINT_GROUP_TYPE_Dn  :
         case MSYM_POINT_GROUP_TYPE_Dnh :
         case MSYM_POINT_GROUP_TYPE_Dnd : {
-            sop = pg->primary;
-            if(NULL == sop){
-                ret = MSYM_SUBSPACE_ERROR;
-                msymSetErrorDetails("Cannot determine splitting operation for point group %s", pg->name);
-                goto err;
+            if(pg->n > 2){
+                sop = pg->primary;
+                if(NULL == sop){
+                    ret = MSYM_SUBSPACE_ERROR;
+                    msymSetErrorDetails("Cannot determine splitting operation for point group %s", pg->name);
+                    goto err;
+                }
             }
             
             break;
@@ -895,7 +897,6 @@ err:
 
 
 msym_error_t generateSubrepresentationSpaces(msym_point_group_t *pg, int sgl, const msym_subgroup_t sg[sgl], int esl, msym_equivalence_set_t *es, msym_permutation_t **perm, int basisl, msym_basis_function_t basis[basisl], msym_element_t *elements, msym_equivalence_set_t **esmap, msym_thresholds_t *thresholds, int *osrsl, msym_subrepresentation_space_t **osrs, msym_basis_function_t ***osrsbf, int **ospan){
-    printf("NEW\n");
     msym_error_t ret = MSYM_SUCCESS;
     msym_character_table_t *ct = pg->ct;
     int lmax = -1, nmax = 0, eslmax = 0;
@@ -1341,7 +1342,7 @@ err:
 
 
 
-msym_error_t generateSubrepresentationSpacesOld(msym_point_group_t *pg, int sgl, const msym_subgroup_t sg[sgl], int esl, msym_equivalence_set_t *es, msym_permutation_t **perm, int basisl, msym_basis_function_t basis[basisl], msym_element_t *elements, msym_equivalence_set_t **esmap, msym_thresholds_t *thresholds, int *osrsl, msym_subrepresentation_space_t **osrs, msym_basis_function_t ***osrsbf, int **ospan){
+msym_error_t generateSubrepresentationSpacesLowMem(msym_point_group_t *pg, int sgl, const msym_subgroup_t sg[sgl], int esl, msym_equivalence_set_t *es, msym_permutation_t **perm, int basisl, msym_basis_function_t basis[basisl], msym_element_t *elements, msym_equivalence_set_t **esmap, msym_thresholds_t *thresholds, int *osrsl, msym_subrepresentation_space_t **osrs, msym_basis_function_t ***osrsbf, int **ospan){
     msym_error_t ret = MSYM_SUCCESS;
     msym_character_table_t *ct = pg->ct;
     int lmax = -1, nmax = 0;
@@ -1747,7 +1748,6 @@ msym_error_t generateSubrepresentationSpacesOld(msym_point_group_t *pg, int sgl,
                             
                             memset(found,0,sizeof(int[ct->s[sk].d][mdim]));
                             for(int s = 0;s < pg->order ;s++){
-                                printf("loop\n");
                                 permutationMatrix(&perm[i][s], mperm);
                                 kron(d, mperm, ld, lst[s], dd, dscal);
                                 for(int dim = 0;dim < mdim;dim++){

@@ -121,7 +121,7 @@ void characterTableToTex(FILE *fp, msym_point_group_type_t type, int n, const ch
 #define M_PI 3.14159265358979323846264338327950288419716939937510582
 #endif
 
-#define CHARACTER_EQUAL 1.0e-9
+#define CHARACTER_EQUAL 1.0e-7
 
 void characterToTex(FILE *fp,int n, const msym_character_table_t *ct, int i, int j, int mode){
     double (*table)[ct->d] = (double (*)[ct->d]) ct->table;

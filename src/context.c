@@ -265,6 +265,18 @@ msym_error_t msymGetSubgroups(msym_context ctx, int *sgl, const msym_subgroup_t 
         int sgmax = numberOfSubgroups(ctx->pg);
         if(MSYM_SUCCESS != (ret = findPermutationSubgroups(ctx->pg->order, ctx->pg->perm, sgmax, ctx->pg->sops, &gsgl, &gsg))) goto err;
         
+        if(isLinearSubgroup(ctx->pg)){
+            gsg = realloc(gsg, (gsgl+1)*sizeof(*gsg));
+            memset(&gsg[gsgl], 0, sizeof(*gsg));
+            gsg[gsgl].n = ctx->pg->n;
+            gsg[gsgl].order = ctx->pg->order;
+            gsg[gsgl].sops = calloc(gsg[gsgl].order, sizeof(*gsg[gsgl].sops));
+            for(int i = 0;i < ctx->pg->order;i++){
+                gsg[gsgl].sops[i] = &ctx->pg->sops[i];
+            }
+            gsgl++;
+        }
+        
         ctx->sg = gsg;
         ctx->sgl = gsgl;
         
@@ -661,6 +673,30 @@ msym_error_t ctxGetEquivalenceSets(msym_context ctx, int *esl, msym_equivalence_
     *esl = ctx->esl;
 err:
     return ret;
+}
+
+msym_error_t msymGetEquivalenceSetByElement(msym_context ctx, msym_element_t *element, const msym_equivalence_set_t **es){
+    msym_error_t ret = MSYM_SUCCESS;
+    if(ctx == NULL) {ret = MSYM_INVALID_CONTEXT; goto err;}
+    if(ctx->es == NULL) {ret = MSYM_INVALID_EQUIVALENCE_SET;goto err;}
+    
+    if(element >= ctx->ext.set_elements_ptr && element < ctx->ext.set_elements_ptr + ctx->elementsl){
+        element = element - ctx->ext.set_elements_ptr + ctx->ext.elements;
+    } else if(!(element >= ctx->ext.elements && element < ctx->ext.elements + ctx->elementsl)){
+        ret = MSYM_INVALID_ELEMENTS;
+        msymSetErrorDetails("Element not within [%p,%p) or [%p,%p) but is at %p",ctx->ext.set_elements_ptr,ctx->ext.set_elements_ptr + ctx->elementsl,ctx->ext.elements,ctx->ext.elements + ctx->elementsl, element);
+        goto err;
+    }
+    
+    msym_equivalence_set_t **eesmap = NULL;
+    
+    if(MSYM_SUCCESS != (ret = ctxGetExternalElementEquivalenceSetMap(ctx, &eesmap))) goto err;
+    
+    *es = eesmap[element - ctx->ext.elements];
+    
+err:
+    return ret;
+    
 }
 
 msym_error_t ctxGetExternalEquivalenceSets(msym_context ctx, int *esl, msym_equivalence_set_t **es){
