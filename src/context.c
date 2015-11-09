@@ -117,7 +117,7 @@ err:
 
 msym_error_t msymGetThresholds(msym_context ctx, const msym_thresholds_t **thresholds){
     msym_error_t ret = MSYM_SUCCESS;
-    if(ctx == NULL) {ret = MSYM_INVALID_CONTEXT;goto err;}
+    if(ctx == NULL) {ret = MSYM_INVALID_CONTEXT; return ret;}
     if(ctx->thresholds == NULL) ret = MSYM_INVALID_THRESHOLD;
     *thresholds = ctx->thresholds;
 err:
@@ -126,7 +126,7 @@ err:
 
 msym_error_t msymSetElements(msym_context ctx, int length, msym_element_t *elements){
     msym_error_t ret = MSYM_SUCCESS;
-    if(ctx == NULL) {ret = MSYM_INVALID_CONTEXT;goto err;}
+    if(ctx == NULL) {ret = MSYM_INVALID_CONTEXT; return ret;}
     /* Allow manual setting of point group before elements */
     if(NULL != ctx->es) ctxDestroyPointGroup(ctx);
     return ctxSetElements(ctx, length, elements);
@@ -137,7 +137,7 @@ err:
 msym_error_t msymGetElements(msym_context ctx, int *length, msym_element_t **elements){
     msym_error_t ret = MSYM_SUCCESS;
     msym_element_t *relements = NULL;
-    if(ctx == NULL) {ret = MSYM_INVALID_CONTEXT;goto err;}
+    if(ctx == NULL) {ret = MSYM_INVALID_CONTEXT; return ret;}
     if(ctx->elements == NULL || ctx->ext.elements == NULL) {ret = MSYM_INVALID_ELEMENTS;goto err;}
     
     *elements = ctx->ext.elements;
@@ -164,7 +164,7 @@ err:
 
 msym_error_t msymGetBasisFunctions(msym_context ctx, int *length, msym_basis_function_t **basis){
     msym_error_t ret = MSYM_SUCCESS;
-    if(ctx == NULL) {ret = MSYM_INVALID_CONTEXT;goto err;}
+    if(ctx == NULL) {ret = MSYM_INVALID_CONTEXT; return ret;}
     if(ctx->basis == NULL) {
         msymSetErrorDetails("Found no basis functions");
         ret = MSYM_INVALID_BASIS_FUNCTIONS;
@@ -179,7 +179,7 @@ err:
 
 msym_error_t msymSetBasisFunctions(msym_context ctx, int length, msym_basis_function_t *basis){
     msym_error_t ret = MSYM_SUCCESS;
-    if(ctx == NULL) {ret = MSYM_INVALID_CONTEXT;goto err;}
+    if(ctx == NULL) {ret = MSYM_INVALID_CONTEXT; return ret;}
     if(ctx->elements == NULL) {ret = MSYM_INVALID_ELEMENTS;goto err;}
     ctxDestroyBasisFunctions(ctx);
     ctx->basis = malloc(sizeof(msym_basis_function_t[length]));
@@ -229,7 +229,7 @@ err:
 
 msym_error_t msymGetPointGroupName(msym_context ctx, int l, char buf[l]){
     msym_error_t ret = MSYM_SUCCESS;
-    if(ctx == NULL) {ret = MSYM_INVALID_CONTEXT;goto err;}
+    if(ctx == NULL) {ret = MSYM_INVALID_CONTEXT; return ret;}
     if(ctx->pg == NULL) {ret = MSYM_INVALID_POINT_GROUP;goto err;}
     snprintf(buf, l, "%s",ctx->pg->name);
 err:
@@ -238,7 +238,7 @@ err:
 
 msym_error_t msymGetPointGroupType(msym_context ctx, msym_point_group_type_t *t, int *n){
     msym_error_t ret = MSYM_SUCCESS;
-    if(ctx == NULL) {ret = MSYM_INVALID_CONTEXT;goto err;}
+    if(ctx == NULL) {ret = MSYM_INVALID_CONTEXT; return ret;}
     if(ctx->pg == NULL) {ret = MSYM_INVALID_POINT_GROUP;goto err;}
     
     *t = ctx->pg->type;
@@ -254,7 +254,7 @@ msym_error_t msymGetSubgroups(msym_context ctx, int *sgl, const msym_subgroup_t 
     msym_subgroup_t *gsg = NULL;
     int gsgl = 0;
     
-    if(ctx == NULL) {ret = MSYM_INVALID_CONTEXT;goto err;}
+    if(ctx == NULL) {ret = MSYM_INVALID_CONTEXT; return ret;}
     if(ctx->pg == NULL) {ret = MSYM_INVALID_POINT_GROUP;goto err;}
     if(ctx->pg->perm == NULL && !(isLinearPointGroup(ctx->pg) && !isLinearSubgroup(ctx->pg))) {
         ret = MSYM_INVALID_PERMUTATION;
@@ -337,7 +337,7 @@ err:
 
 msym_error_t msymGetCenterOfMass(msym_context ctx, double v[3]){
     msym_error_t ret = MSYM_SUCCESS;
-    if(ctx == NULL) {ret = MSYM_INVALID_CONTEXT;goto err;}
+    if(ctx == NULL) {ret = MSYM_INVALID_CONTEXT; return ret;}
     if(ctx->elements == NULL) {ret = MSYM_INVALID_ELEMENTS;goto err;}
     vcopy(ctx->cm, v);
 err:
@@ -355,7 +355,7 @@ err:
 
 msym_error_t msymGetGeometry(msym_context ctx, msym_geometry_t *geometry){
     msym_error_t ret = MSYM_SUCCESS;
-    if(ctx == NULL) {ret = MSYM_INVALID_CONTEXT;goto err;}
+    if(ctx == NULL) {ret = MSYM_INVALID_CONTEXT; return ret;}
     if(ctx->elements == NULL) {ret = MSYM_INVALID_ELEMENTS;goto err;}
     if(ctx->geometry == MSYM_GEOMETRY_UNKNOWN) {ret = MSYM_INVALID_GEOMETRY;goto err;}
     *geometry = ctx->geometry;
@@ -365,7 +365,7 @@ err:
 
 msym_error_t msymGetPrincipalMoments(msym_context ctx, double eigval[3]){
     msym_error_t ret = MSYM_SUCCESS;
-    if(ctx == NULL) {ret = MSYM_INVALID_CONTEXT;goto err;}
+    if(ctx == NULL) {ret = MSYM_INVALID_CONTEXT; return ret;}
     if(ctx->elements == NULL) {ret = MSYM_INVALID_ELEMENTS;goto err;}
     vcopy(ctx->eigval, eigval);
 err:
@@ -373,7 +373,7 @@ err:
 }
 msym_error_t msymGetPrincipalAxes(msym_context ctx, double eigvec[3][3]){
     msym_error_t ret = MSYM_SUCCESS;
-    if(ctx == NULL) {ret = MSYM_INVALID_CONTEXT;goto err;}
+    if(ctx == NULL) {ret = MSYM_INVALID_CONTEXT; return ret;}
     if(ctx->elements == NULL) {ret = MSYM_INVALID_ELEMENTS;goto err;}
     mcopy(ctx->eigvec, eigvec);
 err:
@@ -382,9 +382,9 @@ err:
 
 msym_error_t msymGetRadius(msym_context ctx, double *radius){
     msym_error_t ret = MSYM_SUCCESS;
-    double r = 0.0;
-    if(ctx == NULL) {ret = MSYM_INVALID_CONTEXT;goto err;}
+    if(ctx == NULL) {ret = MSYM_INVALID_CONTEXT; return ret;}
     if(ctx->elements == NULL) {ret = MSYM_INVALID_ELEMENTS;goto err;}
+    double r = 0.0;
     for(int i = 0;i < ctx->elementsl;i++){
         double abs = vabs(ctx->elements[i].v);
         r = r > abs ? r : abs;
@@ -398,7 +398,7 @@ err:
 msym_error_t msymGetSymmetryOperations(msym_context ctx, int *sopsl, const msym_symmetry_operation_t **sops){
     msym_error_t ret = MSYM_SUCCESS;
     msym_symmetry_operation_t *rsops = NULL;
-    if(ctx == NULL) {ret = MSYM_INVALID_CONTEXT;goto err;}
+    if(ctx == NULL) {ret = MSYM_INVALID_CONTEXT; return ret;}
     if(ctx->pg == NULL || ctx->pg->sops == NULL) {ret = MSYM_INVALID_POINT_GROUP;goto err;}
     
     *sops = ctx->pg->sops;
@@ -413,12 +413,12 @@ err:
 
 msym_error_t msymReleaseContext(msym_context ctx){
     msym_error_t ret = MSYM_SUCCESS;
-    if(ctx == NULL) {ret = MSYM_INVALID_CONTEXT;goto err;}
+    if(ctx == NULL) {ret = MSYM_INVALID_CONTEXT; return ret;}
     free(ctx->thresholds);
     ctxDestroyElements(ctx);
     ctxDestroyPointGroup(ctx);
     free(ctx);
-err:
+//err:
     return ret;
 }
 
@@ -433,7 +433,7 @@ err:
 msym_error_t ctxSetElements(msym_context ctx, int length, msym_element_t elements[length]){
     msym_error_t ret = MSYM_SUCCESS;
     msym_thresholds_t *thresholds = NULL;
-    if(ctx == NULL) {ret = MSYM_INVALID_CONTEXT;goto err;}
+    if(ctx == NULL) {ret = MSYM_INVALID_CONTEXT; return ret;}
     
     ctxDestroyElements(ctx);
     
@@ -466,6 +466,7 @@ msym_error_t ctxSetElements(msym_context ctx, int length, msym_element_t element
     
     return ret;
 err:
+    
     free(ctx->elements);
     free(ctx->pelements);
     free(ctx->ext.elements);
@@ -480,8 +481,8 @@ err:
 
 msym_error_t ctxGetThresholds(msym_context ctx, msym_thresholds_t **thresholds){
     msym_error_t ret = MSYM_SUCCESS;
-    if(ctx == NULL) {ret = MSYM_INVALID_CONTEXT;goto err;}
-    if(ctx->thresholds == NULL) ret = MSYM_INVALID_THRESHOLD;
+    if(ctx == NULL) {ret = MSYM_INVALID_CONTEXT; return ret;}
+    if(ctx->thresholds == NULL) {ret = MSYM_INVALID_THRESHOLD; goto err;}
     msym_thresholds_t *t = ctx->thresholds;
     if(t->angle < 1.0 && !signbit(t->angle) &&
        t->equivalence < 1.0 && !signbit(t->equivalence) &&
@@ -501,7 +502,7 @@ err:
 
 msym_error_t ctxGetElements(msym_context ctx, int *l, msym_element_t **elements){
     msym_error_t ret = MSYM_SUCCESS;
-    if(ctx == NULL) {ret = MSYM_INVALID_CONTEXT;goto err;}
+    if(ctx == NULL) {ret = MSYM_INVALID_CONTEXT; return ret;}
     if(ctx->elements == NULL) {ret = MSYM_INVALID_ELEMENTS; goto err;}
     *elements = (msym_element_t *) ctx->elements;
     *l = ctx->elementsl;
@@ -511,7 +512,7 @@ err:
 
 msym_error_t ctxGetExternalElements(msym_context ctx, int *l, msym_element_t **elements){
     msym_error_t ret = MSYM_SUCCESS;
-    if(ctx == NULL) {ret = MSYM_INVALID_CONTEXT;goto err;}
+    if(ctx == NULL) {ret = MSYM_INVALID_CONTEXT; return ret;}
     if(ctx->ext.elements == NULL) {ret = MSYM_INVALID_ELEMENTS; goto err;}
     *elements = (msym_element_t *) ctx->ext.elements;
     *l = ctx->elementsl;
@@ -537,7 +538,7 @@ err:
 
 msym_error_t ctxGetInternalElement(msym_context ctx, msym_element_t *ext, msym_element_t **element){
     msym_error_t ret = MSYM_SUCCESS;
-    if(ctx == NULL) {ret = MSYM_INVALID_CONTEXT;goto err;}
+    if(ctx == NULL) {ret = MSYM_INVALID_CONTEXT; return ret;}
     if(ctx->ext.elements == NULL) {ret = MSYM_INVALID_ELEMENTS;goto err;}
     if(ext < ctx->ext.elements || ext >= ctx->ext.elements+ctx->elementsl){
         msymSetErrorDetails("Element pointer (%p) outside memory block (%p -> %p)", ext, ctx->ext.elements, ctx->ext.elements + ctx->elementsl);
@@ -551,7 +552,7 @@ err:
 
 msym_error_t ctxGetSubgroups(msym_context ctx, int *sgl, msym_subgroup_t **sg){
     msym_error_t ret = MSYM_SUCCESS;
-    if(ctx == NULL) {ret = MSYM_INVALID_CONTEXT;goto err;}
+    if(ctx == NULL) {ret = MSYM_INVALID_CONTEXT; return ret;}
     if(ctx->sg == NULL) {ret = MSYM_INVALID_SUBGROUPS;goto err;}
     *sg = ctx->sg;
     *sgl = ctx->sgl;
@@ -561,7 +562,7 @@ err:
 
 msym_error_t ctxSetSubgroups(msym_context ctx, int sgl, msym_subgroup_t *sg){
     msym_error_t ret = MSYM_SUCCESS;
-    if(ctx == NULL) {ret = MSYM_INVALID_CONTEXT;goto err;}
+    if(ctx == NULL) {ret = MSYM_INVALID_CONTEXT; return ret;}
     ctxDestroySubgroups(ctx);
     ctx->sg = sg;
     ctx->sgl = sgl;
@@ -572,7 +573,7 @@ err:
 
 msym_error_t ctxGetElementPtrs(msym_context ctx, int *l, msym_element_t ***pelements){
     msym_error_t ret = MSYM_SUCCESS;
-    if(ctx == NULL) {ret = MSYM_INVALID_CONTEXT;goto err;}
+    if(ctx == NULL) {ret = MSYM_INVALID_CONTEXT; return ret;}
     if(ctx->pelements == NULL) {ret = MSYM_INVALID_ELEMENTS; goto err;}
     *pelements = (msym_element_t **) ctx->pelements;
     *l = ctx->elementsl;

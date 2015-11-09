@@ -535,6 +535,7 @@ int mgs(int l, const double m[l][l], double o[l][l], int n, double t){
 int mgs2(int l, int lm, const double m[l][l], double o[l][l], int n, double t){
     
     int nm = n + lm + MGS_ADD;
+    double ts = l/(1.0 + l);
     for(int i = 0; i < l && n < nm;i++){
         if(vlabs(l, m[i]) < t){
             continue;
@@ -550,8 +551,10 @@ int mgs2(int l, int lm, const double m[l][l], double o[l][l], int n, double t){
                 for(int k = 0;k < l;k++) o[n][k] -= c*o[j][k];
             }
             if(vlabs(l, o[n]) >= t){
+                t *= ts;
                 vlnorm(l, o[n]);
                 n++;
+                
             }
         }
     }

@@ -70,13 +70,11 @@ int example(const char* in_file, msym_thresholds_t *thresholds){
     int length = read_xyz(in_file, &elements);
     if(length <= 0) return -1;
     
-    //orbitalsl = sizeof(orbitals)/sizeof(char*);
-    //bfsl = orbitalsl*length;
-    //bfs = calloc(bfsl, sizeof(msym_basis_function_t));
-    double (*psalcs)[bfsl] = NULL; //calloc(bfsl, sizeof(*salcs)); // SALCs in matrix form, and input for symmetrization
-    double *pcmem = NULL; // calloc(bfsl, sizeof(double)); // Some temporary memory
-    int *pspecies = NULL; // calloc(bfsl, sizeof(*species));
-    msym_partner_function_t *ppf = NULL; //calloc(bfsl, sizeof(*pf));
+    
+    double (*psalcs)[bfsl] = NULL; // SALCs in matrix form, and input for symmetrization
+    double *pcmem = NULL; // Some temporary memory
+    int *pspecies = NULL;
+    msym_partner_function_t *ppf = NULL;
     
     /* Create a context */
     msym_context ctx = msymCreateContext();
@@ -306,9 +304,13 @@ int example(const char* in_file, msym_thresholds_t *thresholds){
             do{
                 
                 int sel_ss = 0, sel_salc = 0;
-                for(int i = 0; i < msrsl;i++) printf("\t [%d] %s (%d SALCs with %d partner functions each)\n",i, mct->s[msrs[i].s].name, msrs[i].salcl, mct->s[msrs[i].s].d);
-                
-                do {printf("\nChoose subspace [0-%d]:",msrsl-1);} while(scanf(" %d", &sel_ss) <= 0 || sel_ss < 0 || sel_ss >= msrsl);
+                for(int i = 0; i < msrsl;i++){
+                    if(msrs[i].salcl > 0)
+                        printf("\t [%d] %s (%d SALCs with %d partner functions each)\n",i, mct->s[msrs[i].s].name, msrs[i].salcl, mct->s[msrs[i].s].d);
+                    else
+                        printf("\t [-] %s (no SALCs of this symmetry species)\n",mct->s[msrs[i].s].name);
+                }
+                do {printf("\nChoose subspace [0-%d]:",msrsl-1);} while(scanf(" %d", &sel_ss) <= 0 || sel_ss < 0 || sel_ss >= msrsl || msrs[sel_ss].salcl <= 0);
                 
                 int salcl = msrs[sel_ss].salcl;
                 

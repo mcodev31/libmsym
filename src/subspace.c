@@ -140,7 +140,7 @@ msym_error_t generatePermutationSubspaces(msym_point_group_t *pg, msym_permutati
             }
         }
         
-        nirl = mgs2(dim, vspan,proj, ss, oirl, thresholds->orthogonalization/dim);
+        nirl = mgs2(dim, vspan,proj, ss, oirl, thresholds->orthogonalization);
         if(nirl - oirl != vspan){
             debug_printTransform(dim, dim, ss);
             ret = MSYM_SUBSPACE_ERROR;
@@ -183,7 +183,7 @@ msym_error_t generateSubspaces(msym_point_group_t *pg, msym_permutation_t perm[p
         if(MSYM_SUCCESS != (ret = generateProjectionOperator(irrepd,sopsl,cmem,perm,ld,lrsops,proj))) goto err;
         
         if(irrepd == 1){
-            nirl = mgs2(dim, pgvspan, proj, ss, oirl, thresholds->orthogonalization/dim);
+            nirl = mgs2(dim, pgvspan, proj, ss, oirl, thresholds->orthogonalization);
             if(nirl - oirl != pgvspan){
                 debug_printTransform(dim, dim, ss);
                 ret = MSYM_SUBSPACE_ERROR;
@@ -193,12 +193,12 @@ msym_error_t generateSubspaces(msym_point_group_t *pg, msym_permutation_t perm[p
             pss[k][0] = &ss[oirl];
         } else if(!(icosahedral && irrepd == 5)){
             
-            int pgnirl = mgs2(dim, pgvspan, proj, sspg, 0, thresholds->orthogonalization/dim);
+            int pgnirl = mgs2(dim, pgvspan, proj, sspg, 0, thresholds->orthogonalization);
             for(int d = 0; d < irrepd;d++,oirl = nirl){
                 
                 if(MSYM_SUCCESS != (ret = generateProjectionOperator(1,sopsl,sgc[k][d],perm,ld,lrsops,proj))) goto err;
                 
-                int sgnirl = mgs2(dim, sgd[k][d], proj, sssg, 0, thresholds->orthogonalization/dim);
+                int sgnirl = mgs2(dim, sgd[k][d], proj, sssg, 0, thresholds->orthogonalization);
                 
                 if(MSYM_SUCCESS != (ret = projectLinearlyIndependent(dim, pgnirl, sspg, sgnirl, sssg, thresholds, cmem, mem, ss, &nirl))) goto err;
                 
@@ -214,11 +214,11 @@ msym_error_t generateSubspaces(msym_point_group_t *pg, msym_permutation_t perm[p
             }
         } else {
             int idim[] = {1,2,2}, sdim[] = {3,4}, ssd = 0;
-            int pgnirl = mgs2(dim, pgvspan, proj, sspg, 0, thresholds->orthogonalization/dim);
+            int pgnirl = mgs2(dim, pgvspan, proj, sspg, 0, thresholds->orthogonalization);
             for(int d = 0; d < 3;d++,oirl = nirl){
                 if(MSYM_SUCCESS != (ret = generateProjectionOperator(idim[d],sopsl,sgc[k][d],perm,ld,lrsops,proj))) goto err;
                 
-                int sgnirl = mgs2(dim, sgd[k][d], proj, sssg, 0, thresholds->orthogonalization/dim);
+                int sgnirl = mgs2(dim, sgd[k][d], proj, sssg, 0, thresholds->orthogonalization);
                 
                 int id = idim[d];
                 if(id > 1){
@@ -230,7 +230,7 @@ msym_error_t generateSubspaces(msym_point_group_t *pg, msym_permutation_t perm[p
                         if(MSYM_SUCCESS != (ret = generateProjectionOperator(1,sopsl,sgc[k][sid],perm,ld,lrsops,proj))) goto err;
                         
                         // sspg, sssg and proj are taken, use mem, and take proj as mem after
-                        int ignirl = mgs2(dim, sgd[k][sid], proj, mem, 0, thresholds->orthogonalization/dim);
+                        int ignirl = mgs2(dim, sgd[k][sid], proj, mem, 0, thresholds->orthogonalization);
                         
                         if(MSYM_SUCCESS != (ret = projectLinearlyIndependent(dim, sgnirl, sssg, ignirl, mem, thresholds, cmem, proj, ss, &nirl))) goto err;
                         
@@ -291,7 +291,7 @@ msym_error_t generateSubspacesMatrix(msym_point_group_t *pg, msym_permutation_t 
         if(MSYM_SUCCESS != (ret = generateProjectionOperator(irrepd,sopsl,cmem,perm,ld,lrsops,projpg))) goto err;
         
         if(irrepd == 1){
-            nirl = mgs2(dim, pgvspan, projpg, ss, oirl, thresholds->orthogonalization/dim);
+            nirl = mgs2(dim, pgvspan, projpg, ss, oirl, thresholds->orthogonalization/sqrt(dim));
             if(nirl - oirl != pgvspan){
                 debug_printTransform(dim, dim, ss);
                 ret = MSYM_SUBSPACE_ERROR;
@@ -310,7 +310,7 @@ msym_error_t generateSubspacesMatrix(msym_point_group_t *pg, msym_permutation_t 
                 trace = mltrace(dim, mem);
                 mlscale(span[k]/trace, dim, mem, mem);
                 
-                nirl = mgs2(dim, span[k], mem, ss, oirl, thresholds->orthogonalization/dim);
+                nirl = mgs2(dim, span[k], mem, ss, oirl, thresholds->orthogonalization/sqrt(dim));
                 if(nirl - oirl != span[k]){
                     debug_printTransform(dim, dim, ss);
                     ret = MSYM_SUBSPACE_ERROR;
@@ -340,7 +340,7 @@ msym_error_t generateSubspacesMatrix(msym_point_group_t *pg, msym_permutation_t 
                         trace = mltrace(dim, mem);
                         mlscale(span[k]/trace, dim, mem, mem); // We might have small components in these subspaces
                         
-                        nirl = mgs2(dim, span[k], mem, ss, oirl, thresholds->orthogonalization/dim);
+                        nirl = mgs2(dim, span[k], mem, ss, oirl, thresholds->orthogonalization/sqrt(dim));
                         if(nirl - oirl != span[k]){
                             debug_printTransform(dim, dim, mem);
                             ret = MSYM_SUBSPACE_ERROR;
@@ -352,7 +352,7 @@ msym_error_t generateSubspacesMatrix(msym_point_group_t *pg, msym_permutation_t 
                     }
                 } else {
                     
-                    nirl = mgs2(dim, span[k], projig, ss, oirl, thresholds->orthogonalization/dim);
+                    nirl = mgs2(dim, span[k], projig, ss, oirl, thresholds->orthogonalization/sqrt(dim));
                     if(nirl - oirl != span[k]){
                         debug_printTransform(dim, dim, ss);
                         ret = MSYM_SUBSPACE_ERROR;
@@ -593,7 +593,6 @@ msym_error_t getSplittingFieldCharacters(msym_point_group_t *pg, const msym_subg
             for(int i = 0;i < sg->order;i++){
                 if(&pg->sops[s] != sg->sops[i]) continue;
                 if(pg->sops[s].type == IDENTITY){
-                    e = 1;
                     c[0][s] = c[3][s] = c[4][s] = 1;
                     c[1][s] = c[2][s] = 2;
                     found++;
@@ -638,7 +637,7 @@ msym_error_t projectLinearlyIndependent(int dim, int vdim, double v[vdim][dim], 
     
     int mdim = vdim > udim ? udim : vdim;
 
-    int nirl = mgs2(dim, mdim, mem, o, *oirl, thresholds->orthogonalization/dim);
+    int nirl = mgs2(dim, mdim, mem, o, *oirl, thresholds->orthogonalization/sqrt(dim));
     
     for(int i = *oirl; i < nirl;i++) vlnorm(dim, o[i]);
     
@@ -956,7 +955,6 @@ msym_error_t generateSubrepresentationSpaces(msym_point_group_t *pg, int sgl, co
     const msym_subgroup_t **rsg = calloc(ct->d, sizeof(*rsg));
     
     int (*sgd)[5] = calloc(ct->d,sizeof(*sgd));
-    int (*sgdASDASDASD)[5] = calloc(ct->d,sizeof(*sgdASDASDASD));
     int *ispan = calloc(ct->d, sizeof(*ispan));                               // decoposed total span of symmetrized basis (int)
     int (*iespan)[lmax+1][ct->d] = calloc(esl, sizeof(*iespan));
     int (*ipspan)[ct->d] = calloc(esl, sizeof(*ipspan));               // span of permutation operators
@@ -991,7 +989,7 @@ msym_error_t generateSubrepresentationSpaces(msym_point_group_t *pg, int sgl, co
     for(int k = 0; k < ct->d;k++){
         if(ct->s[k].d > 1){
             if(MSYM_SUCCESS != (ret = findSplittingFieldSubgroup(pg, k, sgl, sg, thresholds, &rsg[k]))) goto err;
-            if(MSYM_SUCCESS != (ret = getSplittingFieldCharacters(pg, rsg[k], sgc[k], sgdASDASDASD[k]))) goto err; //TODO: remove sgd
+            if(MSYM_SUCCESS != (ret = getSplittingFieldCharacters(pg, rsg[k], sgc[k], sgd[k]))) goto err; //TODO: remove sgd
         }
     }
     
@@ -1098,7 +1096,7 @@ msym_error_t generateSubrepresentationSpaces(msym_point_group_t *pg, int sgl, co
                 }
             }
             
-            nirl = mgs2(d, vspan,lproj, st[pg->order], oirl, thresholds->orthogonalization/basisl);
+            nirl = mgs2(d, vspan,lproj, st[pg->order], oirl, thresholds->orthogonalization);
             
             if(nirl - oirl != vspan){
                 debug_printTransform(d, d, st[pg->order]);
@@ -1226,7 +1224,7 @@ msym_error_t generateSubrepresentationSpaces(msym_point_group_t *pg, int sgl, co
                             if(sdvl != sspan){
                                 debug_printTransform(vspan, dim, dss);
                                 ret = MSYM_SUBSPACE_ERROR;
-                                msymSetErrorDetails("Linear projection subspace of dimension (%d) inconsistent with span (%d) in %s component %d",sdvl,sd,ct->s[dk].name,d);
+                                msymSetErrorDetails("Linear projection subspace of dimension (%d) inconsistent with span (%d) in %s component %d",sdvl,sspan,ct->s[dk].name,d);
                                 goto err;
                             }
                             
@@ -1284,12 +1282,12 @@ msym_error_t generateSubrepresentationSpaces(msym_point_group_t *pg, int sgl, co
     free(iespan);
     free(ipspan);
     free(ibspan);
+    free(sspmem);
     free(psspmem);
     free(lssp);
     free(rsg);
     free(sgc);
     free(sgd);
-    free(sgdASDASDASD);
     free(isalc);
     free(esnmax);
     free(esbfmap);
@@ -1314,10 +1312,12 @@ err:
     free(iespan);
     free(ipspan);
     free(ibspan);
+    free(sspmem);
     free(psspmem);
     free(lssp);
     free(rsg);
     free(sgc);
+    free(sgd);
     free(ispan);
     free(isalc);
     free(esnmax);
@@ -1824,6 +1824,7 @@ msym_error_t generateSubrepresentationSpacesLowMem(msym_point_group_t *pg, int s
     free(rsg);
     free(sgc);
     free(sgd);
+    free(mpih);
     free(mdcomp);
     free(mdproj);
     free(mdfound);
@@ -1854,6 +1855,8 @@ err:
     free(mdec);
     free(rsg);
     free(sgc);
+    free(sgd);
+    free(mpih);
     free(mdcomp);
     free(mdproj);
     free(mdfound);

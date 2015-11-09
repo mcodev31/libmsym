@@ -22,7 +22,7 @@
 #define DEFAULT_EQUIVALENCE_THRESHOLD 5.0e-4
 #define DEFAULT_EIGFACT_THRESHOLD 1.0e-3
 #define DEFAULT_PERMUTATION_THRESHOLD 5.0e-3
-#define DEFAULT_ORTHOGONALIZATION_THRESHOLD 0.01
+#define DEFAULT_ORTHOGONALIZATION_THRESHOLD 1.0e-2
 
 
 msym_error_t ctxGetThresholds(msym_context ctx, msym_thresholds_t **thresholds);

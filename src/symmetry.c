@@ -673,7 +673,7 @@ msym_error_t findSymmetryCubic(msym_equivalence_set_t *es, double cm[3], double 
         double d;
     } *pairs = malloc(sizeof(struct _pair[150]));*/
     double c2d = 0, c4d = 0, sigmad = 0;
-    int found = 0, nsigma = 0, esigma = 0, inversion = 0, nc[6] = {0,0,0,0,0,0}, ec[6] = {0,0,0,0,0,0}, *ncb = &nsigma, *ecb = &esigma,*nc3b = &nsigma;
+    int found = 0, nsigma = 0, esigma = 0, inversion = 0, nc[6] = {0,0,0,0,0,0}, ec[6] = {0,0,0,0,0,0}, *ncb = &nsigma, *nc3b = &nsigma;
     msym_symmetry_operation_t **(ac[6]);
     double thetac[6] = {0.0,M_PI,M_PI/2,M_PI/3,M_PI/4,M_PI/5};
     
@@ -901,7 +901,6 @@ msym_error_t findSymmetryCubic(msym_equivalence_set_t *es, double cm[3], double 
                 case 15 :
                     ec[5] = 6; ec[3] = 10; ec[2] = 15;
                     ncb = &(nc[2]);
-                    ecb = &(ec[2]);
                     cb = ac[2];
                     break;
                 default :

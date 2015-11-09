@@ -793,8 +793,8 @@ msym_error_t transformAxes(msym_point_group_type_t type, int n, msym_symmetry_op
         case (MSYM_POINT_GROUP_TYPE_Ih)  : {
             msym_symmetry_operation_t *dprimary = NULL;
             msym_symmetry_operation_t *sop;
+            double z = -2.0;
             for(sop = sops; sop < (sops + sopsl); sop++){
-                double z = -2.0;
                 if(sop->type == PROPER_ROTATION && sop->order == 2){
                     double v[3];
                     vnorm2(sop->v,v);

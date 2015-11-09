@@ -48,6 +48,13 @@ msym_error_t generateEquivalenceSet(msym_point_group_t *pg, int length, msym_ele
     msym_equivalence_set_t *ges = calloc(length,sizeof(msym_equivalence_set_t));
     int gel = 0;
     int gesl = 0;
+    
+    if(pg->order <= 0){
+        ret = MSYM_INVALID_POINT_GROUP;
+        msymSetErrorDetails("Point group of zero order when determining equivalence set");
+        goto err;
+    }
+
     for(int i = 0;i < length;i++){
         double ev[3];
         vsub(elements[i].v, cm, ev);
@@ -83,7 +90,7 @@ msym_error_t generateEquivalenceSet(msym_point_group_t *pg, int length, msym_ele
             }
         }
         
-        if(pg->order % aes->length != 0){
+        if(!aes->length || (pg->order % aes->length != 0)){
             msymSetErrorDetails("Equivalence set length (%d) not a divisor of point group order (%d)",pg->order);
             ret = MSYM_INVALID_EQUIVALENCE_SET;
             goto err;
@@ -185,6 +192,7 @@ msym_error_t findPointGroupEquivalenceSets(msym_point_group_t *pg, int length, m
     free(pelements);
     return ret;
 err:
+    free(ges);
     free(pelements);
     return ret;
 
