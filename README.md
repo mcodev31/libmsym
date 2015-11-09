@@ -1,4 +1,4 @@
-# libmsym v0.2.0
+# libmsym v0.2.2
 libmsym is a C library dealing with point group symmetry in molecules.
 
 ## molecules
