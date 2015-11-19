@@ -520,7 +520,6 @@ int mgsold(int l, const double M[l][l], double O[l][l], int n, double t){
     return n;
 }
 
-
 int mgs(int l, const double m[l][l], double o[l][l], int n, double t){
     return mgs2(l,l,m,o,n,t);
 }
