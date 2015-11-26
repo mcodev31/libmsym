@@ -41,7 +41,7 @@ int main(int argc, const char * argv[]) {
         if(MSYM_SUCCESS != (ret = msymGetPointGroupType(ctx, &pg_type, &pg_n))) goto err;
         if(argc >= 4){
             l = argv[3][0] - '0';
-            if(l <= 0 || l > 9) l = -1;
+            if(l < 0 || l > 9) l = -1;
         }
             
         if(pg_n == 0 && (pg_type == MSYM_POINT_GROUP_TYPE_Cnv || pg_type == MSYM_POINT_GROUP_TYPE_Dnh) && l >= 0){

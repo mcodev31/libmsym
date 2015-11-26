@@ -600,12 +600,13 @@ class Context(object):
             raise ImportError("numpy is not available.")
         csize = len(self._basis_functions)
         (d1,d2) = m.shape
-        if not (d1 == csize and d2 == csize and m.dtype == np.float64):
-            raise ValueError("Must provide a " + str(csize) + "x" + str(csize) + " numpy.float64 array")
+        if not (d1 == csize and d2 == csize):
+            raise ValueError("Must provide a " + str(csize) + "x" + str(csize))
+        wf = np.ascontiguousarray(m, dtype=np.float64)
         partner_functions = (PartnerFunction*csize)()
         species = np.zeros((csize),dtype=np.int32)
-        self._assert_success(_lib.msymSymmetrizeWavefunctions(self._ctx,csize,m,species,partner_functions))
-        return (m, species, partner_functions[0:csize])
+        self._assert_success(_lib.msymSymmetrizeWavefunctions(self._ctx,csize,wf,species,partner_functions))
+        return (wf, species, partner_functions[0:csize])
 
     def generate_elements(self, elements):
         if not self._ctx:
@@ -625,10 +626,11 @@ class Context(object):
     def symmetry_species_components(self, wf):
        
         wf_size = len(wf)
-        if not (wf_size == len(self.basis_functions) and wf.dtype == np.float64):
-            raise ValueError("Must provide a numpy.float64 array of length " + str(len(self.basis_functions)))
+        if not wf_size == len(self.basis_functions):
+            raise ValueError("Must provide an array of length " + str(len(self.basis_functions)))
         species_size = self.character_table._d
         species = np.zeros((species_size),dtype=np.float64)
+        wf = np.ascontiguousarray(wf, dtype=np.float64)
         self._assert_success(_lib.msymSymmetrySpeciesComponents(self._ctx, wf_size, wf, species_size, species))
         return species
         
