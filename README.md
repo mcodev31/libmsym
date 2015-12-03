@@ -33,11 +33,21 @@ sudo make install
 
 The libmsym module requires python 3.
 
+If you have installed the libmsym library in a location that can be found by your loader (e.g. ldconfig):
+```shell
+cd ../bindings/python
+# install libmsym module in user site
+python setup.py install --user
+# run example
+python ./examples/msympy_example.py <input xyz-file> <output xyz-file>
+```
+
+If you want to install libmsym in a custom directory, the easies way it to use cmake:
 ```shell
 # install libmsym shared library in $HOME/lib and the python module in the user site
- cmake -DMSYM_BUILD_PYTHON:BOOL=ON -DBUILD_SHARED_LIBS:BOOL=ON -DCMAKE_INSTALL_PREFIX=$HOME/lib -DMSYM_PYTHON_INSTALL_OPTS=--user ../.
+cmake -DMSYM_BUILD_PYTHON:BOOL=ON -DBUILD_SHARED_LIBS:BOOL=ON -DCMAKE_INSTALL_PREFIX=$HOME/lib -DMSYM_PYTHON_INSTALL_OPTS=--user ../.
 # run example
-python3 ../bindings/python/examples/msympy_example.py <input xyz-file> <output xyz-file>
+python ../bindings/python/examples/msympy_example.py <input xyz-file> <output xyz-file>
 ```
 
 methods dealing with SALCs etc. require numpy to be installed
