@@ -15,7 +15,7 @@ if (not sys.version_info[0] is 3):
     sys.exit('libmsym module requires python 3')
     
 setup(name='libmsym',
-      version='${LIBMSYM_VERSION}',
+      version='0.2.4',
       description = 'libmsym python binding',
       license='MIT',
       author='Marcus Johansson',
