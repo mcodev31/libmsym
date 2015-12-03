@@ -29,8 +29,6 @@ if (PYTHON)
 
 	add_custom_target(target ALL DEPENDS ${MSYM_PYTHON_STAMP})
 
-
-	message("execute_process(COMMAND ${PYTHON} ${MSYM_PYTHON_SETUP} install ${MSYM_PYTHON_INSTALL_OPTS})")	
 	install(CODE "execute_process(COMMAND ${PYTHON} ${MSYM_PYTHON_SETUP} install ${MSYM_PYTHON_INSTALL_OPTS})")
 endif()
 
