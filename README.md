@@ -31,21 +31,13 @@ sudo make install
 
 ### python
 
-assumes python 3 is installed
+The libmsym module requires python 3.
 
 ```shell
-cd ../bindings/python
-python3 setup.py build
-# install in user directory
-python3 setup.py install --user
+# install libmsym shared library in $HOME/lib and the python module in the user site
+ cmake -DMSYM_BUILD_PYTHON:BOOL=ON -DBUILD_SHARED_LIBS:BOOL=ON -DCMAKE_INSTALL_PREFIX=$HOME/lib -DMSYM_PYTHON_INSTALL_OPTS=--user ../.
 # run example
-python3 ./examples/msympy_example.py <input xyz-file> <output xyz-file>
-```
-python requires that libmsym is built as a shared library and either installed or initialized before use e.g. on os x:
-
-```py
-import libmsym as msym
-msym.init(library_location='/<libmsym installation path>/libmsym.dylib')
+python3 ../bindings/python/examples/msympy_example.py <input xyz-file> <output xyz-file>
 ```
 
 methods dealing with SALCs etc. require numpy to be installed
