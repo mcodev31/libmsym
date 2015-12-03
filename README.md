@@ -46,6 +46,7 @@ If you want to install libmsym in a custom directory, the easies way it to use c
 ```shell
 # install libmsym shared library in $HOME/lib and the python module in the user site
 cmake -DMSYM_BUILD_PYTHON:BOOL=ON -DBUILD_SHARED_LIBS:BOOL=ON -DCMAKE_INSTALL_PREFIX=$HOME/lib -DMSYM_PYTHON_INSTALL_OPTS=--user ../.
+make install
 # run example
 python ../bindings/python/examples/msympy_example.py <input xyz-file> <output xyz-file>
 ```
