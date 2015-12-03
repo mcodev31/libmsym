@@ -5,12 +5,13 @@ cmake_minimum_required (VERSION 2.8.11)
 project(libmsym)
 
 option(MSYM_BUILD_EXAMPLES "Build example executables" OFF)
+option(MSYM_BUILD_PYTHON "Build python binding" OFF)
 
 include (GenerateExportHeader)
 
 set(LIBMSYM_MAJOR_VERSION 0)
 set(LIBMSYM_MINOR_VERSION 2)
-set(LIBMSYM_PATCH_VERSION 2)
+set(LIBMSYM_PATCH_VERSION 4)
 set(LIBMSYM_VERSION ${LIBMSYM_MAJOR_VERSION}.${LIBMSYM_MINOR_VERSION}.${LIBMSYM_PATCH_VERSION})
 
 set(INSTALL_LIB_DIR lib CACHE PATH "Installation directory for msym library")
@@ -104,4 +105,12 @@ install(EXPORT libmsymTargets DESTINATION "${INSTALL_CMAKE_DIR}")
 
 if(MSYM_BUILD_EXAMPLES)
 	add_subdirectory(examples)
+endif()
+
+if(MSYM_BUILD_PYTHON)
+	if(BUILD_SHARED_LIBS)
+		add_subdirectory(bindings/python)
+	else()
+		message(SEND_ERROR "python requires libmsym to be built as a shared library, use -DBUILD_SHARED_LIBS:BOOL=ON")
+	endif()
 endif()

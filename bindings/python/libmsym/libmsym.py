@@ -11,9 +11,12 @@
 from ctypes import *
 from ctypes.util import find_library
 from enum import Enum
+from copy import copy
+from . import _libmsym_install_location, export
 
 _lib = None
 
+@export
 class Error(Exception):
     def __init__(self, value, details=""):
         super().__init__(value)
@@ -29,6 +32,7 @@ try:
 except ImportError:
     np = None
 
+@export
 class SymmetryOperation(Structure):
 
     NONE = 0,
@@ -78,7 +82,7 @@ class SymmetryOperation(Structure):
     def __repr__(self):
         return self.__str__()
 
-
+@export
 class Element(Structure):
     _fields_ = [("_id", c_void_p),
                 ("mass", c_double),
@@ -107,6 +111,7 @@ class _RealSphericalHarmonic(Structure):
 class _BasisFunctionUnion(Union):
     _fields_ = [("_rsh", _RealSphericalHarmonic)]
 
+@export
 class BasisFunction(Structure):
     _fields_ = [("_id", c_void_p),
                 ("_type", c_int),
@@ -130,6 +135,7 @@ class BasisFunction(Structure):
     def name(self, name):
         self._name = name.encode('ascii')
 
+@export
 class RealSphericalHarmonic(BasisFunction):
     def __init__(self, element=None, n=0, l=0, m=0, name=""):
         super().__init__(element=element)
@@ -191,7 +197,7 @@ class SALC(Structure):
         return self._pf_array
 
         
-
+@export
 class SubrepresentationSpace(Structure):
     _fields_ = [("symmetry_species", c_int),
                 ("_salc_length", c_int),
@@ -205,13 +211,12 @@ class SubrepresentationSpace(Structure):
             self._salcarray = self._salcs[0:self._salc_length]
         return self._salcarray
 
+@export
 class PartnerFunction(Structure):
     _fields_ = [("index", c_int),
                 ("dim",c_int)]
 
-
-    
-
+@export
 class SymmetrySpecies(Structure):
     _fields_ = [("_d", c_int),
                 ("_r", c_int),
@@ -229,6 +234,16 @@ class SymmetrySpecies(Structure):
     def name(self):
         return self._name.decode()
     
+class _Thresholds(Structure):
+    _fields_ = [("zero", c_double),
+                ("geometry", c_double),
+                ("angle", c_double),
+                ("equivalence", c_double),
+                ("eigfact", c_double),
+                ("permutation", c_double),
+                ("orthogonalization", c_double)]
+
+@export
 class CharacterTable(Structure):
     _fields_ = [("_d", c_int),
                 ("_classc", POINTER(c_int)),
@@ -315,6 +330,12 @@ def init(library_location=None):
     _lib.msymCreateContext.restype = _Context
     _lib.msymCreateContext.argtypes = []
 
+    _lib.msymGetDefaultThresholds.restype = POINTER(_Thresholds)
+    _lib.msymGetDefaultThresholds.argtypes = []
+
+    _lib.msymSetThresholds.restype = _ReturnCode
+    _lib.msymSetThresholds.argtypes = [_Context, POINTER(_Thresholds)]
+
     _lib.msymReleaseContext.restype = _ReturnCode
     _lib.msymReleaseContext.argtypes = [_Context]
 
@@ -375,12 +396,16 @@ def init(library_location=None):
     _lib.msymSymmetrizeWavefunctions.restype = _ReturnCode
     _lib.msymSymmetrizeWavefunctions.argtypes = [_Context, c_int, _SALCsMatrix, _SALCsSpecies, POINTER(PartnerFunction)]
 
+
 _libmsym_location = find_library('msym')
+
+if _libmsym_location is None:
+    _libmsym_location = _libmsym_install_location
 
 if not (_libmsym_location is None):
     init(_libmsym_location)
 
-
+@export
 class Context(object):
 
     _ctx = None
@@ -396,7 +421,12 @@ class Context(object):
         self._character_table = None
         self._ctx = _lib.msymCreateContext()
         if not self._ctx:
-            raise RuntimeError
+            raise RuntimeError('Failed to create libmsym context')
+        pthresholds = _lib.msymGetDefaultThresholds()
+        default_thresholds = pthresholds.contents        
+        if default_thresholds is None:
+            raise RuntimeError('Failed get libmsym default thresholds')
+        self._thresholds = copy(default_thresholds)
         if len(elements) > 0:
             self._set_elements(elements)
         if len(basis_functions) > 0:
@@ -527,6 +557,15 @@ class Context(object):
         species = np.zeros((csize),dtype=np.int32)
         self._assert_success(_lib.msymGetSALCs(self._ctx,csize,salcs,species,partner_functions))
         self._salcs = (salcs, species, partner_functions[0:csize])
+
+    def set_thresholds(self, **kwargs):
+        for key in kwargs.keys():
+            if not key in ['zero','geometry','angle','equivalence',
+                           'eigfact','permutation','orthogonalization']:
+                raise Error('Unrecognized threshold argument')
+            setattr(self._thresholds, key, kwargs[key])
+        self._assert_success(_lib.msymSetThresholds(self._ctx, pointer(self._thresholds)))
+        
         
     @property
     def elements(self):
