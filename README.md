@@ -1,4 +1,4 @@
-# libmsym v0.2.0
+# libmsym v0.2.2
 libmsym is a C library dealing with point group symmetry in molecules.
 
 ## molecules
@@ -31,21 +31,24 @@ sudo make install
 
 ### python
 
-assumes python 3 is installed
+The libmsym module requires python 3.
 
+If you have installed the libmsym library in a location that can be found by your loader (e.g. ldconfig):
 ```shell
 cd ../bindings/python
-python3 setup.py build
-# install in user directory
-python3 setup.py install --user
+# install libmsym module in user site
+python setup.py install --user
 # run example
-python3 ./examples/msympy_example.py <input xyz-file> <output xyz-file>
+python ./examples/msympy_example.py <input xyz-file> <output xyz-file>
 ```
-python requires that libmsym is built as a shared library and either installed or initialized before use e.g. on os x:
 
-```py
-import libmsym as msym
-msym.init(library_location='/<libmsym installation path>/libmsym.dylib')
+If you want to install libmsym in a custom directory, the easies way it to use cmake:
+```shell
+# install libmsym shared library in $HOME/lib and the python module in the user site
+cmake -DMSYM_BUILD_PYTHON:BOOL=ON -DBUILD_SHARED_LIBS:BOOL=ON -DCMAKE_INSTALL_PREFIX=$HOME/lib -DMSYM_PYTHON_INSTALL_OPTS=--user ../.
+make install
+# run example
+python ../bindings/python/examples/msympy_example.py <input xyz-file> <output xyz-file>
 ```
 
 methods dealing with SALCs etc. require numpy to be installed

@@ -139,7 +139,7 @@ msym_error_t generatePermutationSubspaces(msym_point_group_t *pg, msym_permutati
                 proj[perm[s].p[i]][i] += c;
             }
         }
-        
+
         nirl = mgs2(dim, vspan,proj, ss, oirl, thresholds->orthogonalization);
         if(nirl - oirl != vspan){
             debug_printTransform(dim, dim, ss);
@@ -152,7 +152,7 @@ msym_error_t generatePermutationSubspaces(msym_point_group_t *pg, msym_permutati
         
     }
     
-    for(int i = 0; i < dim;i++) vlnorm(dim, ss[i]);
+    //for(int i = 0; i < dim;i++) vlnorm(dim, ss[i]);
 
 err:
     return ret;
@@ -203,8 +203,6 @@ msym_error_t generateSubspaces(msym_point_group_t *pg, msym_permutation_t perm[p
                 if(MSYM_SUCCESS != (ret = projectLinearlyIndependent(dim, pgnirl, sspg, sgnirl, sssg, thresholds, cmem, mem, ss, &nirl))) goto err;
                 
                 if(nirl - oirl != span[k]){
-                    printf("sgnirl=%d\n",sgnirl);
-                    debug_printTransform(dim, dim, ss);
                     ret = MSYM_SUBSPACE_ERROR;
                     msymSetErrorDetails("Ortogonal subsubspace of dimension (%d) inconsistent with span (%d) in %s",nirl - oirl,span[k],ct->s[k].name);
                     goto err;
@@ -259,7 +257,7 @@ msym_error_t generateSubspaces(msym_point_group_t *pg, msym_permutation_t perm[p
         }
     }
     
-    for(int i = 0; i < dim;i++) vlnorm(dim, ss[i]);
+    //for(int i = 0; i < dim;i++) vlnorm(dim, ss[i]);
     
 err:
     
@@ -291,7 +289,7 @@ msym_error_t generateSubspacesMatrix(msym_point_group_t *pg, msym_permutation_t 
         if(MSYM_SUCCESS != (ret = generateProjectionOperator(irrepd,sopsl,cmem,perm,ld,lrsops,projpg))) goto err;
         
         if(irrepd == 1){
-            nirl = mgs2(dim, pgvspan, projpg, ss, oirl, thresholds->orthogonalization/sqrt(dim));
+            nirl = mgs2(dim, pgvspan, projpg, ss, oirl, thresholds->orthogonalization);
             if(nirl - oirl != pgvspan){
                 debug_printTransform(dim, dim, ss);
                 ret = MSYM_SUBSPACE_ERROR;
@@ -310,7 +308,7 @@ msym_error_t generateSubspacesMatrix(msym_point_group_t *pg, msym_permutation_t 
                 trace = mltrace(dim, mem);
                 mlscale(span[k]/trace, dim, mem, mem);
                 
-                nirl = mgs2(dim, span[k], mem, ss, oirl, thresholds->orthogonalization/sqrt(dim));
+                nirl = mgs2(dim, span[k], mem, ss, oirl, thresholds->orthogonalization);
                 if(nirl - oirl != span[k]){
                     debug_printTransform(dim, dim, ss);
                     ret = MSYM_SUBSPACE_ERROR;
@@ -340,7 +338,7 @@ msym_error_t generateSubspacesMatrix(msym_point_group_t *pg, msym_permutation_t 
                         trace = mltrace(dim, mem);
                         mlscale(span[k]/trace, dim, mem, mem); // We might have small components in these subspaces
                         
-                        nirl = mgs2(dim, span[k], mem, ss, oirl, thresholds->orthogonalization/sqrt(dim));
+                        nirl = mgs2(dim, span[k], mem, ss, oirl, thresholds->orthogonalization);
                         if(nirl - oirl != span[k]){
                             debug_printTransform(dim, dim, mem);
                             ret = MSYM_SUBSPACE_ERROR;
@@ -352,7 +350,7 @@ msym_error_t generateSubspacesMatrix(msym_point_group_t *pg, msym_permutation_t 
                     }
                 } else {
                     
-                    nirl = mgs2(dim, span[k], projig, ss, oirl, thresholds->orthogonalization/sqrt(dim));
+                    nirl = mgs2(dim, span[k], projig, ss, oirl, thresholds->orthogonalization);
                     if(nirl - oirl != span[k]){
                         debug_printTransform(dim, dim, ss);
                         ret = MSYM_SUBSPACE_ERROR;
@@ -367,7 +365,7 @@ msym_error_t generateSubspacesMatrix(msym_point_group_t *pg, msym_permutation_t 
         }
     }
     
-    for(int i = 0; i < dim;i++) vlnorm(dim, ss[i]);
+    //for(int i = 0; i < dim;i++) vlnorm(dim, ss[i]);
     
 err:
     
@@ -705,6 +703,8 @@ msym_error_t generateSplittingOperation(msym_point_group_t *pg, msym_permutation
             
         case MSYM_POINT_GROUP_TYPE_Cn  :
         case MSYM_POINT_GROUP_TYPE_Cnh :
+            if(2 == pg->n) break;
+            // fallthrough
         case MSYM_POINT_GROUP_TYPE_Sn  :
         case MSYM_POINT_GROUP_TYPE_K   :
         case MSYM_POINT_GROUP_TYPE_Kh  :
@@ -755,9 +755,6 @@ msym_error_t determinePartnerFunctionsSearch(msym_point_group_t *pg, msym_permut
         msymSetErrorDetails("Unexpected dimension %d < 2 when determining partner functions", dim);
         goto err;
     }
-    
-    
-    debug_printTransform(sspan*sd, dim, sdss);
     
     memset(pf, 0, dim*sizeof(*pf));
     
