@@ -414,20 +414,12 @@ msym_error_t findSymmetrySymmetricPolyhedron(msym_equivalence_set_t *es, double 
         vsub(v0,vi, v0i);
         vnorm(v0i);
         
-        double tangle = fabs((fabs(dot0)-fabs(doti))/(fabs(dot0)+fabs(doti)));
+        theta = vangle(v0_proj, vi_proj);
         
-        if(!(tangle <= thresholds->angle)){
-            msymSetErrorDetails("Elements in symmetric polyhedron do not lie on two parallel circles %e > %e (angle threshold)",tangle,thresholds->angle);
-            ret = MSYM_SYMMETRY_ERROR;
-            goto err;
-        }
-        
-        if(vparallel(v0i,ev[prim],thresholds->angle)){
+        if(theta < asin(thresholds->angle)){
             sigma_h = 1;
             staggered = 0;
         }
-        
-        theta = vangle(v0_proj, vi_proj);
         
         if(dot0*doti > 0.0){
             theta_sigma = theta/2;
