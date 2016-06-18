@@ -10,7 +10,7 @@
 
 #include "debug.h"
 
-#ifdef LIBMSYM_DEBUG
+#ifdef __LIBMSYM_DEBUG__
 
 #include <stdio.h>
 #include <stdarg.h>
@@ -20,8 +20,9 @@
 #include <float.h>
 
 
+#ifndef __LIBMSYM_NO_VLA__
 
-void tabPrintTransform(int r, int c, double M[r][c],int indent);
+void tabPrintMatrix(int r, int c, double (*M)[c],int indent);
 void tabprintf(char *format, int indent, ...);
 
 void tabprintf(char *format, int indent, ...){
@@ -32,7 +33,7 @@ void tabprintf(char *format, int indent, ...){
     va_end (args);
 }
 
-void tabPrintTransform(int r, int c, double M[r][c],int indent) {
+void tabPrintMatrix(int r, int c, double (*M)[c],int indent) {
     if(r == 0 || c == 0) {tabprintf("[]\n",indent);return;}
     //printf("\n");
     tabprintf("[",indent);
@@ -51,7 +52,7 @@ void tabPrintTransform(int r, int c, double M[r][c],int indent) {
     
 }
 
-void printTransform(int r, int c, double M[r][c]) {
+void printMatrix(int r, int c, double (*M)[c]) {
     printf("\n[");
     for(int i = 0;i < r;i++){
         for(int j = 0;j<c;j++){
@@ -66,7 +67,7 @@ void printTransform(int r, int c, double M[r][c]) {
     
 }
 
-void printSubspace(msym_character_table_t *ct, int l, msym_subrepresentation_space_t srs[l]){
+void printSubspace(msym_character_table_t *ct, int l, msym_subrepresentation_space_t *srs){
     for(int k = 0;k < l;k++){
         printf("Subspace %d %s\n",k,ct->s[srs[k].s].name);
         for(int i = 0;i < srs[k].salcl;i++){
@@ -85,33 +86,9 @@ void printSubspace(msym_character_table_t *ct, int l, msym_subrepresentation_spa
                 printf("error space\n");
                 exit(1);
             }
-            tabPrintTransform(srs[k].salc[i].d,srs[k].salc[i].fl,space,1);
+            tabPrintMatrix(srs[k].salc[i].d,srs[k].salc[i].fl,space,1);
         }
     }
-}
-
-void printPermutation(msym_permutation_t *perm){
-    int l = perm->p_length;
-    printf("(");
-    for(int j = 0; j < l; j++){
-        printf(j == l -1 ? "%d" : "%d\t",j);
-    }
-    printf(")\n(");
-    for(int j = 0; j < l; j++){
-        printf(j == l -1 ? "%d" : "%d\t",perm->p[j]);
-    }
-    printf(")\n");
-    
-    for(msym_permutation_cycle_t* c = perm->c; c < (perm->c + perm->c_length);c++){
-        printf("(");
-        for(int next = c->s, j = 0;j < c->l;j++){
-            printf(j == c->l -1 ? "%d" : "%d ",next);
-            next = perm->p[next];
-        }
-        printf(")");
-    }
-    
-    printf("\n");
 }
 
 void printCharacterTable(msym_character_table_t *ct){
@@ -138,4 +115,31 @@ void printCharacterTable(msym_character_table_t *ct){
     }
     
 }
+
+#endif /* ifndef __LIBMSYM_DEBUG__ */
+
+void printPermutation(msym_permutation_t *perm){
+    int l = perm->p_length;
+    printf("(");
+    for(int j = 0; j < l; j++){
+        printf(j == l -1 ? "%d" : "%d\t",j);
+    }
+    printf(")\n(");
+    for(int j = 0; j < l; j++){
+        printf(j == l -1 ? "%d" : "%d\t",perm->p[j]);
+    }
+    printf(")\n");
+    
+    for(msym_permutation_cycle_t* c = perm->c; c < (perm->c + perm->c_length);c++){
+        printf("(");
+        for(int next = c->s, j = 0;j < c->l;j++){
+            printf(j == c->l -1 ? "%d" : "%d ",next);
+            next = perm->p[next];
+        }
+        printf(")");
+    }
+    
+    printf("\n");
+}
+
 #endif

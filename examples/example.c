@@ -16,9 +16,9 @@
 
 int read_xyz(const char *name, msym_element_t **ratoms);
 
+#ifndef __LIBMSYM_NO_VLA__
 void printSALC(msym_salc_t *salc, msym_element_t *melements){
 
-    
     double (*space)[salc->fl] = (double (*)[salc->fl]) salc->pf;
     for(int d = 0;d < salc->d;d++){
         if(salc->d > 1) printf("Component %d:\n",d+1);
@@ -39,6 +39,11 @@ void printSALC(msym_salc_t *salc, msym_element_t *melements){
     }
 
 }
+#else
+void printSALC(msym_salc_t *salc, msym_element_t *melements){
+    printf("SALCs not supported without VLA\n");
+}
+#endif
 
 int example(const char* in_file, msym_thresholds_t *thresholds){
     msym_error_t ret = MSYM_SUCCESS;
@@ -50,19 +55,16 @@ int example(const char* in_file, msym_thresholds_t *thresholds){
     
     /* Do not free these variables */
     msym_element_t *melements = NULL;
-    msym_basis_function_t *mbfs = NULL;
     /* these are not mutable */
     const msym_symmetry_operation_t *msops = NULL;
     const msym_subgroup_t *msg = NULL;
-    const msym_subrepresentation_space_t *msrs = NULL;
-    const msym_character_table_t *mct = NULL;
     const msym_equivalence_set_t *mes = NULL;
     int mesl = 0;
     double *irrep = NULL;
     
     msym_basis_function_t *bfs = NULL;
     
-    int msgl = 0, msopsl = 0, mlength = 0, msrsl = 0, mbfsl = 0, bfsl = 0;
+    int msgl = 0, msopsl = 0, mlength = 0, bfsl = 0;
         
     /* This function reads xyz files.
      * It initializes an array of msym_element_t to 0,
@@ -71,11 +73,23 @@ int example(const char* in_file, msym_thresholds_t *thresholds){
     if(length <= 0) return -1;
     
     
-    double (*psalcs)[bfsl] = NULL; // SALCs in matrix form, and input for symmetrization
     double *pcmem = NULL; // Some temporary memory
     int *pspecies = NULL;
     msym_partner_function_t *ppf = NULL;
-    
+#ifndef __LIBMSYM_NO_VLA__
+    /* Wave function calculations requires VLA support.
+     * This is not the proper way to handle this case since __LIBMSYM_NO_VLA__ is defined at build time,
+     * you can use msymSALCSupport(), or preferably build the lib with a proper compiler.
+     * You can still use all APIs, but they will return MSYM_NO_VLA_ERROR
+     */
+    const msym_subrepresentation_space_t *msrs = NULL;
+    const msym_character_table_t *mct = NULL;
+    msym_basis_function_t *mbfs = NULL;
+    int mbfsl = 0, msrsl = 0;
+    double (*psalcs)[bfsl] = NULL; // SALCs in matrix form, and input for symmetrization
+#else
+    void *psalcs = NULL;
+#endif
     /* Create a context */
     msym_context ctx = msymCreateContext();
     
@@ -285,7 +299,7 @@ int example(const char* in_file, msym_thresholds_t *thresholds){
             
         }
     }
-    
+#ifndef __LIBMSYM_NO_VLA__
     if(bfsl > 0){
         // Just keeping memory in context of error handling
         double (*salcs)[bfsl] = psalcs = calloc(bfsl, sizeof(*salcs)); // SALCs in matrix form, and input for symmetrization
@@ -391,6 +405,7 @@ int example(const char* in_file, msym_thresholds_t *thresholds){
         
         
     }
+#endif
     int symprint = 0;
     printf("\nWould you like to symmetrize the molecule? [y/N]:");
     if(scanf(" %c", &yn) > 0 && (yn | 0x60) == 'y'){
@@ -500,8 +515,8 @@ int read_xyz(const char *name, msym_element_t **ratoms) {
         return -1;
     }
     if(l < 300000) {
-        a = malloc(l*sizeof(msym_element_t));
-        memset(a,0,l*sizeof(msym_element_t));
+        a = malloc(l*sizeof(*a));
+        memset(a,0,l*sizeof(*a));
     } else {
         fprintf(stderr, "Too many elements in file %d\n",l);
         fclose(fp);

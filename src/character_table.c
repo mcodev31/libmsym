@@ -8,6 +8,7 @@
 //  Distributed under the MIT License ( See LICENSE file or copy at http://opensource.org/licenses/MIT )
 //
 
+
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
@@ -20,6 +21,12 @@
 #ifndef M_PI
 #define M_PI 3.14159265358979323846264338327950288419716939937510582
 #endif
+
+void directProduct(int l, double *irrep1, double *irrep2, double *pspan){
+    for(int i = 0;i < l;i++) pspan[i] = irrep1[i]*irrep2[i];
+}
+
+#ifndef __LIBMSYM_NO_VLA__
 
 typedef struct _msym_representation {
     enum {IRREDUCIBLE = 1, REDUCIBLE = 2} type;
@@ -59,22 +66,31 @@ msym_error_t getPredefinedCharacterTable(int sopsl, msym_symmetry_operation_t so
 
 msym_error_t getRepresentationName(msym_point_group_type_t type, int n, msym_representation_t *rep, int l, char name[l]);
 
+#define DECOMPOSITION_THRESHOLD 1.0e-6
 
-void decomposeRepresentation(msym_character_table_t *ct, double rspan[ct->d], double dspan[ct->d]){
+msym_error_t decomposeRepresentation(msym_character_table_t *ct, double *rspan, double *dspan){
+    msym_error_t ret = MSYM_SUCCESS;
+    double err = 0.0;
     int order = 0;
     double (*ctable)[ct->d] = ct->table;
-    memset(dspan,0, sizeof(double[ct->d]));
+    memset(dspan,0, ct->d*sizeof(*dspan));
     
     for(int k = 0;k < ct->d;k++){
         order += ct->classc[k];
         for(int j = 0; j < ct->d;j++) dspan[k] += ct->classc[j]*rspan[j]*ctable[k][j];
     }
-    for(int k = 0;k < ct->d;k++) dspan[k] /= order;
-}
-
-
-void directProduct(int l, double irrep1[l], double irrep2[l], double pspan[l]){
-    for(int i = 0;i < l;i++) pspan[i] = irrep1[i]*irrep2[i];
+    for(int k = 0;k < ct->d;k++){
+        dspan[k] /= order;
+        double d = dspan[k] - round(dspan[k]);
+        err += d*d;
+    }
+    
+    if(sqrt(err) > DECOMPOSITION_THRESHOLD){
+        msymSetErrorDetails("Representation decomposition yeilded non integer span");
+        ret = MSYM_SUBSPACE_ERROR;
+    }
+    
+    return ret;
 }
 
 msym_error_t generateCharacterTable(msym_point_group_type_t type, int n, int sopsl, msym_symmetry_operation_t sops[sopsl], msym_character_table_t **oct){
@@ -92,7 +108,7 @@ msym_error_t generateCharacterTable(msym_point_group_type_t type, int n, int sop
     
     ct->d = d;
 
-    msym_representation_t *rep = calloc(ct->d, sizeof(msym_representation_t));;
+    msym_representation_t *rep = calloc(ct->d, sizeof(*rep));;
     double (*table)[ct->d] = (double (*)[ct->d]) ct->table;
     
     
@@ -168,7 +184,7 @@ msym_error_t generateCharacterTable(msym_point_group_type_t type, int n, int sop
         }
     }
 
-    debug_printCharacterTable(ct);
+    dbg_print_character_table(ct);
     
     if(!linear && MSYM_SUCCESS != (ret = verifyCharacterTable(ct))) goto err;
     
@@ -1008,4 +1024,74 @@ err:
     return ret;
 }
 
+static int igcd(int a, int b) {
+    int c;
+    while (a) {
+        c = a;
+        a = b % a;
+        b = c;
+    }
+    return abs(b);
+}
+
+static double frac_cos2(int n, int d){
+    n %= d;
+    if(!n) return 2;
+    int gcd = igcd(n,d);
+    n /= gcd;
+    d /= gcd;
+    if(n < 0 || n > d/2) n = d - abs(n);
+    int i = d - 2 + n + d > 5 + ((d > 7) << 1);
+    
+    double tab[11] = {
+        [0 ] = 0.0, // 2cos(2pi*1/2)
+        [1 ] = 0.0, // 2cos(2pi*1/3)
+        [2 ] = 0.0, // 2cos(2pi*1/4)
+        [3 ] = 0.0, // 2cos(2pi*1/5)
+        [4 ] = 0.0, // 2cos(2pi*2/5)
+        [5 ] = 0.0, // 2cos(2pi*1/6)
+        [6 ] = 0.0, // 2cos(2pi*1/7)
+        [7 ] = 0.0, // 2cos(2pi*2/7)
+        [8 ] = 0.0, // 2cos(2pi*3/7)
+        [9 ] = 0.0, // 2cos(2pi*1/8)
+        [10] = 0.0, // 2cos(2pi*3/8)
+    };
+    
+    if (i < 11) return tab[i];
+    
+    return 2*cos((2*M_PI*n)/d);
+
+}
+
+
+double test_frac(){
+
+    for(int i = 0;i < 40;i++){
+        for(int j = 1; j < 40;j++){
+            double c = 2*cos((2*M_PI*i)/j);
+            double f = frac_cos2(i,j);
+            if(fabs(c-f) > 1.0e-9){
+                exit(1);
+            }
+        
+        }
+    }
+    
+    return 0;
+
+}
+
+#else
+
+msym_error_t decomposeRepresentation(msym_character_table_t *ct, double *rspan, double *dspan){
+    msymSetErrorDetails("Compiled without VLA support required for decomposeRepresentation");
+    return MSYM_NO_VLA_ERROR;
+}
+
+msym_error_t generateCharacterTable(msym_point_group_type_t type, int n, int sopsl, msym_symmetry_operation_t *sops, msym_character_table_t **ct) {
+    msymSetErrorDetails("Compiled without VLA support required for generateCharacterTable");
+    return MSYM_NO_VLA_ERROR;
+}
+
+#endif /* ifdef __LIBMSYM_NO_VLA__ */
 

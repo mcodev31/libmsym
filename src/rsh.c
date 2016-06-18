@@ -28,6 +28,7 @@
 #define M_SQRT2 1.41421356237309504880
 #endif
 
+#ifndef __LIBMSYM_NO_VLA__
 void rshSymmetryOperationRepresentation(msym_symmetry_operation_t *sops, int index, int l, rsh_representations_t *lts);
 void rshCalculateUVWCoefficients(int l, int m1, int m2, double* u, double* v, double* w);
 void rshRotationRepresentation(int index, int l, rsh_representations_t *lrs);
@@ -37,7 +38,7 @@ double rshRotationV(int index, int l, int m1, int m2, rsh_representations_t *lrs
 double rshRotationW(int index, int l, int m1, int m2, rsh_representations_t *lrs);
 
 
-msym_error_t generateRSHRepresentations(int sopsl, msym_symmetry_operation_t sops[sopsl], int lmax, rsh_representations_t *lrs){
+msym_error_t generateRSHRepresentations(int sopsl, msym_symmetry_operation_t *sops, int lmax, rsh_representations_t *lrs){
     msym_error_t ret = MSYM_SUCCESS;
     for(int l = 0;l <= lmax;l++){
         if(lrs[l].d != 2*l+1){
@@ -84,7 +85,7 @@ void rshSymmetryOperationRepresentation(msym_symmetry_operation_t *sops, int ind
         switch (sops[index].type) {
             case INVERSION:
                 if(l & 1){
-                    memset(r,0,sizeof(double[d][d]));
+                    memset(r,0,d*sizeof(*r));
                     for(int i = 0;i < d;i++) r[i][i] = -1;
                     break;
                 } //fallthrough
@@ -127,8 +128,8 @@ double rshRotationV(int index, int l, int m1, int m2, rsh_representations_t *lrs
     double ret = 0;
     if (m1 == 0) {
         ret = rshRotationP(index, l, 1, 1, m2, lrs) + rshRotationP(index, l, -1, -1, m2, lrs);
-    } else if (m1 == 1){
-        ret = M_SQRT2*rshRotationP(index, l, 1, 0, m2, lrs);
+    } else if (m1 == 1){ //TODO: (abs(m1) == 1) -> M_SQRT2*rshRotationP(index, l,  m1, 0, m2, lrs);
+        ret = M_SQRT2*rshRotationP(index, l,  1, 0, m2, lrs);
     } else if (m1 == -1){
         ret = M_SQRT2*rshRotationP(index, l, -1, 0, m2, lrs);
     } else if (m1 > 0){
@@ -192,3 +193,10 @@ void rshCalculateUVWCoefficients(int l, int m1, int m2, double *u, double *v, do
         *w = -0.5*sqrt((l - am1 - 1)*(l - am1)/div);
     }
 }
+
+#else
+msym_error_t generateRSHRepresentations(int sopsl, msym_symmetry_operation_t *sops, int lmax, rsh_representations_t *lrs){
+    msymSetErrorDetails("Compiled without VLA support required for generateRSHRepresentations");
+    return MSYM_NO_VLA_ERROR;
+}
+#endif /* ifndef __LIBMSYM_NO_VLA__ */

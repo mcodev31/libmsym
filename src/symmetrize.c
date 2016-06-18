@@ -30,14 +30,14 @@
 msym_error_t symmetrizeElements(msym_point_group_t *pg, int esl, msym_equivalence_set_t *es, msym_permutation_t **perm, msym_thresholds_t *thresholds, double *err){
     msym_error_t ret = MSYM_SUCCESS;
     double e = 0.0;
-    double (*v)[3] = malloc(sizeof(double[pg->order][3]));
+    double (*v)[3] = malloc(pg->order*sizeof(*v));
     for(int i = 0; i < esl;i++){
         if(es[i].length > pg->order){
             ret = MSYM_SYMMETRIZATION_ERROR;
             msymSetErrorDetails("Equivalence set (%d elements) larger than order of point group (%d)",es[i].length,pg->order);
             goto err;
         }
-        memset(v, 0, sizeof(double[pg->order][3]));
+        memset(v, 0, pg->order*sizeof(*v));
         for(int j = 0; j < pg->order;j++){
             for(int k = 0; k < es[i].length;k++){
                 int p = perm[i][j].p[k];
@@ -62,7 +62,8 @@ err:
     return ret;
 }
 
-msym_error_t symmetrizeWavefunctions(msym_point_group_t *pg, int srsl, msym_subrepresentation_space_t *srs, int *span, int basisl, msym_basis_function_t basis[basisl], double wf[basisl][basisl], double symwf[basisl][basisl], int specieso[basisl], msym_partner_function_t pfo[basisl]){
+#ifndef __LIBMSYM_NO_VLA__
+msym_error_t symmetrizeWavefunctions(msym_point_group_t *pg, int srsl, msym_subrepresentation_space_t *srs, int *span, int basisl, msym_basis_function_t *basis, double (*wf)[basisl], double (*symwf)[basisl], int *specieso, msym_partner_function_t *pfo){
     msym_error_t ret = MSYM_SUCCESS;
     
     if(srsl != pg->ct->d){
@@ -72,7 +73,7 @@ msym_error_t symmetrizeWavefunctions(msym_point_group_t *pg, int srsl, msym_subr
     }
     
     int *ispan = calloc(pg->ct->d,sizeof(*ispan));
-    int *species = (NULL == specieso ? malloc(sizeof(int[basisl])) : specieso);
+    int *species = (NULL == specieso ? malloc(basisl*sizeof(*species)) : specieso);
     
     
     memset(species,0,sizeof(int[basisl]));
@@ -209,7 +210,7 @@ msym_error_t symmetrizeWavefunctions(msym_point_group_t *pg, int srsl, msym_subr
     for(int o = 0;o < basisl;o++){
         int dim = pg->ct->s[species[o]].d;
         if(abs(pf[o][0])+1 != dim){
-            for(int i = 0;i < md;i++) clean_debug_printf("%d = %d\n",i,pf[o][i]);
+            for(int i = 0;i < md;i++) dbg_printf("%d = %d\n",i,pf[o][i]);
             msymSetErrorDetails("Unexpected number of partner functions for wave function %d in %s (expected %d got %d)", o, pg->ct->s[species[o]].name, dim, abs(pf[o][0])+1);
             ret = MSYM_SYMMETRIZATION_ERROR;
             goto err;
@@ -261,7 +262,7 @@ msym_error_t symmetrizeWavefunctions(msym_point_group_t *pg, int srsl, msym_subr
         }
         
         /*for(int i = 0;i < dim;i++){
-            clean_debug_printf("partner function %d has maximum component in dimension %d\n",i,pf[basisl][i]);
+            dbg_printf("partner function %d has maximum component in dimension %d\n",i,pf[basisl][i]);
         }*/
         
         /* calculate average component in each salc subspace and rotate onto the partner functions with largest component */
@@ -310,9 +311,17 @@ err:
     return ret;
 }
 
+#else
+msym_error_t symmetrizeWavefunctions(msym_point_group_t *pg, int srsl, msym_subrepresentation_space_t *srs, int *span, int basisl, msym_basis_function_t *basis, void *wf, void *symwf, int *specieso, msym_partner_function_t *pfo){
+    msymSetErrorDetails("Compiled without VLA support required for symmetrizeWavefunctions");
+    return MSYM_NO_VLA_ERROR;
+}
+#endif
+
+
 msym_error_t symmetrizeTranslation(msym_point_group_t *pg, msym_equivalence_set_t *es, msym_permutation_t *perm, int pi, double translation[3]){
     msym_error_t ret = MSYM_SUCCESS;
-    double (*v)[3] = calloc(es->length,sizeof(double[3]));
+    double (*v)[3] = calloc(es->length,sizeof(*v));
     
     for(int j = 0; j < pg->order;j++){
         int p = perm[j].p[pi];

@@ -69,7 +69,7 @@ struct _msym_context {
 
 msym_context msymCreateContext(){
     msym_context ctx = malloc(sizeof(struct _msym_context));
-    msym_thresholds_t *threshols = malloc(sizeof(msym_thresholds_t));
+    msym_thresholds_t *threshols = malloc(sizeof(*threshols));
     
     //Don't generally handle allocation errors...
     if(ctx == NULL) {msymSetErrorDetails("Context memory allocation failed"); goto err;}
@@ -182,8 +182,8 @@ msym_error_t msymSetBasisFunctions(msym_context ctx, int length, msym_basis_func
     if(ctx == NULL) {ret = MSYM_INVALID_CONTEXT; return ret;}
     if(ctx->elements == NULL) {ret = MSYM_INVALID_ELEMENTS;goto err;}
     ctxDestroyBasisFunctions(ctx);
-    ctx->basis = malloc(sizeof(msym_basis_function_t[length]));
-    memcpy(ctx->basis, basis, sizeof(msym_basis_function_t[length]));
+    ctx->basis = malloc(length*sizeof(*ctx->basis));
+    memcpy(ctx->basis, basis, length*sizeof(*ctx->basis));
     for(int i = 0;i < length;i++){
         msym_basis_function_t *bf = &ctx->basis[i];
         if(bf->element >= ctx->ext.set_elements_ptr && bf->element < ctx->ext.set_elements_ptr + ctx->elementsl){
@@ -227,7 +227,7 @@ err:
     return ret;
 }
 
-msym_error_t msymGetPointGroupName(msym_context ctx, int l, char buf[l]){
+msym_error_t msymGetPointGroupName(msym_context ctx, int l, char *buf){
     msym_error_t ret = MSYM_SUCCESS;
     if(ctx == NULL) {ret = MSYM_INVALID_CONTEXT; return ret;}
     if(ctx->pg == NULL) {ret = MSYM_INVALID_POINT_GROUP;goto err;}
@@ -430,7 +430,7 @@ msym_error_t msymReleaseContext(msym_context ctx){
  ***********************/
 
 
-msym_error_t ctxSetElements(msym_context ctx, int length, msym_element_t elements[length]){
+msym_error_t ctxSetElements(msym_context ctx, int length, msym_element_t *elements){
     msym_error_t ret = MSYM_SUCCESS;
     msym_thresholds_t *thresholds = NULL;
     if(ctx == NULL) {ret = MSYM_INVALID_CONTEXT; return ret;}
@@ -439,9 +439,9 @@ msym_error_t ctxSetElements(msym_context ctx, int length, msym_element_t element
     
     if(MSYM_SUCCESS != (ret = ctxGetThresholds(ctx, &thresholds))) goto err;
     
-    ctx->elements = malloc(sizeof(msym_element_t[length]));
-    ctx->pelements = malloc(sizeof(msym_element_t *[length]));
-    memcpy(ctx->elements, elements, sizeof(msym_element_t[length]));
+    ctx->elements = malloc(length*sizeof(*ctx->elements));
+    ctx->pelements = malloc(length*sizeof(*ctx->pelements));
+    memcpy(ctx->elements, elements, length*sizeof(*ctx->elements));
     ctx->elementsl = length;
     
     for(int i = 0;i < length;i++){
@@ -459,8 +459,8 @@ msym_error_t ctxSetElements(msym_context ctx, int length, msym_element_t element
     
     if(MSYM_SUCCESS != (ret = findGeometry(length, ctx->pelements, zero, thresholds, &ctx->geometry, ctx->eigval, ctx->eigvec))) goto err;
     
-    ctx->ext.elements = malloc(sizeof(msym_element_t[length]));
-    memcpy(ctx->ext.elements, ctx->elements, sizeof(msym_element_t[length]));
+    ctx->ext.elements = malloc(length*sizeof(*ctx->ext.elements));
+    memcpy(ctx->ext.elements, ctx->elements, length*sizeof(*ctx->ext.elements));
     
     ctx->ext.set_elements_ptr = elements;
     
@@ -642,7 +642,7 @@ msym_error_t ctxSetEquivalenceSets(msym_context ctx, int esl, msym_equivalence_s
         }
     }
     
-    ctx->ext.eesmap = calloc(ctx->elementsl, sizeof(msym_equivalence_set_t *));
+    ctx->ext.eesmap = calloc(ctx->elementsl, sizeof(*ctx->ext.eesmap));
     for(int i = 0;i < esl;i++){
         for(int j = 0;j < ctx->ext.es[i].length;j++){
             ctx->ext.eesmap[ctx->ext.es[i].elements[j] - ctx->ext.elements] = &ctx->ext.es[i];

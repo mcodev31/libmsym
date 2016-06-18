@@ -43,6 +43,7 @@ const struct _errordesc {
     { MSYM_POINT_GROUP_ERROR, "Error determining point group" },
     { MSYM_SYMMETRIZATION_ERROR, "Error symmetrizing molecule/orbtials" },
     { MSYM_SUBSPACE_ERROR, "Error generating subspaces" },
+    { MSYM_NO_VLA_ERROR, "Error VLA support required" },
     { MSYM_MEMORY_ERROR, "Error allocating memory" }
 };
 

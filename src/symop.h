@@ -38,8 +38,8 @@ msym_symmetry_operation_t *findSymmetryOperation(msym_symmetry_operation_t*, msy
 void invertSymmetryOperation(msym_symmetry_operation_t *sop, msym_symmetry_operation_t *isop);
 double symmetryOperationCartesianCharacter(msym_symmetry_operation_t *sop);
 double symmetryOperationYCharacter(msym_symmetry_operation_t *sop, int l);
-void symmetryOperationName(msym_symmetry_operation_t* sop, int l, char buf[l]);
-void symmetryOperationShortName(msym_symmetry_operation_t* sop, int l, char buf[l]);
+void symmetryOperationName(msym_symmetry_operation_t* sop, int l, char *buf);
+void symmetryOperationShortName(msym_symmetry_operation_t* sop, int l, char *buf);
 void printSymmetryOperation(msym_symmetry_operation_t *sop);
 
 #endif /* defined(__MSYM__SYMOP_h) */

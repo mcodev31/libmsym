@@ -35,53 +35,53 @@
 
 msym_error_t determinePointGroup(int sopsl, msym_symmetry_operation_t *sops, msym_thresholds_t *thresholds, msym_point_group_t *pg);
 
-msym_error_t generatePointGroup(msym_point_group_type_t type, int n, msym_symmetry_operation_t *primary, int sopsl, msym_symmetry_operation_t sops[sopsl], msym_thresholds_t *thresholds, msym_point_group_t **opg);
-msym_error_t reorientAxes(msym_symmetry_operation_t *primary, int sopsl, msym_symmetry_operation_t sops[sopsl], msym_thresholds_t *thresholds);
-msym_error_t transformAxes(msym_point_group_type_t type, int n, msym_symmetry_operation_t *primary, int sopsl, msym_symmetry_operation_t sops[sopsl], msym_thresholds_t *thresholds, double transform[3][3]);
-msym_error_t transformPrimary(msym_symmetry_operation_t *primary, int sopsl, msym_symmetry_operation_t sops[sopsl], msym_thresholds_t *thresholds, double transform[3][3]);
-msym_error_t transformSecondary(msym_point_group_type_t type, msym_symmetry_operation_t *primary, int sopsl, msym_symmetry_operation_t sops[sopsl], msym_thresholds_t *thresholds, double transform[3][3]);
+msym_error_t generatePointGroup(msym_point_group_type_t type, int n, msym_symmetry_operation_t *primary, int sopsl, msym_symmetry_operation_t *sops, msym_thresholds_t *thresholds, msym_point_group_t **opg);
+msym_error_t reorientAxes(msym_symmetry_operation_t *primary, int sopsl, msym_symmetry_operation_t *sops, msym_thresholds_t *thresholds);
+msym_error_t transformAxes(msym_point_group_type_t type, int n, msym_symmetry_operation_t *primary, int sopsl, msym_symmetry_operation_t *sops, msym_thresholds_t *thresholds, double transform[3][3]);
+msym_error_t transformPrimary(msym_symmetry_operation_t *primary, int sopsl, msym_symmetry_operation_t *sops, msym_thresholds_t *thresholds, double transform[3][3]);
+msym_error_t transformSecondary(msym_point_group_type_t type, msym_symmetry_operation_t *primary, int sopsl, msym_symmetry_operation_t *sops, msym_thresholds_t *thresholds, double transform[3][3]);
 msym_error_t getPointGroupOrder(msym_point_group_type_t type, int n, int *order);
-msym_error_t getPointGroupName(msym_point_group_type_t type, int n, size_t max, char name[max]);
+msym_error_t getPointGroupName(msym_point_group_type_t type, int n, size_t max, char *name);
 
-msym_error_t findSecondaryAxisSigma(msym_symmetry_operation_t *primary, int sopsl, msym_symmetry_operation_t sops[sopsl], msym_thresholds_t *thresholds, double r[3]);
-msym_error_t findSecondaryAxisC2(msym_symmetry_operation_t *primary, int sopsl, msym_symmetry_operation_t sops[sopsl], msym_thresholds_t *thresholds, double r[3]);
+msym_error_t findSecondaryAxisSigma(msym_symmetry_operation_t *primary, int sopsl, msym_symmetry_operation_t *sops, msym_thresholds_t *thresholds, double r[3]);
+msym_error_t findSecondaryAxisC2(msym_symmetry_operation_t *primary, int sopsl, msym_symmetry_operation_t *sops, msym_thresholds_t *thresholds, double r[3]);
 
-msym_error_t findSecondaryAxisC4(msym_symmetry_operation_t *primary, int sopsl, msym_symmetry_operation_t sops[sopsl], msym_thresholds_t *thresholds, double r[3]);
+msym_error_t findSecondaryAxisC4(msym_symmetry_operation_t *primary, int sopsl, msym_symmetry_operation_t *sops, msym_thresholds_t *thresholds, double r[3]);
 
-msym_error_t findSecondaryAxisC2C5(msym_symmetry_operation_t *primary, int sopsl, msym_symmetry_operation_t sops[sopsl], msym_thresholds_t *thresholds, double r[3]);
+msym_error_t findSecondaryAxisC2C5(msym_symmetry_operation_t *primary, int sopsl, msym_symmetry_operation_t *sops, msym_thresholds_t *thresholds, double r[3]);
 
 
 
 msym_error_t generateSymmetryOperations(msym_point_group_type_t type, int n, int order, msym_symmetry_operation_t **osops);
 
 
-msym_error_t generateSymmetryOperationsImpliedRot(int sopsl, msym_symmetry_operation_t sops[sopsl], int order, msym_thresholds_t *thresholds, int *osopsl);
+msym_error_t generateSymmetryOperationsImpliedRot(int sopsl, msym_symmetry_operation_t *sops, int order, msym_thresholds_t *thresholds, int *osopsl);
 
 
-msym_error_t generateSymmetryOperationsCs(int n, int l, msym_symmetry_operation_t sops[l], int *pk, int *pcla);
-msym_error_t generateSymmetryOperationsCi(int n, int l, msym_symmetry_operation_t sops[l], int *pk, int *pcla);
-msym_error_t generateSymmetryOperationsDn(int n, int l, msym_symmetry_operation_t sops[l], int *pk, int *pcla);
-msym_error_t generateSymmetryOperationsDnd(int n, int l, msym_symmetry_operation_t sops[l], int *pk, int *pcla);
-msym_error_t generateSymmetryOperationsDnh(int n, int l, msym_symmetry_operation_t sops[l], int *pk, int *pcla);
-msym_error_t generateSymmetryOperationsSn(int n, int l, msym_symmetry_operation_t sops[l], int *pk, int *pcla);
-msym_error_t generateSymmetryOperationsCn(int n, int l, msym_symmetry_operation_t sops[l], int *pk, int *pcla);
-msym_error_t generateSymmetryOperationsCnv(int n, int l, msym_symmetry_operation_t sops[l], int *pk, int *pcla);
-msym_error_t generateSymmetryOperationsCnh(int n, int l, msym_symmetry_operation_t sops[l], int *pk, int *pcla);
-msym_error_t generateSymmetryOperationsT(int n, int l, msym_symmetry_operation_t sops[l], int *pk, int *pcla);
-msym_error_t generateSymmetryOperationsTd(int n, int l, msym_symmetry_operation_t sops[l], int *pk, int *pcla);
-msym_error_t generateSymmetryOperationsTh(int n, int l, msym_symmetry_operation_t sops[l], int *pk, int *pcla);
-msym_error_t generateSymmetryOperationsO(int n, int l, msym_symmetry_operation_t sops[l], int *pk, int *pcla);
-msym_error_t generateSymmetryOperationsOh(int n, int l, msym_symmetry_operation_t sops[l], int *pk, int *pcla);
-msym_error_t generateSymmetryOperationsI(int n, int l, msym_symmetry_operation_t sops[l], int *pk, int *pcla);
-msym_error_t generateSymmetryOperationsIh(int n, int l, msym_symmetry_operation_t sops[l], int *pk, int *pcla);
+msym_error_t generateSymmetryOperationsCs(int n, int l, msym_symmetry_operation_t *sops, int *pk, int *pcla);
+msym_error_t generateSymmetryOperationsCi(int n, int l, msym_symmetry_operation_t *sops, int *pk, int *pcla);
+msym_error_t generateSymmetryOperationsDn(int n, int l, msym_symmetry_operation_t *sops, int *pk, int *pcla);
+msym_error_t generateSymmetryOperationsDnd(int n, int l, msym_symmetry_operation_t *sops, int *pk, int *pcla);
+msym_error_t generateSymmetryOperationsDnh(int n, int l, msym_symmetry_operation_t *sops, int *pk, int *pcla);
+msym_error_t generateSymmetryOperationsSn(int n, int l, msym_symmetry_operation_t *sops, int *pk, int *pcla);
+msym_error_t generateSymmetryOperationsCn(int n, int l, msym_symmetry_operation_t *sops, int *pk, int *pcla);
+msym_error_t generateSymmetryOperationsCnv(int n, int l, msym_symmetry_operation_t *sops, int *pk, int *pcla);
+msym_error_t generateSymmetryOperationsCnh(int n, int l, msym_symmetry_operation_t *sops, int *pk, int *pcla);
+msym_error_t generateSymmetryOperationsT(int n, int l, msym_symmetry_operation_t *sops, int *pk, int *pcla);
+msym_error_t generateSymmetryOperationsTd(int n, int l, msym_symmetry_operation_t *sops, int *pk, int *pcla);
+msym_error_t generateSymmetryOperationsTh(int n, int l, msym_symmetry_operation_t *sops, int *pk, int *pcla);
+msym_error_t generateSymmetryOperationsO(int n, int l, msym_symmetry_operation_t *sops, int *pk, int *pcla);
+msym_error_t generateSymmetryOperationsOh(int n, int l, msym_symmetry_operation_t *sops, int *pk, int *pcla);
+msym_error_t generateSymmetryOperationsI(int n, int l, msym_symmetry_operation_t *sops, int *pk, int *pcla);
+msym_error_t generateSymmetryOperationsIh(int n, int l, msym_symmetry_operation_t *sops, int *pk, int *pcla);
 
-msym_error_t generateSymmetryOperationsTetrahedral(int l, msym_symmetry_operation_t sops[l], int c2l, msym_symmetry_operation_t c2[c2l], int csl, msym_symmetry_operation_t cs[csl], int c3l, msym_symmetry_operation_t c3[c3l], int *pk);
-msym_error_t generateSymmetryOperationsOctahedral(int l, msym_symmetry_operation_t sops[l], int c2l, msym_symmetry_operation_t c2[c2l], int c3l, msym_symmetry_operation_t c3[c3l], int c4l, msym_symmetry_operation_t c4[c4l], int *pk);
-msym_error_t generateSymmetryOperationsIcosahedral(int l, msym_symmetry_operation_t sops[l], int c2l, msym_symmetry_operation_t c2[c2l], int c3l, msym_symmetry_operation_t c3[c3l], int c5l, msym_symmetry_operation_t c5[c5l], int *pk);
-msym_error_t generateReflectionPlanes(int n, int l, msym_symmetry_operation_t sops[l], int *pk, int *pcla);
-msym_error_t generateC2Axes(int n, int l, msym_symmetry_operation_t sops[l], int *pk, int *pcla);
+msym_error_t generateSymmetryOperationsTetrahedral(int l, msym_symmetry_operation_t *sops, int c2l, msym_symmetry_operation_t *c2, int csl, msym_symmetry_operation_t *cs, int c3l, msym_symmetry_operation_t *c3, int *pk);
+msym_error_t generateSymmetryOperationsOctahedral(int l, msym_symmetry_operation_t *sops, int c2l, msym_symmetry_operation_t *c2, int c3l, msym_symmetry_operation_t *c3, int c4l, msym_symmetry_operation_t *c4, int *pk);
+msym_error_t generateSymmetryOperationsIcosahedral(int l, msym_symmetry_operation_t *sops, int c2l, msym_symmetry_operation_t *c2, int c3l, msym_symmetry_operation_t *c3, int c5l, msym_symmetry_operation_t *c5, int *pk);
+msym_error_t generateReflectionPlanes(int n, int l, msym_symmetry_operation_t *sops, int *pk, int *pcla);
+msym_error_t generateC2Axes(int n, int l, msym_symmetry_operation_t *sops, int *pk, int *pcla);
 
-msym_error_t generateSymmetryOperationsUnknown(int n, int l, msym_symmetry_operation_t sops[l], int *pk, int *pcla);
+msym_error_t generateSymmetryOperationsUnknown(int n, int l, msym_symmetry_operation_t *sops, int *pk, int *pcla);
 
 
 msym_error_t pointGroupFromName(const char *name, msym_point_group_t *pg);
@@ -93,7 +93,7 @@ void sortSymmetryOperations(msym_point_group_t *pg, int classes);
 
 msym_error_t generatePointGroupFromType(msym_point_group_type_t type, int n, double transform[3][3], msym_thresholds_t *thresholds, msym_point_group_t **opg){
     msym_error_t ret = MSYM_SUCCESS;
-    msym_point_group_t *pg = calloc(1,sizeof(msym_point_group_t));
+    msym_point_group_t *pg = calloc(1,sizeof(*pg));
     if(MSYM_SUCCESS != (ret = pointGroupFromType(type,n,pg))) goto err;
     if(MSYM_SUCCESS != (ret = generatePointGroupFromStruct(pg, transform, thresholds))) goto err;
     *opg = pg;
@@ -105,7 +105,7 @@ err:
 
 msym_error_t generatePointGroupFromName(const char *name, double transform[3][3], msym_thresholds_t *thresholds, msym_point_group_t **opg){
     msym_error_t ret = MSYM_SUCCESS;
-    msym_point_group_t *pg = calloc(1,sizeof(msym_point_group_t));
+    msym_point_group_t *pg = calloc(1,sizeof(*pg));
     if(MSYM_SUCCESS != (ret = pointGroupFromName(name,pg))) goto err;
     if(MSYM_SUCCESS != (ret = generatePointGroupFromStruct(pg, transform, thresholds))) goto err;
     *opg = pg;
@@ -296,7 +296,7 @@ err:
 }
 
 
-msym_error_t getPointGroupName(msym_point_group_type_t type, int n, size_t max, char name[max]){
+msym_error_t getPointGroupName(msym_point_group_type_t type, int n, size_t max, char *name){
     msym_error_t ret = MSYM_SUCCESS;
     switch(type) {
         case MSYM_POINT_GROUP_TYPE_Ci  : snprintf(name,max,"Ci"); break;
@@ -327,9 +327,9 @@ err:
 }
 
 
-msym_error_t generatePointGroup(msym_point_group_type_t type, int n, msym_symmetry_operation_t *primary, int sopsl, msym_symmetry_operation_t sops[sopsl], msym_thresholds_t *thresholds, msym_point_group_t **opg){
+msym_error_t generatePointGroup(msym_point_group_type_t type, int n, msym_symmetry_operation_t *primary, int sopsl, msym_symmetry_operation_t *sops, msym_thresholds_t *thresholds, msym_point_group_t **opg){
     msym_error_t ret = MSYM_SUCCESS;
-    msym_point_group_t *pg = calloc(1,sizeof(msym_point_group_t));
+    msym_point_group_t *pg = calloc(1,sizeof(*pg));
     pg->type = type;
     pg->n = n;
     if(MSYM_SUCCESS != (ret = getPointGroupName(type,n,sizeof(pg->name)/sizeof(char),pg->name))) goto err;
@@ -422,8 +422,8 @@ msym_error_t findPointGroup(int sopsl, msym_symmetry_operation_t *sops, msym_thr
     
     if(tpg.order < sopsl){
         int length = 2*sopsl > 121 ? 2*sopsl : 121;
-        tsops = calloc(length, sizeof(msym_symmetry_operation_t));
-        memcpy(tsops, sops, sizeof(msym_symmetry_operation_t[sopsl]));
+        tsops = calloc(length, sizeof(*tsops));
+        memcpy(tsops, sops, sopsl*sizeof(*tsops));
         if(MSYM_SUCCESS != (ret = generateSymmetryOperationsImpliedRot(tsopsl, tsops, length, thresholds, &tsopsl))) goto err;
         tpg.primary = NULL;
         tpg.n = 0;
@@ -755,7 +755,7 @@ err:
     
 }
 
-msym_error_t transformAxes(msym_point_group_type_t type, int n, msym_symmetry_operation_t *primary, int sopsl, msym_symmetry_operation_t sops[sopsl], msym_thresholds_t *thresholds, double transform[3][3]){
+msym_error_t transformAxes(msym_point_group_type_t type, int n, msym_symmetry_operation_t *primary, int sopsl, msym_symmetry_operation_t *sops, msym_thresholds_t *thresholds, double transform[3][3]){
     msym_error_t ret = MSYM_SUCCESS;
     switch (type){
         case (MSYM_POINT_GROUP_TYPE_Ci)  :
@@ -901,11 +901,11 @@ err:
  * and move it to the group so we don't have to regenerate */
 msym_error_t pointGroupFromSubgroup(const msym_subgroup_t *sg, msym_thresholds_t *thresholds, msym_point_group_t **opg){
     msym_error_t ret = MSYM_SUCCESS;
-    *opg = calloc(1,sizeof(msym_point_group_t));
+    *opg = calloc(1,sizeof(**opg));
     msym_point_group_t *pg = *opg;
     pg->type = sg->type;
     pg->n = sg->n;
-    pg->sops = malloc(sizeof(msym_symmetry_operation_t[sg->order]));
+    pg->sops = malloc(sg->order*sizeof(*pg->sops));
     memcpy(pg->name,sg->name,sizeof(pg->name));
     
     if(MSYM_SUCCESS != (ret = getPointGroupOrder(pg->type, pg->n, &pg->order))) goto err;
@@ -920,7 +920,7 @@ msym_error_t pointGroupFromSubgroup(const msym_subgroup_t *sg, msym_thresholds_t
         memcpy(&pg->sops[i], sg->sops[i], sizeof(msym_symmetry_operation_t));
     }
     
-    mleye(3, pg->transform);
+    meye(pg->transform);
     
     if(MSYM_SUCCESS != (ret = transformAxes(pg->type, pg->n, pg->primary, pg->order, pg->sops, thresholds, pg->transform))) goto err;
     
@@ -968,7 +968,7 @@ err:
  * This could be improved with some thresholds, since some things lie in the plane
  * and get flipped. Should try to align with x as well
  */
-msym_error_t reorientAxes(msym_symmetry_operation_t *primary, int sopsl, msym_symmetry_operation_t sops[sopsl], msym_thresholds_t *thresholds
+msym_error_t reorientAxes(msym_symmetry_operation_t *primary, int sopsl, msym_symmetry_operation_t *sops, msym_thresholds_t *thresholds
 ){
     double x[3] = {1.0,0.0,0.0}, y[3] = {0.0,1.0,0.0}, z[3] = {0.0, 0.0, 1.0};
     
@@ -998,7 +998,7 @@ err:
 
 
 
-msym_error_t transformPrimary(msym_symmetry_operation_t *primary, int sopsl, msym_symmetry_operation_t sops[sopsl], msym_thresholds_t *thresholds, double transform[3][3]){
+msym_error_t transformPrimary(msym_symmetry_operation_t *primary, int sopsl, msym_symmetry_operation_t *sops, msym_thresholds_t *thresholds, double transform[3][3]){
     msym_error_t ret = MSYM_SUCCESS;
     if(primary != NULL){
         double z[3] = {0.0, 0.0, 1.0};
@@ -1014,7 +1014,7 @@ msym_error_t transformPrimary(msym_symmetry_operation_t *primary, int sopsl, msy
     return ret;
 }
 
-msym_error_t transformSecondary(msym_point_group_type_t type, msym_symmetry_operation_t *primary, int sopsl, msym_symmetry_operation_t sops[sopsl], msym_thresholds_t *thresholds, double transform[3][3]){
+msym_error_t transformSecondary(msym_point_group_type_t type, msym_symmetry_operation_t *primary, int sopsl, msym_symmetry_operation_t *sops, msym_thresholds_t *thresholds, double transform[3][3]){
     msym_error_t ret = MSYM_SUCCESS;
     double axis[3], x[3] = {1.0,0.0,0.0};
     
@@ -1062,7 +1062,7 @@ err:
 /* For point groups where we use a perpendicular reflection plane to indicate direction.
    We use a vector where the the xy-plane and reflection plane cross
 */
-msym_error_t findSecondaryAxisSigma(msym_symmetry_operation_t *primary, int sopsl, msym_symmetry_operation_t sops[sopsl], msym_thresholds_t *thresholds, double r[3]){
+msym_error_t findSecondaryAxisSigma(msym_symmetry_operation_t *primary, int sopsl, msym_symmetry_operation_t *sops, msym_thresholds_t *thresholds, double r[3]){
     msym_error_t ret = MSYM_SUCCESS;
     msym_symmetry_operation_t *sop = NULL;
     for(sop = sops; sop < (sops + sopsl); sop++){
@@ -1084,7 +1084,7 @@ err:
 /* For point groups where we use a perpendicular C2 axis to indicate direction.
    Adjusted to make sure it's perfectly in the xy-plane.
  */
-msym_error_t findSecondaryAxisC2(msym_symmetry_operation_t *primary, int sopsl, msym_symmetry_operation_t sops[sopsl], msym_thresholds_t *thresholds, double r[3]){
+msym_error_t findSecondaryAxisC2(msym_symmetry_operation_t *primary, int sopsl, msym_symmetry_operation_t *sops, msym_thresholds_t *thresholds, double r[3]){
     msym_error_t ret = MSYM_SUCCESS;
     msym_symmetry_operation_t *sop = NULL;
     for(msym_symmetry_operation_t *sop = sops; sop < (sops + sopsl); sop++){
@@ -1105,7 +1105,7 @@ err:
 }
 
 
-msym_error_t findSecondaryAxisC2C5(msym_symmetry_operation_t *primary, int sopsl, msym_symmetry_operation_t sops[sopsl], msym_thresholds_t *thresholds, double r[3]){
+msym_error_t findSecondaryAxisC2C5(msym_symmetry_operation_t *primary, int sopsl, msym_symmetry_operation_t *sops, msym_thresholds_t *thresholds, double r[3]){
     msym_error_t ret = MSYM_SUCCESS;
     msym_symmetry_operation_t *c2[2], *c5 = NULL;
     int c2i = 0;
@@ -1141,7 +1141,7 @@ err:
 
 
 // Same as C2
-msym_error_t findSecondaryAxisC4(msym_symmetry_operation_t *primary, int sopsl, msym_symmetry_operation_t sops[sopsl], msym_thresholds_t *thresholds, double r[3]){
+msym_error_t findSecondaryAxisC4(msym_symmetry_operation_t *primary, int sopsl, msym_symmetry_operation_t *sops, msym_thresholds_t *thresholds, double r[3]){
     msym_error_t ret = MSYM_SUCCESS;
     msym_symmetry_operation_t *sop = NULL;
     for(sop = sops; sop < (sops + sopsl); sop++){
@@ -1161,7 +1161,7 @@ err:
     return ret;
 }
 
-msym_error_t generateSymmetryOperationsImpliedRot(int sopsl, msym_symmetry_operation_t sops[sopsl], int order, msym_thresholds_t *thresholds, int *osopsl){
+msym_error_t generateSymmetryOperationsImpliedRot(int sopsl, msym_symmetry_operation_t *sops, int order, msym_thresholds_t *thresholds, int *osopsl){
     int isopsl = sopsl;
     for(msym_symmetry_operation_t *sopi = sops; sopi < (sops + sopsl) && isopsl < order; sopi++){
         if(sopi->type == PROPER_ROTATION){
@@ -1185,7 +1185,7 @@ err:
 
 msym_error_t generateSymmetryOperations(msym_point_group_type_t type, int n, int order, msym_symmetry_operation_t **osops){
     msym_error_t ret = MSYM_SUCCESS;
-    msym_symmetry_operation_t *sops = calloc(order, sizeof(msym_symmetry_operation_t));
+    msym_symmetry_operation_t *sops = calloc(order, sizeof(*sops));
     sops[0].cla = 0;
     sops[0].type = IDENTITY;
     sops[0].power = 1;
@@ -1248,11 +1248,11 @@ err:
 
 }
 
-msym_error_t generateSymmetryOperationsUnknown(int n, int l, msym_symmetry_operation_t sops[l], int *pk, int *pcla){
+msym_error_t generateSymmetryOperationsUnknown(int n, int l, msym_symmetry_operation_t *sops, int *pk, int *pcla){
     msymSetErrorDetails("Generating symmetry operations for unknown point group");
     return MSYM_POINT_GROUP_ERROR;
 }
-msym_error_t generateSymmetryOperationsSn(int n, int l, msym_symmetry_operation_t sops[l], int *pk, int *pcla){
+msym_error_t generateSymmetryOperationsSn(int n, int l, msym_symmetry_operation_t *sops, int *pk, int *pcla){
     msym_error_t ret = MSYM_SUCCESS;
     int k = *pk, cla = *pcla, m = (n << (n & 1));
     double z[3] = {0.0,0.0,1.0};
@@ -1263,7 +1263,7 @@ msym_error_t generateSymmetryOperationsSn(int n, int l, msym_symmetry_operation_
         int index = k + ((i-1) << 1);
         symopPow(&sn, i, &sops[index]);
         sops[index].cla = cla + i - 1;
-        clean_debug_printf("i = %d m = %d index = %d ",i,m,index);
+        dbg_printf("i = %d m = %d index = %d ",i,m,index);
         printSymmetryOperation(&sops[index]);
     }
 /*
@@ -1273,21 +1273,21 @@ msym_error_t generateSymmetryOperationsSn(int n, int l, msym_symmetry_operation_
     sops[ri].p.orientation = HORIZONTAL;
     sops[ri].type = REFLECTION;
     vcopy(z,sops[ri].v);
-    clean_debug_printf("replacing symmetry operation %d\n",ri);
+    dbg_printf("replacing symmetry operation %d\n",ri);
     printSymmetryOperation(&sops[ri]);*/
     
     for(int i = 1;i < m >> 1;i++){
         int index = k + 1 + ((i-1) << 1);
         symopPow(&sn, m-i, &sops[index]);
         sops[index].cla = cla + i - 1;
-        clean_debug_printf("i = %d m = %d index = %d ",i,m,index);
+        dbg_printf("i = %d m = %d index = %d ",i,m,index);
         printSymmetryOperation(&sops[index]);
         
     }
     k += m - 1;
     cla += m >> 1;
     
-    clean_debug_printf("------ Sn %d operations %d classes------\n",k-*pk, cla-*pcla);
+    dbg_printf("------ Sn %d operations %d classes------\n",k-*pk, cla-*pcla);
     *pk = k; *pcla = cla;
     
     return ret;
@@ -1295,7 +1295,7 @@ err:
     return ret;
 }
 
-msym_error_t generateSymmetryOperationsCs(int n, int l, msym_symmetry_operation_t sops[l], int *pk, int *pcla){
+msym_error_t generateSymmetryOperationsCs(int n, int l, msym_symmetry_operation_t *sops, int *pk, int *pcla){
     msym_error_t ret = MSYM_SUCCESS;
     int k = *pk, cla = *pcla;
     
@@ -1309,7 +1309,7 @@ msym_error_t generateSymmetryOperationsCs(int n, int l, msym_symmetry_operation_
     k++;
     cla++;
     
-    clean_debug_printf("------ Cs %d operations %d classes------\n",k-*pk, cla-*pcla);
+    dbg_printf("------ Cs %d operations %d classes------\n",k-*pk, cla-*pcla);
     *pk = k; *pcla = cla;
     
     return ret;
@@ -1318,7 +1318,7 @@ err:
 
 }
 
-msym_error_t generateSymmetryOperationsCi(int n, int l, msym_symmetry_operation_t sops[l], int *pk, int *pcla){
+msym_error_t generateSymmetryOperationsCi(int n, int l, msym_symmetry_operation_t *sops, int *pk, int *pcla){
     msym_error_t ret = MSYM_SUCCESS;
     int k = *pk, cla = *pcla;
     
@@ -1332,7 +1332,7 @@ msym_error_t generateSymmetryOperationsCi(int n, int l, msym_symmetry_operation_
     k++;
     cla++;
     
-    clean_debug_printf("------ Ci %d operations %d classes------\n",k-*pk, cla-*pcla);
+    dbg_printf("------ Ci %d operations %d classes------\n",k-*pk, cla-*pcla);
     *pk = k; *pcla = cla;
     
     return ret;
@@ -1341,7 +1341,7 @@ err:
     
 }
 
-msym_error_t generateSymmetryOperationsCn(int n, int l, msym_symmetry_operation_t sops[l], int *pk, int *pcla){
+msym_error_t generateSymmetryOperationsCn(int n, int l, msym_symmetry_operation_t *sops, int *pk, int *pcla){
     msym_error_t ret = MSYM_SUCCESS;
     int k = *pk, cla = *pcla;
     double z[3] = {0.0,0.0,1.0};
@@ -1353,7 +1353,7 @@ msym_error_t generateSymmetryOperationsCn(int n, int l, msym_symmetry_operation_
         int index = k + (i << 1) - 2;
         symopPow(&cn, i, &sops[index]);
         sops[index].cla = cla + (index >> 1);
-        clean_debug_printf("i = %d index = %d ",i,index);
+        dbg_printf("i = %d index = %d ",i,index);
         printSymmetryOperation(&sops[index]);
     }
     
@@ -1361,14 +1361,14 @@ msym_error_t generateSymmetryOperationsCn(int n, int l, msym_symmetry_operation_
         int index = k + (i << 1) - 1;
         symopPow(&cn, n-i, &sops[index]);
         sops[index].cla = cla + ((index - 1) >> 1);
-        clean_debug_printf("i = %d index = %d ",i,index);
+        dbg_printf("i = %d index = %d ",i,index);
         printSymmetryOperation(&sops[index]);
     }
     
     k += n - 1;
     cla += n >> 1;
     
-    clean_debug_printf("------ Cn %d operations %d classes------\n",k-*pk, cla-*pcla);
+    dbg_printf("------ Cn %d operations %d classes------\n",k-*pk, cla-*pcla);
     *pk = k; *pcla = cla;
     
     return ret;
@@ -1376,7 +1376,7 @@ err:
     return ret;
 }
 
-msym_error_t generateSymmetryOperationsCnh(int n, int l, msym_symmetry_operation_t sops[l], int *pk, int *pcla){
+msym_error_t generateSymmetryOperationsCnh(int n, int l, msym_symmetry_operation_t *sops, int *pk, int *pcla){
     msym_error_t ret = MSYM_SUCCESS;
     int k = *pk, cla = *pcla, s = 0;
     double z[3] = {0.0,0.0,1.0};
@@ -1424,7 +1424,7 @@ msym_error_t generateSymmetryOperationsCnh(int n, int l, msym_symmetry_operation
     
     if(MSYM_SUCCESS != (ret = generateSymmetryOperationsSn(s,l,sops,&k,&cla))) goto err;
     
-    clean_debug_printf("------ Cnh %d operations %d classes------\n",k-*pk, cla-*pcla);
+    dbg_printf("------ Cnh %d operations %d classes------\n",k-*pk, cla-*pcla);
     *pk = k; *pcla = cla;
     
     return ret;
@@ -1433,7 +1433,7 @@ err:
     
 }
 
-msym_error_t generateSymmetryOperationsCnv(int n, int l, msym_symmetry_operation_t sops[l], int *pk, int *pcla){
+msym_error_t generateSymmetryOperationsCnv(int n, int l, msym_symmetry_operation_t *sops, int *pk, int *pcla){
     msym_error_t ret = MSYM_SUCCESS;
     int k = *pk, cla = *pcla;
     
@@ -1477,7 +1477,7 @@ msym_error_t generateSymmetryOperationsCnv(int n, int l, msym_symmetry_operation
         k += n0;
         cla += 1;
         
-        clean_debug_printf("\n------ C0v %d operations %d classes------\n",k-*pk, cla-*pcla);
+        dbg_printf("\n------ C0v %d operations %d classes------\n",k-*pk, cla-*pcla);
     } else {
         if(k + (n << 1) - 1 > l){
             ret = MSYM_POINT_GROUP_ERROR;
@@ -1486,7 +1486,7 @@ msym_error_t generateSymmetryOperationsCnv(int n, int l, msym_symmetry_operation
         }
         if(MSYM_SUCCESS != (ret = generateSymmetryOperationsCn(n,l,sops,&k,&cla))) goto err;
         if(MSYM_SUCCESS != (ret = generateReflectionPlanes(n,l,sops,&k,&cla))) goto err;
-        clean_debug_printf("------ Cnv %d operations %d classes------\n",k-*pk, cla-*pcla);
+        dbg_printf("------ Cnv %d operations %d classes------\n",k-*pk, cla-*pcla);
         
     }
     
@@ -1497,7 +1497,7 @@ err:
     return ret;
 }
 
-msym_error_t generateSymmetryOperationsDn(int n, int l, msym_symmetry_operation_t sops[l], int *pk, int *pcla){
+msym_error_t generateSymmetryOperationsDn(int n, int l, msym_symmetry_operation_t *sops, int *pk, int *pcla){
     msym_error_t ret = MSYM_SUCCESS;
     int k = *pk, cla = *pcla;
     if(k + (n << 1) - 1 > l){ret = MSYM_POINT_GROUP_ERROR; msymSetErrorDetails("Too many operations when generating D%d symmetry operations",n); goto err;}
@@ -1510,7 +1510,7 @@ msym_error_t generateSymmetryOperationsDn(int n, int l, msym_symmetry_operation_
     //k += n;
     //cla = sops[k-1].cla + 1;
     
-    clean_debug_printf("\n------ Dn %d operations %d classes------\n",k-*pk, cla-*pcla);
+    dbg_printf("\n------ Dn %d operations %d classes------\n",k-*pk, cla-*pcla);
     *pk = k; *pcla = cla;
     
     return ret;
@@ -1518,7 +1518,7 @@ err:
     return ret;
 }
 
-msym_error_t generateSymmetryOperationsDnh(int n, int l, msym_symmetry_operation_t sops[l], int *pk, int *pcla){
+msym_error_t generateSymmetryOperationsDnh(int n, int l, msym_symmetry_operation_t *sops, int *pk, int *pcla){
     msym_error_t ret = MSYM_SUCCESS;
     int k = *pk, cla = *pcla;
     
@@ -1561,7 +1561,7 @@ msym_error_t generateSymmetryOperationsDnh(int n, int l, msym_symmetry_operation
             memcpy(&(sops[index]), &sigma, sizeof(msym_symmetry_operation_t));
             vrotate(i*M_PI/n0, sigma.v, z, sops[index].v);
             sops[index].cla = cla;
-            clean_debug_printf("generated sigma at %d\n",index);
+            dbg_printf("generated sigma at %d\n",index);
             index += n0;
             memcpy(&(sops[index]), &c2, sizeof(msym_symmetry_operation_t));
             vrotate(i*M_PI/n0, c2.v, z, sops[index].v);
@@ -1571,7 +1571,7 @@ msym_error_t generateSymmetryOperationsDnh(int n, int l, msym_symmetry_operation
         k += n0 << 1;
         cla += 2;
 
-        clean_debug_printf("\n------ D0h %d operations %d classes------\n",k-*pk, cla-*pcla);
+        dbg_printf("\n------ D0h %d operations %d classes------\n",k-*pk, cla-*pcla);
     } else {
         
         if(k + (n << 2) - 1 > l){
@@ -1582,7 +1582,7 @@ msym_error_t generateSymmetryOperationsDnh(int n, int l, msym_symmetry_operation
         if(MSYM_SUCCESS != (ret = generateSymmetryOperationsCnh(n,l,sops,&k,&cla))) goto err;
         if(MSYM_SUCCESS != (ret = generateReflectionPlanes(n,l,sops,&k,&cla))) goto err;
         if(MSYM_SUCCESS != (ret = generateC2Axes(n,l,sops,&k,&cla))) goto err;
-        clean_debug_printf("\n------ Dnh %d operations %d classes------\n",k-*pk, cla-*pcla);
+        dbg_printf("\n------ Dnh %d operations %d classes------\n",k-*pk, cla-*pcla);
         
     }
     
@@ -1593,7 +1593,7 @@ err:
     return ret;
 }
 
-msym_error_t generateSymmetryOperationsDnd(int n, int l, msym_symmetry_operation_t sops[l], int *pk, int *pcla){
+msym_error_t generateSymmetryOperationsDnd(int n, int l, msym_symmetry_operation_t *sops, int *pk, int *pcla){
     msym_error_t ret = MSYM_SUCCESS;
     int k = *pk, cla = *pcla;
     double x[3] = {1.0,0.0,0.0}, y[3] = {0.0,1.0,0.0}, z[3] = {0.0,0.0,1.0};
@@ -1623,7 +1623,7 @@ msym_error_t generateSymmetryOperationsDnd(int n, int l, msym_symmetry_operation
     cla += 1;
     
     
-    clean_debug_printf("\n------ Dnd %d operations %d classes------\n",k-*pk, cla-*pcla);
+    dbg_printf("\n------ Dnd %d operations %d classes------\n",k-*pk, cla-*pcla);
     *pk = k; *pcla = cla;
     
     return ret;
@@ -1631,7 +1631,7 @@ err:
     return ret;
 }
 
-msym_error_t generateSymmetryOperationsT(int n, int l, msym_symmetry_operation_t sops[l], int *pk, int *pcla){
+msym_error_t generateSymmetryOperationsT(int n, int l, msym_symmetry_operation_t *sops, int *pk, int *pcla){
     msym_error_t ret = MSYM_SUCCESS;
     int k = *pk, cla = *pcla;
     
@@ -1648,7 +1648,7 @@ msym_error_t generateSymmetryOperationsT(int n, int l, msym_symmetry_operation_t
     
     cla += 2;
     
-    clean_debug_printf("------ T %d operations %d classes------\n",k-*pk, cla-*pcla);
+    dbg_printf("------ T %d operations %d classes------\n",k-*pk, cla-*pcla);
     *pk = k; *pcla = cla;
     
     return ret;
@@ -1656,7 +1656,7 @@ err:
     return ret;
 }
 
-msym_error_t generateSymmetryOperationsTd(int n, int l, msym_symmetry_operation_t sops[l], int *pk, int *pcla){
+msym_error_t generateSymmetryOperationsTd(int n, int l, msym_symmetry_operation_t *sops, int *pk, int *pcla){
     msym_error_t ret = MSYM_SUCCESS;
     int k = *pk, cla = *pcla;
     
@@ -1679,7 +1679,7 @@ msym_error_t generateSymmetryOperationsTd(int n, int l, msym_symmetry_operation_
     
     cla += 4;
     
-    clean_debug_printf("------ Td %d operations %d classes------\n",k-*pk, cla-*pcla);
+    dbg_printf("------ Td %d operations %d classes------\n",k-*pk, cla-*pcla);
     *pk = k; *pcla = cla;
     
     return ret;
@@ -1687,7 +1687,7 @@ err:
     return ret;
 }
 
-msym_error_t generateSymmetryOperationsTh(int n, int l, msym_symmetry_operation_t sops[l], int *pk, int *pcla){
+msym_error_t generateSymmetryOperationsTh(int n, int l, msym_symmetry_operation_t *sops, int *pk, int *pcla){
     msym_error_t ret = MSYM_SUCCESS;
     int k = *pk, cla = *pcla;
     
@@ -1716,7 +1716,7 @@ msym_error_t generateSymmetryOperationsTh(int n, int l, msym_symmetry_operation_
     
     cla += 5;
     
-    clean_debug_printf("------ Th %d operations %d classes------\n",k-*pk, cla-*pcla);
+    dbg_printf("------ Th %d operations %d classes------\n",k-*pk, cla-*pcla);
     *pk = k; *pcla = cla;
     
     return ret;
@@ -1724,7 +1724,7 @@ err:
     return ret;
 }
 
-msym_error_t generateSymmetryOperationsO(int n, int l, msym_symmetry_operation_t sops[l], int *pk, int *pcla){
+msym_error_t generateSymmetryOperationsO(int n, int l, msym_symmetry_operation_t *sops, int *pk, int *pcla){
     msym_error_t ret = MSYM_SUCCESS;
     int k = *pk, cla = *pcla;
     
@@ -1747,7 +1747,7 @@ msym_error_t generateSymmetryOperationsO(int n, int l, msym_symmetry_operation_t
     
     cla += 4;
     
-    clean_debug_printf("------ O %d operations %d classes------\n",k-*pk, cla-*pcla);
+    dbg_printf("------ O %d operations %d classes------\n",k-*pk, cla-*pcla);
     *pk = k; *pcla = cla;
     
     return ret;
@@ -1755,7 +1755,7 @@ err:
     return ret;
 }
 
-msym_error_t generateSymmetryOperationsOh(int n, int l, msym_symmetry_operation_t sops[l], int *pk, int *pcla){
+msym_error_t generateSymmetryOperationsOh(int n, int l, msym_symmetry_operation_t *sops, int *pk, int *pcla){
     msym_error_t ret = MSYM_SUCCESS;
     int k = *pk, cla = *pcla;
     
@@ -1793,7 +1793,7 @@ msym_error_t generateSymmetryOperationsOh(int n, int l, msym_symmetry_operation_
     
     cla += 9;
     
-    clean_debug_printf("------ O %d operations %d classes------\n",k-*pk, cla-*pcla);
+    dbg_printf("------ O %d operations %d classes------\n",k-*pk, cla-*pcla);
     *pk = k; *pcla = cla;
     
     return ret;
@@ -1801,7 +1801,7 @@ err:
     return ret;
 }
 
-msym_error_t generateSymmetryOperationsI(int n, int l, msym_symmetry_operation_t sops[l], int *pk, int *pcla){
+msym_error_t generateSymmetryOperationsI(int n, int l, msym_symmetry_operation_t *sops, int *pk, int *pcla){
     msym_error_t ret = MSYM_SUCCESS;
     int k = *pk, cla = *pcla;
     
@@ -1825,7 +1825,7 @@ msym_error_t generateSymmetryOperationsI(int n, int l, msym_symmetry_operation_t
     
     cla += 4;
     
-    clean_debug_printf("------ I %d operations %d classes------\n",k-*pk, cla-*pcla);
+    dbg_printf("------ I %d operations %d classes------\n",k-*pk, cla-*pcla);
     *pk = k; *pcla = cla;
     
     return ret;
@@ -1834,7 +1834,7 @@ err:
 }
 
 
-msym_error_t generateSymmetryOperationsIh(int n, int l, msym_symmetry_operation_t sops[l], int *pk, int *pcla){
+msym_error_t generateSymmetryOperationsIh(int n, int l, msym_symmetry_operation_t *sops, int *pk, int *pcla){
     msym_error_t ret = MSYM_SUCCESS;
     int k = *pk, cla = *pcla;
     
@@ -1874,7 +1874,7 @@ msym_error_t generateSymmetryOperationsIh(int n, int l, msym_symmetry_operation_
     
     cla += 9;
     
-    clean_debug_printf("------ Ih %d operations %d classes------\n",k-*pk, cla-*pcla);
+    dbg_printf("------ Ih %d operations %d classes------\n",k-*pk, cla-*pcla);
     *pk = k; *pcla = cla;
     
     return ret;
@@ -1882,7 +1882,7 @@ err:
     return ret;
 }
 
-msym_error_t generateSymmetryOperationsTetrahedral(int l, msym_symmetry_operation_t sops[l], int c2l, msym_symmetry_operation_t c2[c2l], int csl, msym_symmetry_operation_t cs[csl], int c3l, msym_symmetry_operation_t c3[c3l], int *pk){
+msym_error_t generateSymmetryOperationsTetrahedral(int l, msym_symmetry_operation_t *sops, int c2l, msym_symmetry_operation_t *c2, int csl, msym_symmetry_operation_t *cs, int c3l, msym_symmetry_operation_t *c3, int *pk){
     msym_error_t ret = MSYM_SUCCESS;
     int k = *pk;
     
@@ -1936,7 +1936,7 @@ msym_error_t generateSymmetryOperationsTetrahedral(int l, msym_symmetry_operatio
         }
     }
     
-    clean_debug_printf("------ Tetra %d operations 0 classes------\n",k-*pk);
+    dbg_printf("------ Tetra %d operations 0 classes------\n",k-*pk);
     *pk = k;
     
     return ret;
@@ -1945,7 +1945,7 @@ err:
     
 }
 
-msym_error_t generateSymmetryOperationsOctahedral(int l, msym_symmetry_operation_t sops[l], int c2l, msym_symmetry_operation_t c2[c2l], int c3l, msym_symmetry_operation_t c3[c3l], int c4l, msym_symmetry_operation_t c4[c4l], int *pk){
+msym_error_t generateSymmetryOperationsOctahedral(int l, msym_symmetry_operation_t *sops, int c2l, msym_symmetry_operation_t *c2, int c3l, msym_symmetry_operation_t *c3, int c4l, msym_symmetry_operation_t *c4, int *pk){
     msym_error_t ret = MSYM_SUCCESS;
     int k = *pk;
     
@@ -1997,7 +1997,7 @@ msym_error_t generateSymmetryOperationsOctahedral(int l, msym_symmetry_operation
         }
     }
     
-    clean_debug_printf("------ Octa %d operations 0 classes------\n",k-*pk);
+    dbg_printf("------ Octa %d operations 0 classes------\n",k-*pk);
     *pk = k;
     
     return ret;
@@ -2007,7 +2007,7 @@ err:
 }
 
 
-msym_error_t generateSymmetryOperationsIcosahedral(int l, msym_symmetry_operation_t sops[l], int c2l, msym_symmetry_operation_t c2[c2l], int c3l, msym_symmetry_operation_t c3[c3l], int c5l, msym_symmetry_operation_t c5[c5l], int *pk){
+msym_error_t generateSymmetryOperationsIcosahedral(int l, msym_symmetry_operation_t *sops, int c2l, msym_symmetry_operation_t *c2, int c3l, msym_symmetry_operation_t *c3, int c5l, msym_symmetry_operation_t *c5, int *pk){
     msym_error_t ret = MSYM_SUCCESS;
     int k = *pk;
     
@@ -2077,7 +2077,7 @@ msym_error_t generateSymmetryOperationsIcosahedral(int l, msym_symmetry_operatio
         }
     }    
     
-    clean_debug_printf("------ Icosa %d operations 0 classes------\n",k-*pk);
+    dbg_printf("------ Icosa %d operations 0 classes------\n",k-*pk);
     *pk = k;
     
     return ret;
@@ -2086,7 +2086,7 @@ err:
     
 }
 
-msym_error_t generateReflectionPlanes(int n, int l, msym_symmetry_operation_t sops[l], int *pk, int *pcla){
+msym_error_t generateReflectionPlanes(int n, int l, msym_symmetry_operation_t *sops, int *pk, int *pcla){
     msym_error_t ret = MSYM_SUCCESS;
     int k = *pk, cla = *pcla;
     double z[3] = {0.0,0.0,1.0}, y[3] = {0.0,1.0,0.0};
@@ -2105,7 +2105,7 @@ msym_error_t generateReflectionPlanes(int n, int l, msym_symmetry_operation_t so
     
     k += n;
     cla += 1 << (~n & 1); //1 or 2 added classes
-    clean_debug_printf("------ R %d operations %d classes------\n",k-*pk, cla-*pcla);
+    dbg_printf("------ R %d operations %d classes------\n",k-*pk, cla-*pcla);
     *pk = k; *pcla = cla;
     
     return ret;
@@ -2113,7 +2113,7 @@ err:
     return ret;
 }
 
-msym_error_t generateC2Axes(int n, int l, msym_symmetry_operation_t sops[l], int *pk, int *pcla){
+msym_error_t generateC2Axes(int n, int l, msym_symmetry_operation_t *sops, int *pk, int *pcla){
     msym_error_t ret = MSYM_SUCCESS;
     int k = *pk, cla = *pcla;
     double z[3] = {0.0,0.0,1.0}, x[3] = {1.0,0.0,0.0};
@@ -2132,7 +2132,7 @@ msym_error_t generateC2Axes(int n, int l, msym_symmetry_operation_t sops[l], int
     
     k += n;
     cla += 1 << (~n & 1); //1 or 2 added classes
-    clean_debug_printf("------ C2 %d operations %d classes------\n",k-*pk, cla-*pcla);
+    dbg_printf("------ C2 %d operations %d classes------\n",k-*pk, cla-*pcla);
     *pk = k; *pcla = cla;
     
     return ret;
@@ -2143,8 +2143,8 @@ err:
 
 int classifySymmetryOperations(msym_point_group_t *pg){
     int c = 1;
-    double (*mop)[3][3] = malloc(sizeof(double[pg->order][3][3]));
-    double (*imop)[3][3] = malloc(sizeof(double[pg->order][3][3]));
+    double (*mop)[3][3] = malloc(pg->order*sizeof(*mop));
+    double (*imop)[3][3] = malloc(pg->order*sizeof(*imop));
     
     //There may be a better way to do this
     for(int i = 0; i < pg->order;i++){
@@ -2186,7 +2186,7 @@ int classifySymmetryOperations(msym_point_group_t *pg){
 
 //cant be bothereed writing an efficient sorting alg for this
 void sortSymmetryOperations(msym_point_group_t *pg, int classes){
-    msym_symmetry_operation_t *tmp = malloc(pg->order*sizeof(msym_symmetry_operation_t));
+    msym_symmetry_operation_t *tmp = malloc(pg->order*sizeof(*tmp));
     int n = 0;
     
     for(int c = 0; c < classes;c++){

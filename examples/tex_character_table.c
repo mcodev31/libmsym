@@ -17,6 +17,8 @@
 // Use <libmsym/msym.h> if installed
 #include "msym.h"
 
+#ifndef __LIBMSYM_NO_VLA__
+
 void characterTableToTex(FILE *fp, msym_point_group_type_t type, int n, const char *name, const msym_character_table_t *ct);
 void pointGroupToTex(FILE *fp, msym_point_group_type_t type, int n, int l, char buf[l]);
 void symmetryOperationToTex(FILE *fp, msym_symmetry_operation_t *sop, int l, char buf[l]);
@@ -248,3 +250,9 @@ void symmetryOperationToTex(FILE *fp, msym_symmetry_operation_t *sop, int l, cha
         }
     }
 }
+
+#else
+int main(int argc, const char * argv[]){
+    fprintf(stderr, "Character tables require VLA support during compilation\n");
+}
+#endif

@@ -25,11 +25,21 @@
 
 #define PARTNER_THRESHOLD 1.0e-6
 
-msym_error_t projectLinearlyIndependent(int dim, int vdim, double v[vdim][dim], int udim, double u[udim][dim], msym_thresholds_t *thresholds, double cmem[dim], double mem[dim][dim], double o[dim][dim], int *oirl);
+void freeSubrepresentationSpaces(int srsl, msym_subrepresentation_space_t *srs){
+    for(int i = 0;i < srsl && NULL != srs;i++){
+        for(int j = 0;j < srs[i].salcl;j++){
+            free(srs[i].salc[j].pf);
+        }
+        free(srs[i].salc);
+    }
+    free(srs);
+}
 
+#ifndef __LIBMSYM_NO_VLA__
 
+msym_error_t projectLinearlyIndependent(int dim, int vdim, double (*v)[dim], int udim, double (*u)[dim], msym_thresholds_t *thresholds, double *cmem, double (*mem)[dim], double (*o)[dim], int *oirl);
 
-void decomposeSubRepresentation(msym_point_group_t *pg, const msym_subgroup_t **rsg, double (*sgc)[5][pg->order], int span[pg->ct->d], int (*sgd)[5]){
+void decomposeSubRepresentation(msym_point_group_t *pg, const msym_subgroup_t **rsg, double (*sgc)[5][pg->order], int *span, int (*sgd)[5]){
     msym_character_table_t *ct = pg->ct;
     msym_symmetry_operation_t *sops = pg->sops;
     int sopsl = pg->order;
@@ -66,12 +76,12 @@ void decomposeSubRepresentation(msym_point_group_t *pg, const msym_subgroup_t **
     }
 }
 
-msym_error_t generateBasisRepresentations(int n, int sopsl, msym_symmetry_operation_t sops[sopsl], int lmax, rsh_representations_t *lrsh){
+msym_error_t generateBasisRepresentations(int n, int sopsl, msym_symmetry_operation_t *sops, int lmax, rsh_representations_t *lrsh){
     msym_error_t ret = MSYM_SUCCESS;
     for(int l = 0;l <= lmax;l++){
         int d = 2*l+1;
         lrsh[l].d = d;
-        lrsh[l].t = malloc(sizeof(double[n][d][d]));
+        lrsh[l].t = malloc(n*d*d*sizeof(double));
     }
     
     if(MSYM_SUCCESS != (ret = generateRSHRepresentations(sopsl, sops, lmax, lrsh))) goto err;
@@ -88,12 +98,12 @@ err:
 }
 
 
-msym_error_t generateProjectionOperator(int d, int sopsl, double c[sopsl], msym_permutation_t perm[sopsl], int ld, double (*lsops)[ld][ld], double proj[perm->p_length*ld][perm->p_length*ld]){
+msym_error_t generateProjectionOperator(int d, int sopsl, double *c, msym_permutation_t *perm, int ld, double (*lsops)[ld][ld], double (*proj)[perm->p_length*ld]){
     msym_error_t ret = MSYM_SUCCESS;
     
     int pd = perm->p_length;
     
-    memset(proj,0,sizeof(double[pd*ld][pd*ld]));
+    memset(proj,0,pd*ld*sizeof(*proj));
     
     for(int s = 0;s < sopsl;s++){
         if(c[s] == 0) continue;
@@ -114,7 +124,7 @@ msym_error_t generateProjectionOperator(int d, int sopsl, double c[sopsl], msym_
 }
 
 
-msym_error_t generatePermutationSubspaces(msym_point_group_t *pg, msym_permutation_t perm[pg->order], int span[pg->ct->d], msym_thresholds_t *thresholds, double pmem[4][perm->p_length][perm->p_length], double (**pss)[pg->ct->d], double ss[perm->p_length][perm->p_length]){
+msym_error_t generatePermutationSubspaces(msym_point_group_t *pg, msym_permutation_t *perm, int *span, msym_thresholds_t *thresholds, double (*pmem)[perm->p_length][perm->p_length], double (**pss)[pg->ct->d], double (*ss)[perm->p_length]){
     msym_error_t ret = MSYM_SUCCESS;
     
     int dim = perm->p_length, sopsl = pg->order;
@@ -142,7 +152,7 @@ msym_error_t generatePermutationSubspaces(msym_point_group_t *pg, msym_permutati
 
         nirl = mgs2(dim, vspan,proj, ss, oirl, thresholds->orthogonalization);
         if(nirl - oirl != vspan){
-            debug_printTransform(dim, dim, ss);
+            dbg_print_matrix(dim, dim, ss);
             ret = MSYM_SUBSPACE_ERROR;
             msymSetErrorDetails("Ortogonal permutation subspace of dimension (%d) inconsistent with span (%d) in %s",nirl - oirl,vspan,ct->s[k].name);
             goto err;
@@ -158,7 +168,7 @@ err:
     return ret;
 }
 
-msym_error_t generateSubspaces(msym_point_group_t *pg, msym_permutation_t perm[pg->order], int ld, double (*lrsops)[ld][ld], int span[pg->ct->d], double (*sgc)[5][pg->order], int (*sgd)[5], msym_thresholds_t *thresholds, double cmem[pg->order], double pmem[4][perm->p_length*ld][perm->p_length*ld], double (*(*pss)[5])[pg->ct->d], double ss[perm->p_length*ld][perm->p_length*ld]){
+msym_error_t generateSubspaces(msym_point_group_t *pg, msym_permutation_t *perm, int ld, double (*lrsops)[ld][ld], int *span, double (*sgc)[5][pg->order], int (*sgd)[5], msym_thresholds_t *thresholds, double *cmem, double (*pmem)[perm->p_length*ld][perm->p_length*ld], double (*(*pss)[5])[pg->ct->d], double ss[perm->p_length*ld][perm->p_length*ld]){
     msym_error_t ret = MSYM_SUCCESS;
     
     int pd = perm->p_length, dim = pd*ld;
@@ -185,7 +195,7 @@ msym_error_t generateSubspaces(msym_point_group_t *pg, msym_permutation_t perm[p
         if(irrepd == 1){
             nirl = mgs2(dim, pgvspan, proj, ss, oirl, thresholds->orthogonalization);
             if(nirl - oirl != pgvspan){
-                debug_printTransform(dim, dim, ss);
+                dbg_print_matrix(dim, dim, ss);
                 ret = MSYM_SUBSPACE_ERROR;
                 msymSetErrorDetails("Ortogonal subspace of dimension (%d) inconsistent with span (%d) in %s",nirl - oirl,pgvspan,ct->s[k].name);
                 goto err;
@@ -233,7 +243,7 @@ msym_error_t generateSubspaces(msym_point_group_t *pg, msym_permutation_t perm[p
                         if(MSYM_SUCCESS != (ret = projectLinearlyIndependent(dim, sgnirl, sssg, ignirl, mem, thresholds, cmem, proj, ss, &nirl))) goto err;
                         
                         if(nirl - oirl != span[k]){
-                            debug_printTransform(sgnirl, dim, sssg);
+                            dbg_print_matrix(sgnirl, dim, sssg);
                             ret = MSYM_SUBSPACE_ERROR;
                             msymSetErrorDetails("Ortogonal icosahedral subsubspace of dimension (%d) inconsistent with span (%d) in %s",nirl - oirl,span[k],ct->s[k].name);
                             goto err;
@@ -244,7 +254,7 @@ msym_error_t generateSubspaces(msym_point_group_t *pg, msym_permutation_t perm[p
                 } else {
                     if(MSYM_SUCCESS != (ret = projectLinearlyIndependent(dim, pgnirl, sspg, sgnirl, sssg, thresholds, cmem, mem, ss, &nirl))) goto err;
                     if(nirl - oirl != span[k]){
-                        debug_printTransform(dim, dim, ss);
+                        dbg_print_matrix(dim, dim, ss);
                         ret = MSYM_SUBSPACE_ERROR;
                         msymSetErrorDetails("Ortogonal icosahedral subspace of dimension (%d) inconsistent with span (%d) in %s",nirl - oirl,span[k],ct->s[k].name);
                         goto err;
@@ -291,7 +301,7 @@ msym_error_t generateSubspacesMatrix(msym_point_group_t *pg, msym_permutation_t 
         if(irrepd == 1){
             nirl = mgs2(dim, pgvspan, projpg, ss, oirl, thresholds->orthogonalization);
             if(nirl - oirl != pgvspan){
-                debug_printTransform(dim, dim, ss);
+                dbg_print_matrix(dim, dim, ss);
                 ret = MSYM_SUBSPACE_ERROR;
                 msymSetErrorDetails("Ortogonal subspace of dimension (%d) inconsistent with span (%d) in %s",nirl - oirl,pgvspan,ct->s[k].name);
                 goto err;
@@ -301,16 +311,16 @@ msym_error_t generateSubspacesMatrix(msym_point_group_t *pg, msym_permutation_t 
             for(int d = 0; d < irrepd;d++,oirl = nirl){
                 
                 if(MSYM_SUCCESS != (ret = generateProjectionOperator(1,sopsl,sgc[k][d],perm,ld,lrsops,projsg))) goto err;
-                clean_debug_printf("mmlmul %dx%d %d\n",dim,dim,__LINE__);
+                dbg_printf("mmlmul %dx%d %d\n",dim,dim,__LINE__);
                 mmlsymmul(dim, projsg, projpg, mem);
                 //mmlmul(dim, dim, projsg, dim, projpg, mem);
-                clean_debug_printf("done mmlmul %d\n",__LINE__);
+                dbg_printf("done mmlmul %d\n",__LINE__);
                 trace = mltrace(dim, mem);
                 mlscale(span[k]/trace, dim, mem, mem);
                 
                 nirl = mgs2(dim, span[k], mem, ss, oirl, thresholds->orthogonalization);
                 if(nirl - oirl != span[k]){
-                    debug_printTransform(dim, dim, ss);
+                    dbg_print_matrix(dim, dim, ss);
                     ret = MSYM_SUBSPACE_ERROR;
                     msymSetErrorDetails("Ortogonal subsubspace of dimension (%d) inconsistent with span (%d) in %s",nirl - oirl,span[k],ct->s[k].name);
                     goto err;
@@ -322,25 +332,25 @@ msym_error_t generateSubspacesMatrix(msym_point_group_t *pg, msym_permutation_t 
             int idim[] = {1,2,2}, sdim[] = {3,4}, ssd = 0;
             for(int d = 0; d < 3;d++,oirl = nirl){
                 if(MSYM_SUCCESS != (ret = generateProjectionOperator(idim[d],sopsl,sgc[k][d],perm,ld,lrsops,projsg))) goto err;
-                clean_debug_printf("mmlmul %d\n",__LINE__);
+                dbg_printf("mmlmul %d\n",__LINE__);
                 mmlsymmul(dim, projsg, projpg, projig);
                 //mmlmul(dim, dim, projsg, dim, projpg, projig);
-                clean_debug_printf("done mmlmul %d\n",__LINE__);
+                dbg_printf("done mmlmul %d\n",__LINE__);
                 int id = idim[d];
                 if(id > 1){
                     for(int sd = 0; sd < id;sd++,oirl = nirl){
                         int sid = sdim[sd];
                         if(MSYM_SUCCESS != (ret = generateProjectionOperator(1,sopsl,sgc[k][sid],perm,ld,lrsops,projsg))) goto err;
-                        clean_debug_printf("mmlmul %d\n",__LINE__);
+                        dbg_printf("mmlmul %d\n",__LINE__);
                         mmlsymmul(dim, projsg, projig, mem);
                         //mmlmul(dim, dim, projsg, dim, projig, mem);
-                        clean_debug_printf("done mmlmul %d\n",__LINE__);
+                        dbg_printf("done mmlmul %d\n",__LINE__);
                         trace = mltrace(dim, mem);
                         mlscale(span[k]/trace, dim, mem, mem); // We might have small components in these subspaces
                         
                         nirl = mgs2(dim, span[k], mem, ss, oirl, thresholds->orthogonalization);
                         if(nirl - oirl != span[k]){
-                            debug_printTransform(dim, dim, mem);
+                            dbg_print_matrix(dim, dim, mem);
                             ret = MSYM_SUBSPACE_ERROR;
                             msymSetErrorDetails("Ortogonal icosahedral subsubspace of dimension (%d) inconsistent with span (%d) in %s",nirl - oirl,span[k],ct->s[k].name);
                             goto err;
@@ -352,7 +362,7 @@ msym_error_t generateSubspacesMatrix(msym_point_group_t *pg, msym_permutation_t 
                     
                     nirl = mgs2(dim, span[k], projig, ss, oirl, thresholds->orthogonalization);
                     if(nirl - oirl != span[k]){
-                        debug_printTransform(dim, dim, ss);
+                        dbg_print_matrix(dim, dim, ss);
                         ret = MSYM_SUBSPACE_ERROR;
                         msymSetErrorDetails("Ortogonal icosahedral subspace of dimension (%d) inconsistent with span (%d) in %s",nirl - oirl,span[k],ct->s[k].name);
                         goto err;
@@ -508,7 +518,7 @@ msym_error_t getSplittingFieldCharacters(msym_point_group_t *pg, const msym_subg
     for(int i = 0;i < 5;i++){cd[i] = 1;}
     if((sg->type == MSYM_POINT_GROUP_TYPE_Cs) || (sg->type == MSYM_POINT_GROUP_TYPE_Cn && sg->n == 2)){
         int faxis = 0;
-        memset(c, 0, sizeof(double[pg->order]));
+        memset(c, 0, 1*sizeof(*c));
         for(int s = 0;s < pg->order && !(e && faxis);s++){
             for(int i = 0;i < sg->order;i++){
                 if(&pg->sops[s] != sg->sops[i]) continue;
@@ -533,7 +543,7 @@ msym_error_t getSplittingFieldCharacters(msym_point_group_t *pg, const msym_subg
             [2] = {-1,  1, -1},
             [3] = { 1,  1,  1}
         };
-        memset(c, 0, sizeof(double[3][pg->order]));
+        memset(c, 0, 3*sizeof(*c));
         for(int s = 0;s < pg->order && !((index == 3) && e);s++){
             for(int i = 0;i < sg->order;i++){
                 if(&pg->sops[s] != sg->sops[i]) continue;
@@ -890,8 +900,6 @@ err:
     return ret;
 }
 
-
-
 msym_error_t generateSubrepresentationSpaces(msym_point_group_t *pg, int sgl, const msym_subgroup_t sg[sgl], int esl, msym_equivalence_set_t *es, msym_permutation_t **perm, int basisl, msym_basis_function_t basis[basisl], msym_element_t *elements, msym_equivalence_set_t **esmap, msym_thresholds_t *thresholds, int *osrsl, msym_subrepresentation_space_t **osrs, msym_basis_function_t ***osrsbf, int **ospan){
     msym_error_t ret = MSYM_SUCCESS;
     msym_character_table_t *ct = pg->ct;
@@ -946,7 +954,7 @@ msym_error_t generateSubrepresentationSpaces(msym_point_group_t *pg, int sgl, co
     double (**psspmem)[pg->order] = calloc(ct->d, sizeof(*psspmem));
     double (*(*lssp)[ct->d])[2*lmax+1] = calloc(lmax+1, sizeof(*lssp));
     
-    double *mspan = calloc(ct->d, sizeof(double));                  // span decomposition memory
+    double *mspan = calloc(ct->d, sizeof(*mspan));                  // span decomposition memory
     double (*sgc)[5][pg->order] = calloc(ct->d,sizeof(*sgc));
     
     const msym_subgroup_t **rsg = calloc(ct->d, sizeof(*rsg));
@@ -1075,7 +1083,7 @@ msym_error_t generateSubrepresentationSpaces(msym_point_group_t *pg, int sgl, co
         vlscale(1.0/pg->order, ct->d, bspan[l], bspan[l]);
         
         double (*st)[d][d] = lts[l].t;
-        memset(st[pg->order], 0, sizeof(double[d][d]));
+        memset(st[pg->order], 0, d*sizeof(*st[pg->order]));
         
         for(int k = 0, oirl = 0, nirl = 0;k < ct->d;k++, oirl = nirl){
             
@@ -1084,7 +1092,7 @@ msym_error_t generateSubrepresentationSpaces(msym_point_group_t *pg, int sgl, co
             
             ibspan[l][k] = (int) round(bspan[l][k]);
             
-            memset(lproj, 0, sizeof(double[d][d]));
+            memset(lproj, 0, d*sizeof(*lproj));
             for(int s = 0;s < pg->order;s++){
                 double c = ctable[k][pg->sops[s].cla];
                 if(c != 0){
@@ -1096,7 +1104,7 @@ msym_error_t generateSubrepresentationSpaces(msym_point_group_t *pg, int sgl, co
             nirl = mgs2(d, vspan,lproj, st[pg->order], oirl, thresholds->orthogonalization);
             
             if(nirl - oirl != vspan){
-                debug_printTransform(d, d, st[pg->order]);
+                dbg_print_matrix(d, d, st[pg->order]);
                 ret = MSYM_SUBSPACE_ERROR;
                 msymSetErrorDetails("Ortogonal subspace of dimension (%d) inconsistent with span (%d) in %s",nirl - oirl,vspan,ct->s[k].name);
                 goto err;
@@ -1117,7 +1125,7 @@ msym_error_t generateSubrepresentationSpaces(msym_point_group_t *pg, int sgl, co
         for(int l = 0; l <= lmax;l++){
             if(les[i][l] == 0) continue;
             les[i][l] /= es[i].length;
-            memset(dspan, 0, sizeof(double[ct->d]));
+            memset(dspan, 0, ct->d*sizeof(dspan));
             for(int k = 0;k < ct->d;k++){
                 for(int j = 0;j < ct->d && round(pspan[i][k]) > 0;j++){
                     directProduct(ct->d, ctable[k], ctable[j], mspan);
@@ -1126,7 +1134,7 @@ msym_error_t generateSubrepresentationSpaces(msym_point_group_t *pg, int sgl, co
                 }
             }
             
-            decomposeRepresentation(ct, dspan, mspan);
+            if(MSYM_SUCCESS != (ret = decomposeRepresentation(ct, dspan, mspan))) goto err;
             for(int k = 0;k < ct->d;k++){
                 iespan[i][l][k] = (int)round(mspan[k]/ct->s[k].r);
                 ispan[k] += les[i][l]*iespan[i][l][k];
@@ -1138,13 +1146,13 @@ msym_error_t generateSubrepresentationSpaces(msym_point_group_t *pg, int sgl, co
     for(int k = 0;k < ct->d;k++){
         srs[k].s = k;
         srs[k].salcl = ispan[k];
-        srs[k].salc = calloc(srs[k].salcl, sizeof(msym_salc_t));
+        srs[k].salc = calloc(srs[k].salcl, sizeof(*srs[k].salc));
     }
     
-    clean_debug_printf("decomposed %d\n", ct->d);
+    dbg_printf("decomposed %d\n", ct->d);
     for(int prk = 0;prk < ct->d;prk++){
-        if(prk < ct->d - 1) clean_debug_printf("%d%s + ", ispan[prk], ct->s[prk].name);
-        else clean_debug_printf("%d%s\n", ispan[prk], ct->s[prk].name);
+        if(prk < ct->d - 1) dbg_printf("%d%s + ", ispan[prk], ct->s[prk].name);
+        else dbg_printf("%d%s\n", ispan[prk], ct->s[prk].name);
     }
     
     int dbasisl = 0;
@@ -1175,10 +1183,10 @@ msym_error_t generateSubrepresentationSpaces(msym_point_group_t *pg, int sgl, co
             double (*split)[dim] = splitmem;
             msym_symmetry_operation_t *splitop = NULL;
             
-            clean_debug_printf("e decomposed %d\n", ct->d);
+            dbg_printf("e decomposed %d\n", ct->d);
             for(int prk = 0;prk < ct->d;prk++){
-                if(prk < ct->d - 1) clean_debug_printf("%d%s + ", iespan[i][l][prk], ct->s[prk].name);
-                else clean_debug_printf("%d%s\n", iespan[i][l][prk], ct->s[prk].name);
+                if(prk < ct->d - 1) dbg_printf("%d%s + ", iespan[i][l][prk], ct->s[prk].name);
+                else dbg_printf("%d%s\n", iespan[i][l][prk], ct->s[prk].name);
             }
             
             decomposeSubRepresentation(pg, rsg, sgc, iespan[i][l], sgd);
@@ -1200,7 +1208,7 @@ msym_error_t generateSubrepresentationSpaces(msym_point_group_t *pg, int sgl, co
                     
                     directProduct(ct->d, ctable[pk], ctable[lk], rspan);
                     vlscale(pspan[i][pk]*bspan[l][lk], ct->d, rspan, rspan);
-                    decomposeRepresentation(ct, rspan, mspan);
+                    if(MSYM_SUCCESS != (ret = decomposeRepresentation(ct, rspan, mspan))) goto err;
         
                     for(int dk = 0; dk < ct->d; dk++){
                         int sspan =  (int) round(mspan[dk]/ct->s[dk].r);
@@ -1219,7 +1227,7 @@ msym_error_t generateSubrepresentationSpaces(msym_point_group_t *pg, int sgl, co
                             sdvi[d] = oirl;
                             
                             if(sdvl != sspan){
-                                debug_printTransform(vspan, dim, dss);
+                                dbg_print_matrix(vspan, dim, dss);
                                 ret = MSYM_SUBSPACE_ERROR;
                                 msymSetErrorDetails("Linear projection subspace of dimension (%d) inconsistent with span (%d) in %s component %d",sdvl,sspan,ct->s[dk].name,d);
                                 goto err;
@@ -1262,7 +1270,7 @@ msym_error_t generateSubrepresentationSpaces(msym_point_group_t *pg, int sgl, co
         }
     }
     
-    debug_printSubspace(ct,ct->d,srs);
+    dbg_print_space(ct,ct->d,srs);
     *ospan = ispan;
     *osrsl = ct->d;
     *osrs = srs;
@@ -1337,6 +1345,27 @@ err:
     return ret;
 }
 
+#else
+
+msym_error_t generateSubrepresentationSpaces(msym_point_group_t *pg, int sgl, const msym_subgroup_t *sg, int esl, msym_equivalence_set_t *es, msym_permutation_t **perm, int basisl, msym_basis_function_t *basis, msym_element_t *elements,msym_equivalence_set_t **esmap, msym_thresholds_t *thresholds, int *osrsl, msym_subrepresentation_space_t **osrs, msym_basis_function_t ***osrsbf, int **ospan){
+    msymSetErrorDetails("Compiled without VLA support required for generateSubrepresentationSpaces");
+    return MSYM_NO_VLA_ERROR;
+
+}
+msym_error_t symmetrySpeciesComponents(msym_point_group_t *pg, int srsl, msym_subrepresentation_space_t *srs, int basisl, msym_basis_function_t *basis, double *wf, double *s){
+    msymSetErrorDetails("Compiled without VLA support required for symmetrySpeciesComponents");
+    return MSYM_NO_VLA_ERROR;
+}
+#endif /* ifndef __LIBMSYM_NO_VLA__*/
+
+#ifdef LIBMSYM_LOW_MEMORY_SUBSPACE
+
+void permutationMatrixLowMem(msym_permutation_t *perm, double (*m)[perm->p_length]){
+    memset(m, 0, perm->p_length*sizeof(*m));
+    for(int i = 0;i < perm->p_length;i++){
+        m[perm->p[i]][i] = 1.0;
+    }
+}
 
 
 msym_error_t generateSubrepresentationSpacesLowMem(msym_point_group_t *pg, int sgl, const msym_subgroup_t sg[sgl], int esl, msym_equivalence_set_t *es, msym_permutation_t **perm, int basisl, msym_basis_function_t basis[basisl], msym_element_t *elements, msym_equivalence_set_t **esmap, msym_thresholds_t *thresholds, int *osrsl, msym_subrepresentation_space_t **osrs, msym_basis_function_t ***osrsbf, int **ospan){
@@ -1524,7 +1553,7 @@ msym_error_t generateSubrepresentationSpacesLowMem(msym_point_group_t *pg, int s
             nirl = mgs(d, lproj, st[pg->order], oirl, thresholds->orthogonalization/basisl);
             
             if(nirl - oirl != vspan){
-                debug_printTransform(d, d, st[pg->order]);
+                dbg_print_matrix(d, d, st[pg->order]);
                 ret = MSYM_SUBSPACE_ERROR;
                 msymSetErrorDetails("Ortogonal subspace of dimension (%d) inconsistent with span (%d) in %s",nirl - oirl,vspan,ct->s[k].name);
                 goto err;
@@ -1560,7 +1589,7 @@ msym_error_t generateSubrepresentationSpacesLowMem(msym_point_group_t *pg, int s
     }
     
     /* decompose direct product into irreducible representations */
-    decomposeRepresentation(ct, rspan, dspan);
+    if(MSYM_SUCCESS != (ret = decomposeRepresentation(ct, rspan, dspan))) goto err;
     int ddim_max = 0;
     for(int k = 0;k < ct->d;k++){
         ispan[k] = (int)round(dspan[k]/ct->s[k].r);
@@ -1575,10 +1604,10 @@ msym_error_t generateSubrepresentationSpacesLowMem(msym_point_group_t *pg, int s
     mdfound = malloc(sizeof(int[5][ddim_max]));
     
     
-    clean_debug_printf("decomposed %d\n", ct->d);
+    dbg_printf("decomposed %d\n", ct->d);
     for(int prk = 0;prk < ct->d;prk++){
-        if(prk < ct->d - 1) clean_debug_printf("%d%s + ", ispan[prk], ct->s[prk].name);
-        else clean_debug_printf("%d%s\n", ispan[prk], ct->s[prk].name);        
+        if(prk < ct->d - 1) dbg_printf("%d%s + ", ispan[prk], ct->s[prk].name);
+        else dbg_printf("%d%s\n", ispan[prk], ct->s[prk].name);
     }
     
     int dbasisl = 0;
@@ -1605,7 +1634,7 @@ msym_error_t generateSubrepresentationSpacesLowMem(msym_point_group_t *pg, int s
             memset(pproj, 0, sizeof(double[d][d]));
             for(int s = 0;s < pg->order;s++){
                 if(ctable[k][pg->sops[s].cla] == 0) continue;
-                permutationMatrix(&perm[i][s], mperm);
+                permutationMatrixLowMem(&perm[i][s], mperm);
                 mlscale(ctable[k][pg->sops[s].cla], d, mperm, pscal);
                 mladd(d, pscal, pproj, pproj);
             }
@@ -1633,7 +1662,7 @@ msym_error_t generateSubrepresentationSpacesLowMem(msym_point_group_t *pg, int s
                     
                     directProduct(ct->d, ctable[k], ctable[lk], rspan);
                     vlscale(pspan[i][k]*bspan[l][lk], ct->d, rspan, rspan);
-                    decomposeRepresentation(ct, rspan, mspan);
+                    if(MSYM_SUCCESS != (ret = decomposeRepresentation(ct, rspan, mspan))) goto err;
                     
                     for(int dk = 0; dk < ct->d; dk++) mspan[dk] /= ct->s[dk].r;
                     
@@ -1651,7 +1680,7 @@ msym_error_t generateSubrepresentationSpacesLowMem(msym_point_group_t *pg, int s
                             
                             for(int s = 0;s < pg->order;s++){
                                 if(ctable[dk][pg->sops[s].cla] == 0) continue;
-                                permutationMatrix(&perm[i][s], mperm);
+                                permutationMatrixLowMem(&perm[i][s], mperm);
                                 kron(d, mperm, ld, lst[s], dd, dscal);
                                 
                                 mlscale(ctable[dk][pg->sops[s].cla], dd, dscal, dscal);
@@ -1694,7 +1723,7 @@ msym_error_t generateSubrepresentationSpacesLowMem(msym_point_group_t *pg, int s
                                     if(sgc[sk][pdim][s] == 0) continue;
                                     // we really should have precomputed this by now, it's the third time,
                                     // or a better approach would be a an optimized function
-                                    permutationMatrix(&perm[i][s], mperm);
+                                    permutationMatrixLowMem(&perm[i][s], mperm);
                                     kron(d, mperm, ld, lst[s], dd, dscal);
                                     mlscale(sgc[sk][pdim][s], dd, dscal, dscal);
                                     mladd(dd, dscal, dproj, dproj);
@@ -1705,7 +1734,7 @@ msym_error_t generateSubrepresentationSpacesLowMem(msym_point_group_t *pg, int s
                                     //getting rediculous
                                     for(int s = 0;s < pg->order;s++){
                                         if(sgc[sk][c2dim][s] == 0) continue;
-                                        permutationMatrix(&perm[i][s], mperm);
+                                        permutationMatrixLowMem(&perm[i][s], mperm);
                                         kron(d, mperm, ld, lst[s], dd, dscal);
                                         mlscale(sgc[sk][c2dim][s], dd, dscal, dscal);
                                         mladd(dd, dscal, ihproj, ihproj);
@@ -1719,7 +1748,7 @@ msym_error_t generateSubrepresentationSpacesLowMem(msym_point_group_t *pg, int s
                                 mlscale(1.0/rsg[sk]->order, dd, dproj, dproj);
                                 
                                 //printf("constructed subgroup projection operator %s\n",cs_name[dim]);
-                                //debug_printTransform(dd, dd, dproj);
+                                //dbg_print_matrix(dd, dd, dproj);
                                 
                                 mmtlmul(dd,dd,dproj,svspan,&sbasis[si],dscal);
                                 
@@ -1745,7 +1774,7 @@ msym_error_t generateSubrepresentationSpacesLowMem(msym_point_group_t *pg, int s
                             
                             memset(found,0,sizeof(int[ct->s[sk].d][mdim]));
                             for(int s = 0;s < pg->order ;s++){
-                                permutationMatrix(&perm[i][s], mperm);
+                                permutationMatrixLowMem(&perm[i][s], mperm);
                                 kron(d, mperm, ld, lst[s], dd, dscal);
                                 for(int dim = 0;dim < mdim;dim++){
                                     for(int sg = 1;sg < ct->s[sk].d;sg++){
@@ -1780,7 +1809,7 @@ msym_error_t generateSubrepresentationSpacesLowMem(msym_point_group_t *pg, int s
                                 msym_salc_t *salc = &srs[sk].salc[isalc[sk]];
                                 salc->d = ct->s[sk].d;
                                 
-                                double (*pf)[dd] = calloc(salc->d,sizeof(double[dd]));
+                                double (*pf)[dd] = calloc(salc->d,sizeof(*pf));
                                 
                                 for(int dim = 0; dim < salc->d;dim++){
                                     vlnorm2(dd, sbasis[si+dim+ir], pf[dim]);
@@ -1799,7 +1828,7 @@ msym_error_t generateSubrepresentationSpacesLowMem(msym_point_group_t *pg, int s
         }
     }
     
-    debug_printSubspace(ct,ct->d,srs);
+    dbg_print_space(ct,ct->d,srs);
     *ospan = ispan;
     *osrsl = ct->d;
     *osrs = srs;
@@ -1879,14 +1908,4 @@ err:
     return ret;
 }
 
-void freeSubrepresentationSpaces(int srsl, msym_subrepresentation_space_t *srs){
-    for(int i = 0;i < srsl && NULL != srs;i++){
-        for(int j = 0;j < srs[i].salcl;j++){
-            free(srs[i].salc[j].pf);
-        }
-        free(srs[i].salc);
-    }
-    free(srs);
-}
-
-
+#endif

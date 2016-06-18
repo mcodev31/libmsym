@@ -15,4 +15,4 @@ typedef struct _rsh_representations {
     void *t;
 } rsh_representations_t;
 
-msym_error_t generateRSHRepresentations(int sopsl, msym_symmetry_operation_t sops[sopsl], int lmax, rsh_representations_t *lrs);
+msym_error_t generateRSHRepresentations(int sopsl, msym_symmetry_operation_t *sops, int lmax, rsh_representations_t *lrs);

@@ -25,23 +25,14 @@
 #define SQR(x) ((x)*(x))
 #define CUBE(x) ((x)*(x)*(x))
 
-void mleye(int l, double E[l][l]){
-    
-    memset(E, 0, sizeof(double[l][l]));
-    for(int i = 0;i < l;i++){
-        E[i][i] = 1.0;
+
+
+void meye(double E[3][3]){
+    for(int i = 0;i < 3;i++){
+        for(int j = 0;j < 3;j++)
+        E[i][j] = i == j;
     }
 }
-
-
-//#define EQUAL(A,B,T) ((fabs(((A)-(B)))) < (T))
-//#define LT(A,B,T) ((B) - (A) > (T))
-//#define VEQUAL(v1,v2) ((EQUAL((v1)[0],(v2)[0],2ERO_THRESHOLD)) && (EQUAL((v1)[1],(v2)[1],2ERO_THRESHOLD)) && (EQUAL((v1)[2],(v2)[2],2ERO_THRESHOLD))) //Stop using this
-//#define S2ERO(v) (EQUAL((v),0.0,2ERO_THRESHOLD))
-
-//#define PARALLEL(v1,v2) (S2ERO(fabs(vdot((v1),(v2)))-1.0))
-//#define PERPENDICULAR(v1,v2) (S2ERO(vdot((v1),(v2))))
-
 
 void vrotate(double theta, const double v[3], const double axis[3], double vr[3]){
 
@@ -79,7 +70,7 @@ void malign(const double v[3], const double axis[3], double m[3][3]){
     vnorm2(axis, axisn);
     dot = vdot(vn,axisn);
     if(dot >= 1.0){
-        mleye(3,m);
+        meye(m);
         //m[0][0] = m[1][1] = m[2][2] = 1.0;
         //m[0][1] = m[0][2] = m[1][0] = m[1][2] = m[2][0] = m[2][1] = 0.0;
     
@@ -99,7 +90,7 @@ void malign(const double v[3], const double axis[3], double m[3][3]){
         skew[1][0] = cross[2];  skew[1][1] = 0.0;       skew[1][2] = -cross[0];
         skew[2][0] = -cross[1]; skew[2][1] = cross[0];  skew[2][2] = 0.0;
         
-        mleye(3,m);
+        meye(m);
         
         madd(m,skew,m);
         mmmul(skew,skew,skew);
@@ -136,6 +127,12 @@ void mreflect(double const axis[3], double m[3][3]){
     
 }
 
+void mproject(double const v[3], double m[3][3]){
+    for(int i = 0;i < 3;i++)
+        for(int j = 0;j < 3;j++)
+            m[i][j] = v[i]*v[j];
+}
+
 int vzero(const double v[3], double t){
     return vabs(v) <= t;
 }
@@ -154,13 +151,13 @@ int vperpendicular(const double v1[3], const double v2[3], double t){
     return fabs(vdot(tv1,tv2)) <= t;
 }
 
-double vlsum(int l, double v[l]){
+double vlsum(int l, double *v){
     double sum = 0.0;
     for(int i = 0;i < l;i++) sum += v[i];
     return sum;
 }
 
-double vlsumsqr(int l, double v[l]){
+double vlsumsqr(int l, double *v){
     double sum = 0.0;
     for(int i = 0;i < l;i++) sum += SQR(v[i]);
     return sum;
@@ -194,7 +191,7 @@ void vproj(const double v[3], const double u[3], double vo[3]){
     vlproj(3, v, u, vo);
 }
 
-void vlproj(int l, const double v[l], const double u[l], double vo[l]){
+void vlproj(int l, const double *v, const double *u, double *vo){
     vlscale(vldot(l,u,v)/vldot(l,u,u),l,u,vo);
 }
 
@@ -235,7 +232,7 @@ double vdot(const double v1[3], const double v2[3]) {
     
 }
 
-double vldot(int l, const double v1[l], const double v2[l]) {
+double vldot(int l, const double *v1, const double *v2) {
     double d = 0;
     for(int i = 0; i < l; i++) d+= v1[i]*v2[i];
     return d;
@@ -247,7 +244,7 @@ void vadd(const double v1[3], const double v2[3], double vr[3]){
     vr[2] = v1[2] + v2[2];
 }
 
-void vladd(int l, const double v1[l], const double v2[l], double vr[l]){
+void vladd(int l, const double *v1, const double *v2, double *vr){
     for(int i = 0; i < l;i++) vr[i] = v1[i] + v2[i];
 }
 
@@ -258,7 +255,7 @@ void vscale(double s, const double v[3], double vr[3]){
     vr[2] = s*v[2];
 }
 
-void vlscale(double s,int l, const double v[l], double vr[l]){
+void vlscale(double s,int l, const double *v, double *vr){
     for(int i = 0;i < l;i++) vr[i] = s*v[i];
 }
 
@@ -270,27 +267,13 @@ void mscale(double s, const double m[3][3], double mr[3][3]){
     }
 }
 
-void mlscale(double s,int l, const double m[l][l], double mr[l][l]){
-    for(int i=0; i<l; ++i){
-        for(int j=0; j<l; ++j){
-            mr[i][j] = s*m[i][j];
-        }
-    }
-}
-
-double mltrace(int l, const double M[l][l]) {
-    double trace = 0;
-    for(int i = 0; i < l; i++) trace += M[i][i];
-    return trace;
-}
-
 void vsub(const double v1[3], const double v2[3], double vr[3]){
     vr[0] = v1[0] - v2[0];
     vr[1] = v1[1] - v2[1];
     vr[2] = v1[2] - v2[2];
 }
 
-void vlsub(int l, const double v1[l], const double v2[l], double vr[l]){
+void vlsub(int l, const double *v1, const double *v2, double *vr){
     for(int i = 0; i < l;i++) vr[i] = v1[i] - v2[i];
 }
 
@@ -298,7 +281,7 @@ double vabs(const double v[3]){
     return sqrt(SQR(v[0])+SQR(v[1])+SQR(v[2]));
 }
 
-double vlabs(int l, const double v[l]){
+double vlabs(int l, const double *v){
     double r = 0;
     for(int i = 0;i < l;i++) r += SQR(v[i]);
     return sqrt(r);
@@ -320,7 +303,7 @@ double vnorm(double v[3]){
     return norm;
 }
 
-double vlnorm(int l, double v[l]){
+double vlnorm(int l, double *v){
     double norm = vlabs(l,v);
     if (norm != 0.0) {
         for(int i = 0; i < l;i++){
@@ -330,7 +313,7 @@ double vlnorm(int l, double v[l]){
     return norm;
 }
 
-double vlnorm2(int l, const double v1[l], double v2[l]){
+double vlnorm2(int l, const double *v1, double *v2){
     double norm = vlabs(l,v1);
     if (norm != 0.0) {
         for(int i = 0; i < l;i++){
@@ -354,7 +337,7 @@ void vcopy(const double vi[3], double vo[3]){
     vo[2] = vi[2];
 }
 
-void vlcopy(int l, const double vi[l], double vo[l]){
+void vlcopy(int l, const double *vi, double *vo){
     for(int i = 0; i < l; i++) vo[i] = vi[i];
 }
 
@@ -367,16 +350,6 @@ void mvmul(const double v[3], const double m[3][3], double r[3]){
     r[1] = t[1];
     r[2] = t[2];
 }
-
-void mvlmul(int r, int c, const double M[r][c], const double v[c], double vo[r]){
-    memset(vo, 0, sizeof(double[r]));
-    for(int i = 0; i < r; i++){
-        for(int j = 0; j < c;j++){
-            vo[i] += M[i][j]*v[j];
-        }
-    }
-}
-
 
 void mmmul(const double A[3][3], const double B[3][3], double C[3][3]){
     double T[3][3];
@@ -397,9 +370,176 @@ void mmmul(const double A[3][3], const double B[3][3], double C[3][3]){
     mcopy(T,C);
 }
 
+int mequal(const double A[3][3], const double B[3][3], double t){
+    int e = 1;
+    for(int i = 0;i < 3;i++){
+        for(int j = 0;j < 3;j++){
+            e &= (fabs(A[i][j] - B[i][j]) <= t);
+        }
+    }
+    return e;
+}
+
+void jacobi(double m[6], double e[3], double ev[3][3], double threshold){
+    double err = 1.0;
+    e[0] = m[0];
+    e[1] = m[3];
+    e[2] = m[5];
+
+    meye(ev);
+    
+    while(err > 0){
+        err = 0.0;
+        for(int od = 0;od < 3;od++){
+            int i = 1 << od, row = od >> 1, col = 1 + (od >> (od >> 1));
+            double ami = fabs(m[i]), eps = ami/threshold;
+            
+            if(fabs(e[row]) + eps == fabs(e[row]) && fabs(e[col]) + eps == fabs(e[col])){
+                m[i] = 0.0;
+            } else if(ami > 0.0) {
+                err = fmax(ami, err);
+                double d = e[col] - e[row],
+                t = copysign(2,d)*m[i]/(fabs(d) + sqrt(SQR(d)+4*SQR(m[i]))),
+                c = 1/sqrt(1+SQR(t)),
+                s = c*t;
+                
+                e[row] -= t * m[i];
+                e[col] += t * m[i];
+                
+                m[i] = 0.0;
+                
+                /* rotate eigenvectors */
+                for (int k = 0; k < 3; k++){
+                    double evr = ev[k][row], evc = ev[k][col];
+                    ev[k][row] = c*evr - s*evc;
+                    ev[k][col] = s*evr + c*evc;
+                }
+                
+                /* rotate index */
+                int ix = col ^ 3, iy = 4 >> row;
+                double mix = m[ix], miy = m[iy];
+                m[ix] = c*mix - s*miy;
+                m[iy] = s*mix + c*miy;
+            }
+        }
+    }
+}
+
+
+void madd(const double A[3][3], const double B[3][3], double C[3][3]){
+    for(int i=0; i<3; ++i){
+        for(int j=0; j<3; ++j){
+            C[i][j] = A[i][j] + B[i][j];
+        }
+    }
+}
+
+void mcopy(const double A[3][3], double B[3][3]){
+    for(int i=0; i<3; ++i){
+        for(int j=0; j<3; ++j){
+            B[i][j] = A[i][j];
+        }
+    }
+}
+
+double mdet(const double M[3][3]){
+    double d0 = M[1][1] * M[2][2] - M[2][1] * M[1][2];
+    double d1 = M[1][0] * M[2][2] - M[1][2] * M[2][0];
+    double d2 = M[1][0] * M[2][1] - M[1][1] * M[2][0];
+    return (M[0][0]*d0 - M[0][1]*d1 + M[0][2]*d2);
+}
+
+void minv(const double M[3][3], double I[3][3]){
+    
+    double d0 = M[1][1] * M[2][2] - M[2][1] * M[1][2];
+    double d1 = M[1][0] * M[2][2] - M[1][2] * M[2][0];
+    double d2 = M[1][0] * M[2][1] - M[1][1] * M[2][0];
+    double det = (M[0][0]*d0 - M[0][1]*d1 + M[0][2]*d2);
+    
+    I[0][0] = d0/det;
+    I[0][1] = (M[0][2] * M[2][1] - M[0][1] * M[2][2])/det;
+    I[0][2] = (M[0][1] * M[1][2] - M[0][2] * M[1][1])/det;
+    I[1][0] = -d1/det;
+    I[1][1] = (M[0][0] * M[2][2] - M[0][2] * M[2][0])/det;
+    I[1][2] = (M[1][0] * M[0][2] - M[0][0] * M[1][2])/det;
+    I[2][0] = d2/det;
+    I[2][1] = (M[2][0] * M[0][1] - M[0][0] * M[2][1])/det;
+    I[2][2] = (M[0][0] * M[1][1] - M[1][0] * M[0][1])/det;
+    
+    
+}
+
+int ipow(int b, int e){
+    int r = 1;
+    while (e){
+        if (e & 1)
+            r *= b;
+        e >>= 1;
+        b *= b;
+    }
+    return r;
+}
+
+#ifndef __LIBMSYM_NO_VLA__
+
+void mleye(int l, double E[l][l]){
+    
+    memset(E, 0, sizeof(double[l][l]));
+    for(int i = 0;i < l;i++){
+        E[i][i] = 1.0;
+    }
+}
+
+void mladd(int l, const double A[l][l], const double B[l][l], double C[l][l]){
+    for(int i=0; i<l; ++i){
+        for(int j=0; j<l; ++j){
+            C[i][j] = A[i][j] + B[i][j];
+        }
+    }
+}
+
+void mlscale(double s,int l, const double m[l][l], double mr[l][l]){
+    for(int i=0; i<l; ++i){
+        for(int j=0; j<l; ++j){
+            mr[i][j] = s*m[i][j];
+        }
+    }
+}
+
+double mltrace(int l, const double M[l][l]) {
+    double trace = 0;
+    for(int i = 0; i < l; i++) trace += M[i][i];
+    return trace;
+}
+
+void mltranspose(int rl, int cl, const double A[rl][cl], double B[cl][rl]){
+    for(int r = 0; r < rl;r++){
+        for(int c = 0; c < cl;c++){
+            B[c][r] = A[r][c];
+        }
+    }
+}
+
+void mlcopy(int l, const double A[l][l], double B[l][l]){
+    for(int i=0; i<l; ++i){
+        for(int j=0; j<l; ++j){
+            B[i][j] = A[i][j];
+        }
+    }
+}
+
+void mvlmul(int r, int c, const double M[r][c], const double v[c], double vo[r]){
+    memset(vo, 0, sizeof(double[r]));
+    for(int i = 0; i < r; i++){
+        for(int j = 0; j < c;j++){
+            vo[i] += M[i][j]*v[j];
+        }
+    }
+}
+
 void mmtlmul(int rla, int cla, const double A[rla][cla], int rlb, const double B[rlb][cla], double C[rla][rlb]){
     if(A == C || B == C){
-        double (*T)[rlb] = malloc(sizeof(double[cla][rlb]));
+        double (*T)[rlb] = malloc(cla*sizeof(*T));
         mltranspose(rlb, cla, B, T);
         mmlmul(rla,cla,A,rlb,T,C);
         free(T);
@@ -428,12 +568,11 @@ void mmlsymmul(int dim, const double m1[dim][dim], const double m2[dim][dim], do
     }
 }
 
-
 void mmlmul(int rla, int cla, double const A[rla][cla], int clb, const double B[cla][clb], double C[rla][clb]){
     
     double (*T)[clb];
     if(A == C || B == C){
-        T = malloc(sizeof(double[rla][clb]));
+        T = malloc(rla*sizeof(*T));
     } else {
         T = C;
     }
@@ -452,16 +591,6 @@ void mmlmul(int rla, int cla, double const A[rla][cla], int clb, const double B[
         memcpy(C, T, sizeof(double[rla][clb]));
         free(T);
     }
-}
-
-int mequal(const double A[3][3], const double B[3][3], double t){
-    int e = 1;
-    for(int i = 0;i < 3;i++){
-        for(int j = 0;j < 3;j++){
-            e &= (fabs(A[i][j] - B[i][j]) <= t);
-        }
-    }
-    return e;
 }
 
 void mlFilterSmall(int l, double A[l][l]){
@@ -499,7 +628,7 @@ void kron2(int ar, int ac, const double A[ar][ac], int br, int bc, const double 
 
 /* Graam-Schmidt */
 int mgsold(int l, const double M[l][l], double O[l][l], int n, double t){
-    double *tmp = malloc(sizeof(double[l]));
+    double *tmp = malloc(l*sizeof(*tmp));
     for(int i = 0; i < l;i++){
         if(vlabs(l,M[i]) < t){
             continue;
@@ -560,134 +689,5 @@ int mgs2(int l, int lm, const double m[l][l], double o[l][l], int n, double t){
     return n;
 }
 
+#endif /* ifndef __LIBMSYM_NO_VLA__ */
 
-void jacobi(double m[6], double e[3], double ev[3][3], double threshold){
-    double err = 1.0;
-    e[0] = m[0];
-    e[1] = m[3];
-    e[2] = m[5];
-
-    mleye(3,ev);
-    
-    while(err > 0){
-        err = 0.0;
-        for(int od = 0;od < 3;od++){
-            int i = 1 << od, row = od >> 1, col = 1 + (od >> (od >> 1));
-            double ami = fabs(m[i]), eps = ami/threshold;
-            
-            if(fabs(e[row]) + eps == fabs(e[row]) && fabs(e[col]) + eps == fabs(e[col])){
-                m[i] = 0.0;
-            } else if(ami > 0.0) {
-                err = fmax(ami, err);
-                double d = e[col] - e[row],
-                t = copysign(2,d)*m[i]/(fabs(d) + sqrt(SQR(d)+4*SQR(m[i]))),
-                c = 1/sqrt(1+SQR(t)),
-                s = c*t;
-                
-                e[row] -= t * m[i];
-                e[col] += t * m[i];
-                
-                m[i] = 0.0;
-                
-                /* rotate eigenvectors */
-                for (int k = 0; k < 3; k++){
-                    double evr = ev[k][row], evc = ev[k][col];
-                    ev[k][row] = c*evr - s*evc;
-                    ev[k][col] = s*evr + c*evc;
-                }
-                
-                /* rotate index */
-                int ix = col ^ 3, iy = 4 >> row;
-                double mix = m[ix], miy = m[iy];
-                m[ix] = c*mix - s*miy;
-                m[iy] = s*mix + c*miy;
-            }
-        }
-    }
-}
-
-
-void madd(const double A[3][3], const double B[3][3], double C[3][3]){
-    for(int i=0; i<3; ++i){
-        for(int j=0; j<3; ++j){
-            C[i][j] = A[i][j] + B[i][j];
-        }
-    }
-}
-
-void mladd(int l, const double A[l][l], const double B[l][l], double C[l][l]){
-    for(int i=0; i<l; ++i){
-        for(int j=0; j<l; ++j){
-            C[i][j] = A[i][j] + B[i][j];
-        }
-    }
-}
-
-void mcopy(const double A[3][3], double B[3][3]){
-    for(int i=0; i<3; ++i){
-        for(int j=0; j<3; ++j){
-            B[i][j] = A[i][j];
-        }
-    }
-}
-
-double mdet(const double M[3][3]){
-    double d0 = M[1][1] * M[2][2] - M[2][1] * M[1][2];
-    double d1 = M[1][0] * M[2][2] - M[1][2] * M[2][0];
-    double d2 = M[1][0] * M[2][1] - M[1][1] * M[2][0];
-    return (M[0][0]*d0 - M[0][1]*d1 + M[0][2]*d2);
-}
-
-void minv(const double M[3][3], double I[3][3]){
-    
-    double d0 = M[1][1] * M[2][2] - M[2][1] * M[1][2];
-    double d1 = M[1][0] * M[2][2] - M[1][2] * M[2][0];
-    double d2 = M[1][0] * M[2][1] - M[1][1] * M[2][0];
-    double det = (M[0][0]*d0 - M[0][1]*d1 + M[0][2]*d2);
-    
-    I[0][0] = d0/det;
-    I[0][1] = (M[0][2] * M[2][1] - M[0][1] * M[2][2])/det;
-    I[0][2] = (M[0][1] * M[1][2] - M[0][2] * M[1][1])/det;
-    I[1][0] = -d1/det;
-    I[1][1] = (M[0][0] * M[2][2] - M[0][2] * M[2][0])/det;
-    I[1][2] = (M[1][0] * M[0][2] - M[0][0] * M[1][2])/det;
-    I[2][0] = d2/det;
-    I[2][1] = (M[2][0] * M[0][1] - M[0][0] * M[2][1])/det;
-    I[2][2] = (M[0][0] * M[1][1] - M[1][0] * M[0][1])/det;
-    
-    
-}
-
-void mlcopy(int l, const double A[l][l], double B[l][l]){
-    for(int i=0; i<l; ++i){
-        for(int j=0; j<l; ++j){
-            B[i][j] = A[i][j];
-        }
-    }
-}
-
-void mtranspose(const double A[3][3], double B[3][3]){
-    mltranspose(3, 3, A, B);
-}
-
-
-
-void mltranspose(int rl, int cl, const double A[rl][cl], double B[cl][rl]){
-    for(int r = 0; r < rl;r++){
-        for(int c = 0; c < cl;c++){
-            B[c][r] = A[r][c];
-        }
-    }
-}
-
-int ipow(int b, int e)
-{
-    int r = 1;
-    while (e){
-        if (e & 1)
-            r *= b;
-        e >>= 1;
-        b *= b;
-    }
-    return r;
-}

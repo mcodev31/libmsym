@@ -22,6 +22,11 @@
 
 #include "debug.h"
 
+/* break the build (rather than reduce functionality) if unaware of the compiler support */
+#if !defined(__LIBMSYM_NO_VLA__) && defined(__STDC_NO_VLA__)
+#error "__STDC_NO_VLA__ reqiures definition of __LIBMSYM_NO_VLA__"
+#endif
+
 msym_error_t msymFindSymmetry(msym_context ctx){
     msym_error_t ret = MSYM_SUCCESS;
     int elementsl = 0, esl = 0;
@@ -90,7 +95,7 @@ msym_error_t msymSetPointGroupByName(msym_context ctx, const char *name){
     
     if(MSYM_SUCCESS != (ret = ctxGetPointGroup(ctx, &ppg))){
         double transform[3][3];
-        mleye(3,transform);
+        meye(transform);
         if(MSYM_SUCCESS != (ret = generatePointGroupFromName(name, transform, t, &pg))) goto err;
     } else if(MSYM_SUCCESS != (ret = generatePointGroupFromName(name, ppg->transform, t, &pg))) goto err;
     
@@ -113,7 +118,7 @@ msym_error_t msymSetPointGroupByType(msym_context ctx, msym_point_group_type_t t
     
     if(MSYM_SUCCESS != (ret = ctxGetPointGroup(ctx, &ppg))){
         double transform[3][3];
-        mleye(3,transform);
+        meye(transform);
         if(MSYM_SUCCESS != (ret = generatePointGroupFromType(type, n, transform, t, &pg))) goto err;
     } else if(MSYM_SUCCESS != (ret = generatePointGroupFromType(type, n, ppg->transform, t, &pg))) goto err;
     
@@ -126,7 +131,7 @@ err:
     return ret;
 }
 
-msym_error_t msymGenerateElements(msym_context ctx, int length, msym_element_t elements[length]){
+msym_error_t msymGenerateElements(msym_context ctx, int length, msym_element_t *elements){
     msym_error_t ret = MSYM_SUCCESS;
     msym_point_group_t *pg = NULL;
     msym_thresholds_t *t = NULL;
@@ -217,7 +222,7 @@ msym_error_t msymAlignAxes(msym_context ctx){
     
     for(int i = 0; i < elementsl;i++) mvmul(elements[i].v, pg->transform, elements[i].v);
     for(int i = 0; i < pg->order;i++) mvmul(pg->sops[i].v, pg->transform, pg->sops[i].v);
-    mleye(3,pg->transform);
+    meye(pg->transform);
     if(MSYM_SUCCESS != (ret = ctxUpdateExternalElementCoordinates(ctx))) goto err;
     
 err:
@@ -522,7 +527,118 @@ err:
     return ret;
 }
 
-msym_error_t msymGetSALCs(msym_context ctx, int l, double c[l][l], int species[l], msym_partner_function_t pf[l]){
+msym_error_t msymSymmetrySpeciesComponents(msym_context ctx, int wfl, double *wf, int sl, double *s){
+    msym_error_t ret = MSYM_SUCCESS;
+    
+    msym_point_group_t *pg = NULL;
+    msym_subrepresentation_space_t *srs = NULL;
+    msym_basis_function_t *basis = NULL;
+    int *span = NULL;
+    
+    int srsl = 0, basisl = 0;
+    
+    if(MSYM_SUCCESS != (ret = ctxGetPointGroup(ctx, &pg))) goto err;
+    if(pg->ct == NULL){
+        if(MSYM_SUCCESS != (ret = generateCharacterTable(pg->type, pg->n, pg->order, pg->sops, &pg->ct))) goto err;
+    }
+    
+    if(MSYM_SUCCESS != (ret = ctxGetBasisFunctions(ctx, &basisl, &basis))) goto err;
+    
+    if(basisl != wfl) {
+        ret = MSYM_INVALID_INPUT;
+        msymSetErrorDetails("Supplied coefficient vector size (%d) does not match number of basis functions (%d)",wfl,basisl);
+        goto err;
+    }
+    
+    if(sl != pg->ct->d) {
+        ret = MSYM_INVALID_INPUT;
+        msymSetErrorDetails("Supplied symmetry species vector size (%d) does not match character table (%d)",sl,pg->ct->d);
+        goto err;
+    }
+    
+    if(MSYM_SUCCESS != (ret = ctxGetSubrepresentationSpaces(ctx, &srsl, &srs, &span))){
+        if(MSYM_SUCCESS != (ret = msymGenerateSubrepresentationSpaces(ctx))) goto err;
+        if(MSYM_SUCCESS != (ret = ctxGetSubrepresentationSpaces(ctx, &srsl, &srs, &span))) goto err;
+    }
+    
+    if(MSYM_SUCCESS != (ret = symmetrySpeciesComponents(pg, srsl, srs, basisl, basis, wf, s))) goto err;
+    
+err:
+    return ret;
+    
+}
+
+msym_error_t msymFindEquivalenceSetPermutations(msym_context ctx) {
+    msym_error_t ret = MSYM_SUCCESS;
+    //We can't allocate this as a double[][] unless we typecast it every time, since the compiler doesn't have the indexing information in the context
+    msym_permutation_t **perm = NULL;
+    msym_permutation_t *bperm = NULL;
+    msym_point_group_t *pg = NULL;
+    msym_equivalence_set_t *es = NULL;
+    msym_thresholds_t *t = NULL;
+    double (**esv)[3] = NULL;
+    int esl = 0;
+    
+    if(MSYM_SUCCESS != (ret = ctxGetThresholds(ctx, &t))) goto err;
+    if(MSYM_SUCCESS != (ret = ctxGetPointGroup(ctx, &pg))) goto err;
+    if(MSYM_SUCCESS != (ret = ctxGetEquivalenceSets(ctx, &esl, &es))) goto err;
+    
+    perm = (msym_permutation_t**)malloc(esl*sizeof(*perm) + esl*pg->order*sizeof(*bperm));
+    bperm = (msym_permutation_t*)(perm + esl);
+    memset(bperm,0,esl*pg->order*sizeof(*bperm));
+    
+    
+    
+    for(int i = 0; i < esl;i++){
+        perm[i] = bperm + i*pg->order;
+        if(es[i].length > pg->order){
+            msymSetErrorDetails("Equivalence set has more elements (%d) than the order of the point group %s (%d)",es[i].length,pg->name,pg->order);
+            ret = MSYM_INVALID_EQUIVALENCE_SET;
+            goto err;
+        }
+    }
+    /*
+    if(perm == NULL){
+        perm = (msym_permutation_t**)malloc(esl*sizeof(msym_permutation_t*) + esl*pg->sopsl*sizeof(msym_permutation_t));
+        bperm = (msym_permutation_t*)(perm + esl);
+        memset(bperm,0,esl*pg->sopsl*sizeof(msym_permutation_t));
+        for(int i = 0; i < esl;i++){ //This really shouldn't happen
+            perm[i] = bperm + i*pg->sopsl;
+            if(es[i].length > pg->order){
+                msymSetErrorDetails("Equivalence set has more elements (%d) than the order of the point group %s (%d)",es[i].length,pg->name,pg->order);
+                ret = MSYM_INVALID_EQUIVALENCE_SET;
+                goto err;
+            }
+        }
+    }*/
+    
+    esv = malloc(pg->order*sizeof(*esv));
+    for(int i = 0; i < esl;i++){
+        for(int j = 0; j < es[i].length;j++){
+            esv[j] = &es[i].elements[j]->v;
+        }
+        
+        for(int j = 0; j < pg->order;j++){
+            if(MSYM_SUCCESS != (ret = findPermutation(&pg->sops[j], es[i].length, esv, t, &perm[i][j]))) goto err;
+        }
+    }
+        
+    if(MSYM_SUCCESS != (ret = ctxSetEquivalenceSetPermutations(ctx, esl, pg->order, perm))) goto err;
+    
+    free(esv);
+    return ret;
+    
+err:
+    free(esv);
+    free(perm);
+    return ret;
+}
+
+#ifndef __LIBMSYM_NO_VLA__
+
+msym_error_t msymSALCSupport(){ return MSYM_SUCCESS; }
+
+msym_error_t msymGetSALCs(msym_context ctx, int l, double (*c)[l], int *species, msym_partner_function_t *pf){
     msym_error_t ret = MSYM_SUCCESS;
     
     
@@ -584,48 +700,7 @@ err:
     
 }
 
-msym_error_t msymSymmetrySpeciesComponents(msym_context ctx, int wfl, double *wf, int sl, double *s){
-    msym_error_t ret = MSYM_SUCCESS;
-    
-    msym_point_group_t *pg = NULL;
-    msym_subrepresentation_space_t *srs = NULL;
-    msym_basis_function_t *basis = NULL;
-    int *span = NULL;
-    
-    int srsl = 0, basisl = 0;
-    
-    if(MSYM_SUCCESS != (ret = ctxGetPointGroup(ctx, &pg))) goto err;
-    if(pg->ct == NULL){
-        if(MSYM_SUCCESS != (ret = generateCharacterTable(pg->type, pg->n, pg->order, pg->sops, &pg->ct))) goto err;
-    }
-    
-    if(MSYM_SUCCESS != (ret = ctxGetBasisFunctions(ctx, &basisl, &basis))) goto err;
-    
-    if(basisl != wfl) {
-        ret = MSYM_INVALID_INPUT;
-        msymSetErrorDetails("Supplied coefficient vector size (%d) does not match number of basis functions (%d)",wfl,basisl);
-        goto err;
-    }
-    
-    if(sl != pg->ct->d) {
-        ret = MSYM_INVALID_INPUT;
-        msymSetErrorDetails("Supplied symmetry species vector size (%d) does not match character table (%d)",sl,pg->ct->d);
-        goto err;
-    }
-    
-    if(MSYM_SUCCESS != (ret = ctxGetSubrepresentationSpaces(ctx, &srsl, &srs, &span))){
-        if(MSYM_SUCCESS != (ret = msymGenerateSubrepresentationSpaces(ctx))) goto err;
-        if(MSYM_SUCCESS != (ret = ctxGetSubrepresentationSpaces(ctx, &srsl, &srs, &span))) goto err;
-    }
-    
-    if(MSYM_SUCCESS != (ret = symmetrySpeciesComponents(pg, srsl, srs, basisl, basis, wf, s))) goto err;
-    
-err:
-    return ret;
-    
-}
-
-msym_error_t msymSymmetrizeWavefunctions(msym_context ctx, int l, double c[l][l], int species[l], msym_partner_function_t pf[l]){
+msym_error_t msymSymmetrizeWavefunctions(msym_context ctx, int l, double (*c)[l], int *species, msym_partner_function_t *pf){
     msym_error_t ret = MSYM_SUCCESS;
     msym_point_group_t *pg = NULL;
     msym_subrepresentation_space_t *srs = NULL;
@@ -659,69 +734,20 @@ err:
     return ret;
 }
 
-msym_error_t msymFindEquivalenceSetPermutations(msym_context ctx) {
-    msym_error_t ret = MSYM_SUCCESS;
-    //We can't allocate this as a double[][] unless we typecast it every time, since the compiler doesn't have the indexing information in the context
-    msym_permutation_t **perm = NULL;
-    msym_permutation_t *bperm = NULL;
-    msym_point_group_t *pg = NULL;
-    msym_equivalence_set_t *es = NULL;
-    msym_thresholds_t *t = NULL;
-    double (**esv)[3] = NULL;
-    int esl = 0;
-    
-    if(MSYM_SUCCESS != (ret = ctxGetThresholds(ctx, &t))) goto err;
-    if(MSYM_SUCCESS != (ret = ctxGetPointGroup(ctx, &pg))) goto err;
-    if(MSYM_SUCCESS != (ret = ctxGetEquivalenceSets(ctx, &esl, &es))) goto err;
-    
-    perm = (msym_permutation_t**)malloc(esl*sizeof(msym_permutation_t*) + esl*pg->order*sizeof(msym_permutation_t));
-    bperm = (msym_permutation_t*)(perm + esl);
-    memset(bperm,0,esl*pg->order*sizeof(msym_permutation_t));
-    
-    
-    
-    for(int i = 0; i < esl;i++){
-        perm[i] = bperm + i*pg->order;
-        if(es[i].length > pg->order){
-            msymSetErrorDetails("Equivalence set has more elements (%d) than the order of the point group %s (%d)",es[i].length,pg->name,pg->order);
-            ret = MSYM_INVALID_EQUIVALENCE_SET;
-            goto err;
-        }
-    }
-    /*
-    if(perm == NULL){
-        perm = (msym_permutation_t**)malloc(esl*sizeof(msym_permutation_t*) + esl*pg->sopsl*sizeof(msym_permutation_t));
-        bperm = (msym_permutation_t*)(perm + esl);
-        memset(bperm,0,esl*pg->sopsl*sizeof(msym_permutation_t));
-        for(int i = 0; i < esl;i++){ //This really shouldn't happen
-            perm[i] = bperm + i*pg->sopsl;
-            if(es[i].length > pg->order){
-                msymSetErrorDetails("Equivalence set has more elements (%d) than the order of the point group %s (%d)",es[i].length,pg->name,pg->order);
-                ret = MSYM_INVALID_EQUIVALENCE_SET;
-                goto err;
-            }
-        }
-    }*/
-    
-    esv = malloc(sizeof(double (*[pg->order])[3]));
-    for(int i = 0; i < esl;i++){
-        for(int j = 0; j < es[i].length;j++){
-            esv[j] = &es[i].elements[j]->v;
-        }
-        
-        for(int j = 0; j < pg->order;j++){
-            if(MSYM_SUCCESS != (ret = findPermutation(&pg->sops[j], es[i].length, esv, t, &perm[i][j]))) goto err;
-        }
-    }
-        
-    if(MSYM_SUCCESS != (ret = ctxSetEquivalenceSetPermutations(ctx, esl, pg->order, perm))) goto err;
-    
-    free(esv);
-    return ret;
-    
-err:
-    free(esv);
-    free(perm);
-    return ret;
+#else
+msym_error_t msymSALCSupport(){
+    msymSetErrorDetails("Compiled without VLA support required for msymSALCSupport");
+    return MSYM_NO_VLA_ERROR;
 }
+
+msym_error_t msymGetSALCs(msym_context ctx, int l, void *c, int *species, msym_partner_function_t *pf){
+    msymSetErrorDetails("Compiled without VLA support required for msymGetSALCs");
+    return MSYM_NO_VLA_ERROR;
+}
+
+msym_error_t msymSymmetrizeWavefunctions(msym_context ctx, int l, void *c, int *species, msym_partner_function_t *pf){
+    msymSetErrorDetails("Compiled without VLA support required for msymSymmetrizeWavefunctions");
+    return MSYM_NO_VLA_ERROR;
+}
+#endif
 

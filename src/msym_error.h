@@ -37,6 +37,7 @@ extern "C" {
         MSYM_POINT_GROUP_ERROR = -16,
         MSYM_SYMMETRIZATION_ERROR = -17,
         MSYM_SUBSPACE_ERROR = -18,
+        MSYM_NO_VLA_ERROR = -127,
         MSYM_MEMORY_ERROR = -128
     };
     

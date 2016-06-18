@@ -26,13 +26,13 @@ void freePermutationData(msym_permutation_t *perm){
     }
 }
 
-msym_error_t findPermutation(msym_symmetry_operation_t *sop, int l, double (*v[l])[3], msym_thresholds_t *t, msym_permutation_t *perm){
+msym_error_t findPermutation(msym_symmetry_operation_t *sop, int l, double (**v)[3], msym_thresholds_t *t, msym_permutation_t *perm){
     msym_error_t ret = MSYM_SUCCESS;
     double m[3][3];
     symmetryOperationMatrix(sop, m);
     
-    perm->p = malloc(sizeof(int[l]));
-    memset(perm->p, -1, sizeof(int[l])); //TODO: 2s complement
+    perm->p = malloc(l*sizeof(perm->p));
+    memset(perm->p, -1, l*sizeof(perm->p)); //FIXME: only valid in 2s complement
     perm->p_length = l;
     
     for(int i = 0; i < l;i++){
@@ -71,22 +71,22 @@ typedef struct _perm_subgroup {
 
 
 
-msym_error_t findPermutationSubgroups(int l, msym_permutation_t perm[l], int sgmax, msym_symmetry_operation_t *sops, int *subgroupl, msym_subgroup_t **subgroup){
+msym_error_t findPermutationSubgroups(int l, msym_permutation_t *perm, int sgmax, msym_symmetry_operation_t *sops, int *subgroupl, msym_subgroup_t **subgroup){
     msym_error_t ret = MSYM_SUCCESS;
-    perm_subgroup_t *group = calloc(l, sizeof(perm_subgroup_t));
+    perm_subgroup_t *group = calloc(l, sizeof(*group));
     
-    int *isops = malloc(sizeof(int[l]));
-    int *msops = malloc(sizeof(int[l]));
+    int *isops = malloc(l*sizeof(*isops));
+    int *msops = malloc(l*sizeof(*msops));
     int gl = 0, glm = 0;
     
     for(int i = 0;i < l;i++){
         if((sops[i].power == 1 && (sops[i].type == PROPER_ROTATION || sops[i].type == IMPROPER_ROTATION)) || sops[i].type == INVERSION || sops[i].type == REFLECTION){
             msym_permutation_cycle_t* c = perm[i].c;
             glm = gl;
-            memset(msops, 0, sizeof(int[l]));
+            memset(msops, 0, l*sizeof(*msops));
             group[gl].sopsl = c->l;
-            group[gl].sops = realloc(group[gl].sops, sizeof(int[c->l]));
-            memset(group[gl].sops,0,sizeof(int[c->l]));
+            group[gl].sops = realloc(group[gl].sops, c->l*sizeof(*group[gl].sops));
+            memset(group[gl].sops,0,c->l*sizeof(*group[gl].sops));
             //group[gl].sops = calloc(c->l, sizeof(int));
             group[gl].subgroup[0] = group[gl].subgroup[1] = -1;
             for(int next = c->s, j = 0;j < c->l;j++){
@@ -113,11 +113,11 @@ msym_error_t findPermutationSubgroups(int l, msym_permutation_t perm[l], int sgm
     for(int i = 0;i < gl && gl < sgmax;i++){
         for(int j = i+1;j < gl && gl < sgmax;j++){
             int minl = group[i].sopsl < group[j].sopsl ? group[i].sopsl : group[j].sopsl;
-            if(0 == memcmp(group[i].sops,group[j].sops,sizeof(int[minl]))) continue;
+            if(0 == memcmp(group[i].sops,group[j].sops,minl*sizeof(*group[i].sops))) continue;
             
             int n = 0;
-            memset(isops, 0, sizeof(int[l]));
-            memset(msops, 0, sizeof(int[l]));
+            memset(isops, 0, l*sizeof(*isops));
+            memset(msops, 0, l*sizeof(*msops));
             
             for(int k = 0;k < group[i].sopsl;k++){
                 int s = group[i].sops[k];
@@ -146,7 +146,7 @@ msym_error_t findPermutationSubgroups(int l, msym_permutation_t perm[l], int sgm
             
             if(n < l && n > 1) {
                 n = 0;
-                memset(isops, 0, sizeof(int[l]));
+                memset(isops, 0, l*sizeof(*isops));
 
                 for(int k = 0;k < l;k++){
                     if(msops[k]){
@@ -156,15 +156,15 @@ msym_error_t findPermutationSubgroups(int l, msym_permutation_t perm[l], int sgm
                 }
                 int f;
                 for(f = 0;f < gl;f++){
-                    if(group[f].sopsl == n && 0 == memcmp(group[f].sops, isops, sizeof(int[n]))){
+                    if(group[f].sopsl == n && 0 == memcmp(group[f].sops, isops, n*sizeof(*isops))){
                         break;
                     }
                 }
                 if(f == gl){
-                    group = realloc(group, sizeof(perm_subgroup_t[gl+1]));
+                    group = realloc(group, (gl+1)*sizeof(*group));
                     group[gl].sopsl = n;
-                    group[gl].sops = malloc(sizeof(int[n]));
-                    memcpy(group[gl].sops, isops, sizeof(int[n]));
+                    group[gl].sops = malloc(n*sizeof(*group[gl].sops));
+                    memcpy(group[gl].sops, isops, n*sizeof(*group[gl].sops));
                     group[gl].subgroup[0] = i;
                     group[gl].subgroup[1] = j;
                     gl++;
@@ -173,9 +173,9 @@ msym_error_t findPermutationSubgroups(int l, msym_permutation_t perm[l], int sgm
         }
     }
 
-    msym_subgroup_t *mgroup = calloc(gl, sizeof(msym_subgroup_t));
+    msym_subgroup_t *mgroup = calloc(gl, sizeof(*mgroup));
     for(int i = 0;i < gl;i++){
-        mgroup[i].sops = calloc(group[i].sopsl, sizeof(msym_symmetry_operation_t *));
+        mgroup[i].sops = calloc(group[i].sopsl, sizeof(*mgroup[i].sops));
         mgroup[i].order = group[i].sopsl;
         mgroup[i].generators[0] = group[i].subgroup[0] < 0 ? NULL : &mgroup[group[i].subgroup[0]];
         mgroup[i].generators[1] = group[i].subgroup[1] < 0 ? NULL : &mgroup[group[i].subgroup[1]];
@@ -198,19 +198,19 @@ msym_error_t findPermutationSubgroups(int l, msym_permutation_t perm[l], int sgm
     return ret;
 }
 
-msym_error_t findSymmetryOperationPermutations(int l, msym_symmetry_operation_t sops[l], msym_thresholds_t *t, msym_permutation_t **rperm){
+msym_error_t findSymmetryOperationPermutations(int l, msym_symmetry_operation_t *sops, msym_thresholds_t *t, msym_permutation_t **rperm){
     
     msym_error_t ret = MSYM_SUCCESS;
     //Don't block allocate this, it's a pain to keep track of the pointers
-    msym_permutation_t *permutations = malloc(sizeof(msym_permutation_t[l]));
+    msym_permutation_t *permutations = malloc(l*sizeof(*permutations));
     
     for(int i = 0; i < l;i++){
-        permutations[i].p = malloc(sizeof(int[l]));
-        memset(permutations[i].p, -1, sizeof(int[l]));
+        permutations[i].p = malloc(l*sizeof(*permutations[i].p));
+        memset(permutations[i].p, -1, l*sizeof(*permutations[i].p));
         permutations[i].p_length = l;
     }
     
-    double (*msops)[3][3] = malloc(sizeof(double[l][3][3]));
+    double (*msops)[3][3] = malloc(l*sizeof(*msops));
     
     for(int i = 0; i < l;i++){
         symmetryOperationMatrix(&sops[i], msops[i]);
@@ -266,13 +266,13 @@ err:
 msym_error_t setPermutationCycles(msym_permutation_t *perm){
     msym_error_t ret = MSYM_SUCCESS;
     int l = perm->p_length;
-    int *icycle = malloc(sizeof(int[l]));
-    int *pcycle = malloc(sizeof(int[l]));
-    int *lcycle = malloc(sizeof(int[l]));
+    int *icycle = malloc(l*sizeof(*icycle));
+    int *pcycle = malloc(l*sizeof(*pcycle));
+    int *lcycle = malloc(l*sizeof(*lcycle));
     
     int cl = 0;
-    memset(icycle, -1,sizeof(int[l])); //TODO: 2s complement
-    memset(lcycle,  0,sizeof(int[l]));
+    memset(icycle, -1,l*sizeof(*icycle)); //TODO: 2s complement
+    memset(lcycle,  0,l*sizeof(*lcycle));
     
     perm->c = NULL;
     perm->c_length = 0;
@@ -294,7 +294,7 @@ msym_error_t setPermutationCycles(msym_permutation_t *perm){
         cl++;
     }
     perm->c_length = cl;
-    perm->c = malloc(sizeof(msym_permutation_cycle_t[cl]));
+    perm->c = malloc(cl*sizeof(*perm->c));
     for(int c = 0; c < cl;c++){
         perm->c[c].l = lcycle[c];
         perm->c[c].s = pcycle[c];
@@ -306,15 +306,5 @@ err:
     free(pcycle);
     free(lcycle);
     return ret;
-}
-
-
-//We need these as doubles later, so might as well, even though we could represent these with ALOT less memory
-void permutationMatrix(msym_permutation_t *perm, double m[perm->p_length][perm->p_length]){
-    memset(m, 0, sizeof(double[perm->p_length][perm->p_length]));
-    for(int i = 0;i < perm->p_length;i++){
-        //m[i][perm->p[i]] = 1.0;
-        m[perm->p[i]][i] = 1.0;
-    }
 }
 

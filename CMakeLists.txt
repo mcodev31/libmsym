@@ -57,7 +57,14 @@ generate_export_header(msym
              EXPORT_FILE_NAME msym_EXPORTS.h
 	     STATIC_DEFINE MSYM_EXPORTS_BUILT_AS_STATIC)
 
-set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99")
+if(MSYM_NO_VLA_SUPPORT)
+	set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 -D__LIBMSYM_NO_VLA__")
+	#set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 -Werror=vla -D__LIBMSYM_NO_VLA__")
+else()
+	set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99")
+endif()
+
+
 #set_target_properties (msym PROPERTIES
 #        C_STANDARD 99
 #        C_STANDARD_REQUIRED ON)
@@ -67,7 +74,7 @@ set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99")
 #set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 -fsanitize=address -fno-omit-frame-pointer")
 #set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 -fsanitize=memory -fno-omit-frame-pointer -fsanitize-memory-track-origins")
 
-set (CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -Wall -DLIBMSYM_DEBUG")
+set (CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -Wall -D__LIBMSYM_DEBUG__")
 
 set_target_properties(msym PROPERTIES PUBLIC_HEADER "src/msym.h;src/msym_error.h")
 

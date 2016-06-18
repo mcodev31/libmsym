@@ -137,7 +137,7 @@ double symmetryOperationYCharacter(msym_symmetry_operation_t *sop, int l){
 
 }
 
-void symmetryOperationName(msym_symmetry_operation_t* sop, int l, char buf[l]){
+void symmetryOperationName(msym_symmetry_operation_t* sop, int l, char *buf){
     char *rn = "";
     char *cn = "";
     switch(sop->orientation){
@@ -159,7 +159,7 @@ void symmetryOperationName(msym_symmetry_operation_t* sop, int l, char buf[l]){
     }
 }
 
-void symmetryOperationShortName(msym_symmetry_operation_t* sop, int l, char buf[l]){
+void symmetryOperationShortName(msym_symmetry_operation_t* sop, int l, char *buf){
     switch (sop->type) {
         case PROPER_ROTATION   : snprintf(buf, l, "C%d",sop->order); break;
         case IMPROPER_ROTATION : snprintf(buf, l, "S%d",sop->order); break;
@@ -234,7 +234,7 @@ void symmetryOperationMatrix(msym_symmetry_operation_t *sop, double m[3][3]){
                 mrotate(theta, sop->v, m);
             } else {
                 // Treat C0 as a sum over all Cn operations i.e. a projection
-                kron2(3, 1, &sop->v, 1, 3, &sop->v, m);
+                mproject(sop->v,m);
             }
             break;
         }
@@ -297,9 +297,9 @@ void printSymmetryOperation(msym_symmetry_operation_t *sop){
     char buf[12];
     symmetryOperationName(sop, 12, buf);
     if(sop->type == INVERSION || sop->type == IDENTITY)
-        clean_debug_printf("%s(%d)\n",buf,sop->cla);
+        dbg_printf("%s(%d)\n",buf,sop->cla);
     else
-        clean_debug_printf("%s(%d) [%lf;%lf;%lf]\n",buf,sop->cla, sop->v[0],sop->v[1],sop->v[2]);
+        dbg_printf("%s(%d) [%lf;%lf;%lf]\n",buf,sop->cla, sop->v[0],sop->v[1],sop->v[2]);
 }
 
 int igcd(int a, int b) {

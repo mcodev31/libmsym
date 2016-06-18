@@ -164,6 +164,7 @@ extern "C" {
     
     msym_context MSYM_EXPORT msymCreateContext();
     msym_error_t MSYM_EXPORT msymReleaseContext(msym_context ctx);
+    msym_error_t MSYM_EXPORT msymSALCSupport();
     
     const msym_thresholds_t MSYM_EXPORT *msymGetDefaultThresholds();
     msym_error_t MSYM_EXPORT msymSetThresholds(msym_context ctx, const msym_thresholds_t *thresholds);
@@ -189,14 +190,13 @@ extern "C" {
     msym_error_t MSYM_EXPORT msymFindSymmetry(msym_context ctx);
     msym_error_t MSYM_EXPORT msymSymmetrizeElements(msym_context context, double *err);
     msym_error_t MSYM_EXPORT msymApplyTranslation(msym_context ctx, msym_element_t *element, double v[3]);
-#ifdef __cplusplus
+#if defined(__cplusplus) || defined(__LIBMSYM_NO_VLA__)
     msym_error_t MSYM_EXPORT msymSymmetrizeWavefunctions(msym_context ctx, int l, void *c, int *species, msym_partner_function_t *pf);
     msym_error_t MSYM_EXPORT msymGetSALCs(msym_context ctx, int l, void *c, int *species, msym_partner_function_t *pf);
-    
 #else
-    msym_error_t MSYM_EXPORT msymSymmetrizeWavefunctions(msym_context ctx, int l, double c[l][l], int species[l], msym_partner_function_t pf[l]);
-    msym_error_t MSYM_EXPORT msymGetSALCs(msym_context ctx, int l, double c[l][l], int species[l], msym_partner_function_t pf[l]);
-#endif
+    msym_error_t MSYM_EXPORT msymSymmetrizeWavefunctions(msym_context ctx, int l, double (*c)[l], int *species, msym_partner_function_t *pf);
+    msym_error_t MSYM_EXPORT msymGetSALCs(msym_context ctx, int l, double (*c)[l], int *species, msym_partner_function_t *pf);
+#endif /* defined(__cplusplus) || defined(__LIBMSYM_NO_VLA__) */
     msym_error_t MSYM_EXPORT msymSymmetrySpeciesComponents(msym_context ctx, int wfl, double *wf, int sl, double *s);
     msym_error_t MSYM_EXPORT msymGenerateElements(msym_context ctx, int length, msym_element_t *elements);
     msym_error_t MSYM_EXPORT msymGenerateSubrepresentationSpaces(msym_context ctx);
