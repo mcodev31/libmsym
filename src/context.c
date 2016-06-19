@@ -130,8 +130,6 @@ msym_error_t msymSetElements(msym_context ctx, int length, msym_element_t *eleme
     /* Allow manual setting of point group before elements */
     if(NULL != ctx->es) ctxDestroyPointGroup(ctx);
     return ctxSetElements(ctx, length, elements);
-err:
-    return ret;
 }
 
 msym_error_t msymGetElements(msym_context ctx, int *length, msym_element_t **elements){

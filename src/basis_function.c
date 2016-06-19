@@ -50,7 +50,7 @@ msym_error_t basisFunctionFromQuantumNumbers(int n, int l, int m, msym_basis_fun
             break;
         }
         default : {
-            char t = l <= 20 ? ('f' - 3 + l + (l >= 7) + (l >= 12) + (l >= 14)) : '?';
+            char t = (char) (l <= 20 ? ('f' - 3 + l + (l >= 7) + (l >= 12) + (l >= 14)) : '?');
             char *d = (m == 0 ? "" : m < 0 ? "-" : "+");
             snprintf(bf->name, sizeof(bf->name), "%d%c%d%s",n,t,abs(m),d);
         }

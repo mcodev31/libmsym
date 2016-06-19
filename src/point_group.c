@@ -1087,7 +1087,7 @@ err:
 msym_error_t findSecondaryAxisC2(msym_symmetry_operation_t *primary, int sopsl, msym_symmetry_operation_t *sops, msym_thresholds_t *thresholds, double r[3]){
     msym_error_t ret = MSYM_SUCCESS;
     msym_symmetry_operation_t *sop = NULL;
-    for(msym_symmetry_operation_t *sop = sops; sop < (sops + sopsl); sop++){
+    for(sop = sops; sop < (sops + sopsl); sop++){
         //Choose a C2 perpendicular to the primary axis, it'll make things relatively easy
         if(sop != primary && sop->type == PROPER_ROTATION && sop->order == 2 && vperpendicular(sop->v, primary->v,thresholds->angle)){
             vproj_plane(sop->v, primary->v, r);

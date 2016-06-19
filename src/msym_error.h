@@ -43,10 +43,9 @@ extern "C" {
     
     typedef enum _msym_error msym_error_t;
     
-    const char *msymErrorString(msym_error_t error);
+    const char MSYM_EXPORT *msymErrorString(msym_error_t error);
+    const char MSYM_EXPORT *msymGetErrorDetails();
     void msymSetErrorDetails(const char *format, ...);
-    const char *msymGetErrorDetails();
-    
     
 #ifdef __cplusplus
 }
