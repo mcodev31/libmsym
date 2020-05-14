@@ -365,6 +365,9 @@ def init(library_location=None):
 
     _lib.msymSymmetrizeElements.restype = _ReturnCode
     _lib.msymSymmetrizeElements.argtypes = [_Context]
+    
+    _lib.msymAlignAxes.restype = _ReturnCode
+    _lib.msymAlignAxes.argtypes = [_Context]
 
     _lib.msymSetBasisFunctions.restype = _ReturnCode
     _lib.msymSetBasisFunctions.argtypes = [_Context, c_int, POINTER(BasisFunction)]
@@ -610,6 +613,15 @@ class Context(object):
         self._assert_success(_lib.msymSymmetrizeElements(self._ctx, byref(cerror)))
         self._update_elements()
         return self._elements
+    
+    def align_axes(self):
+        if not self._ctx:
+            raise RuntimeError
+        cerror = c_double(0)
+        self._assert_success(_lib.msymAlignAxes(self._ctx))
+        self._update_elements()
+        return self._elements
+
 
     @property
     def subrepresentation_spaces(self):
