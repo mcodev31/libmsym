@@ -71,12 +71,12 @@ class SymmetryOperation(Structure):
             orientation = self._proper_rotation_type_names[self.orientation]
         elif self.type == self.REFLECTION:
             orientation = self._reflection_type_names[self.orientation]
-            axis = " with normal vector " + repr(self.vector)
+            axis = " with normal vector " + "[ {: >.3f}, {: >.3f}, {: >.3f}]".format(self.vector[0],self.vector[1],self.vector[2])
 
         if self.type in [self.PROPER_ROTATION, self.IMPROPER_ROTATION]:
             order = str(self.order)
             power = "^" + str(self.power)
-            axis = " around " + repr(self.vector)
+            axis = " around " + "[ {: >.3f}, {: >.3f}, {: >.3f}]".format(self.vector[0],self.vector[1],self.vector[2])
 
         return __name__ + "." + self.__class__.__name__ + "( " + self._names[self.type] + order + orientation + power + axis + ", conjugacy class: " + str(self.conjugacy_class) + " )"
     def __repr__(self):
