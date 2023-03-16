@@ -49,7 +49,7 @@ extern "C" {
             MSYM_SYMMETRY_OPERATION_ORIENTATION_DIHEDRAL = 3
         } orientation;
         double v[3];                            // Proper/improper rotation vector or reflection plane normal
-        int cla;                                // Class of symmetry operation (point group dependant)
+        int cla;                                // Class of symmetry operation (point group dependent)
     } msym_symmetry_operation_t;
     
     typedef enum _msym_point_group_type {
@@ -112,7 +112,7 @@ extern "C" {
     typedef struct _msym_real_spherical_harmonic {
         int n;                                  // Principal
         int l;                                  // Azimuthal
-        int m;                                  // Liniear combination of magnetic quantum number (e.g. 2pz = 0, 2px = 1, 2py = -1)
+        int m;                                  // Linear combination of magnetic quantum number (e.g. 2pz = 0, 2px = 1, 2py = -1)
     } msym_real_spherical_harmonic_t;
     
     typedef struct _msym_basis_function {

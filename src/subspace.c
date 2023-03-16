@@ -144,7 +144,7 @@ msym_error_t generatePermutationSubspaces(msym_point_group_t *pg, msym_permutati
         if(nirl - oirl != vspan){
             debug_printTransform(dim, dim, ss);
             ret = MSYM_SUBSPACE_ERROR;
-            msymSetErrorDetails("Ortogonal permutation subspace of dimension (%d) inconsistent with span (%d) in %s",nirl - oirl,vspan,ct->s[k].name);
+            msymSetErrorDetails("Orthogonal permutation subspace of dimension (%d) inconsistent with span (%d) in %s",nirl - oirl,vspan,ct->s[k].name);
             goto err;
         }
         
@@ -187,7 +187,7 @@ msym_error_t generateSubspaces(msym_point_group_t *pg, msym_permutation_t perm[p
             if(nirl - oirl != pgvspan){
                 debug_printTransform(dim, dim, ss);
                 ret = MSYM_SUBSPACE_ERROR;
-                msymSetErrorDetails("Ortogonal subspace of dimension (%d) inconsistent with span (%d) in %s",nirl - oirl,pgvspan,ct->s[k].name);
+                msymSetErrorDetails("Orthogonal subspace of dimension (%d) inconsistent with span (%d) in %s",nirl - oirl,pgvspan,ct->s[k].name);
                 goto err;
             }
             pss[k][0] = &ss[oirl];
@@ -204,7 +204,7 @@ msym_error_t generateSubspaces(msym_point_group_t *pg, msym_permutation_t perm[p
                 
                 if(nirl - oirl != span[k]){
                     ret = MSYM_SUBSPACE_ERROR;
-                    msymSetErrorDetails("Ortogonal subsubspace of dimension (%d) inconsistent with span (%d) in %s",nirl - oirl,span[k],ct->s[k].name);
+                    msymSetErrorDetails("Orthogonal subsubspace of dimension (%d) inconsistent with span (%d) in %s",nirl - oirl,span[k],ct->s[k].name);
                     goto err;
                 }
                 pss[k][d] = &ss[oirl];
@@ -235,7 +235,7 @@ msym_error_t generateSubspaces(msym_point_group_t *pg, msym_permutation_t perm[p
                         if(nirl - oirl != span[k]){
                             debug_printTransform(sgnirl, dim, sssg);
                             ret = MSYM_SUBSPACE_ERROR;
-                            msymSetErrorDetails("Ortogonal icosahedral subsubspace of dimension (%d) inconsistent with span (%d) in %s",nirl - oirl,span[k],ct->s[k].name);
+                            msymSetErrorDetails("Orthogonal icosahedral subsubspace of dimension (%d) inconsistent with span (%d) in %s",nirl - oirl,span[k],ct->s[k].name);
                             goto err;
                         }
                         pss[k][ssd] = &ss[oirl];
@@ -246,7 +246,7 @@ msym_error_t generateSubspaces(msym_point_group_t *pg, msym_permutation_t perm[p
                     if(nirl - oirl != span[k]){
                         debug_printTransform(dim, dim, ss);
                         ret = MSYM_SUBSPACE_ERROR;
-                        msymSetErrorDetails("Ortogonal icosahedral subspace of dimension (%d) inconsistent with span (%d) in %s",nirl - oirl,span[k],ct->s[k].name);
+                        msymSetErrorDetails("Orthogonal icosahedral subspace of dimension (%d) inconsistent with span (%d) in %s",nirl - oirl,span[k],ct->s[k].name);
                         goto err;
                     }
                     pss[k][d] = &ss[oirl];
@@ -293,7 +293,7 @@ msym_error_t generateSubspacesMatrix(msym_point_group_t *pg, msym_permutation_t 
             if(nirl - oirl != pgvspan){
                 debug_printTransform(dim, dim, ss);
                 ret = MSYM_SUBSPACE_ERROR;
-                msymSetErrorDetails("Ortogonal subspace of dimension (%d) inconsistent with span (%d) in %s",nirl - oirl,pgvspan,ct->s[k].name);
+                msymSetErrorDetails("Orthogonal subspace of dimension (%d) inconsistent with span (%d) in %s",nirl - oirl,pgvspan,ct->s[k].name);
                 goto err;
             }
             pss[k][0] = &ss[oirl];
@@ -312,7 +312,7 @@ msym_error_t generateSubspacesMatrix(msym_point_group_t *pg, msym_permutation_t 
                 if(nirl - oirl != span[k]){
                     debug_printTransform(dim, dim, ss);
                     ret = MSYM_SUBSPACE_ERROR;
-                    msymSetErrorDetails("Ortogonal subsubspace of dimension (%d) inconsistent with span (%d) in %s",nirl - oirl,span[k],ct->s[k].name);
+                    msymSetErrorDetails("Orthogonal subsubspace of dimension (%d) inconsistent with span (%d) in %s",nirl - oirl,span[k],ct->s[k].name);
                     goto err;
                 }
                 pss[k][d] = &ss[oirl];
@@ -342,7 +342,7 @@ msym_error_t generateSubspacesMatrix(msym_point_group_t *pg, msym_permutation_t 
                         if(nirl - oirl != span[k]){
                             debug_printTransform(dim, dim, mem);
                             ret = MSYM_SUBSPACE_ERROR;
-                            msymSetErrorDetails("Ortogonal icosahedral subsubspace of dimension (%d) inconsistent with span (%d) in %s",nirl - oirl,span[k],ct->s[k].name);
+                            msymSetErrorDetails("Orthogonal icosahedral subsubspace of dimension (%d) inconsistent with span (%d) in %s",nirl - oirl,span[k],ct->s[k].name);
                             goto err;
                         }
                         pss[k][ssd] = &ss[oirl];
@@ -354,7 +354,7 @@ msym_error_t generateSubspacesMatrix(msym_point_group_t *pg, msym_permutation_t 
                     if(nirl - oirl != span[k]){
                         debug_printTransform(dim, dim, ss);
                         ret = MSYM_SUBSPACE_ERROR;
-                        msymSetErrorDetails("Ortogonal icosahedral subspace of dimension (%d) inconsistent with span (%d) in %s",nirl - oirl,span[k],ct->s[k].name);
+                        msymSetErrorDetails("Orthogonal icosahedral subspace of dimension (%d) inconsistent with span (%d) in %s",nirl - oirl,span[k],ct->s[k].name);
                         goto err;
                     }
                     pss[k][d] = &ss[oirl];
@@ -909,7 +909,7 @@ msym_error_t generateSubrepresentationSpaces(msym_point_group_t *pg, int sgl, co
     
     if(lmax < 0 || nmax < 1){
         if(nmax == -1) msymSetErrorDetails("Basis functions are not of the same type");
-        else msymSetErrorDetails("Invalid sperical harmonics quantum numbers");
+        else msymSetErrorDetails("Invalid spherical harmonics quantum numbers");
         ret = MSYM_INVALID_BASIS_FUNCTIONS;
         return ret;
     } else if (ftype != MSYM_BASIS_TYPE_REAL_SPHERICAL_HARMONIC){
@@ -920,7 +920,7 @@ msym_error_t generateSubrepresentationSpaces(msym_point_group_t *pg, int sgl, co
     
     int projm = (2*lmax+1)*eslmax;
     
-    double (*pmem)[projm][projm] = calloc(7, sizeof(*pmem));        // Memory for calculating projection operatorsle
+    double (*pmem)[projm][projm] = calloc(7, sizeof(*pmem));        // Memory for calculating projection operators
     
     if(NULL == pmem){
         ret = MSYM_MEMORY_ERROR;
@@ -932,7 +932,7 @@ msym_error_t generateSubrepresentationSpaces(msym_point_group_t *pg, int sgl, co
     double (*pspan)[ct->d] = calloc(esl, sizeof(*pspan));               // span of permutation operators
     
     double *rspan = calloc(ct->d, sizeof(*rspan));                  // total direct product symmetrized basis
-    double *dspan = calloc(ct->d, sizeof(*dspan));                  // decoposed total span of symmetrized basis (double)
+    double *dspan = calloc(ct->d, sizeof(*dspan));                  // decomposed total span of symmetrized basis (double)
     
     double (*sdssmem)[projm] = pmem[1];
     double (*dssmem)[projm] = pmem[2];
@@ -952,7 +952,7 @@ msym_error_t generateSubrepresentationSpaces(msym_point_group_t *pg, int sgl, co
     const msym_subgroup_t **rsg = calloc(ct->d, sizeof(*rsg));
     
     int (*sgd)[5] = calloc(ct->d,sizeof(*sgd));
-    int *ispan = calloc(ct->d, sizeof(*ispan));                               // decoposed total span of symmetrized basis (int)
+    int *ispan = calloc(ct->d, sizeof(*ispan));                               // decomposed total span of symmetrized basis (int)
     int (*iespan)[lmax+1][ct->d] = calloc(esl, sizeof(*iespan));
     int (*ipspan)[ct->d] = calloc(esl, sizeof(*ipspan));               // span of permutation operators
     int (*ibspan)[ct->d] = calloc(lmax+1, sizeof(*ibspan));
@@ -1098,7 +1098,7 @@ msym_error_t generateSubrepresentationSpaces(msym_point_group_t *pg, int sgl, co
             if(nirl - oirl != vspan){
                 debug_printTransform(d, d, st[pg->order]);
                 ret = MSYM_SUBSPACE_ERROR;
-                msymSetErrorDetails("Ortogonal subspace of dimension (%d) inconsistent with span (%d) in %s",nirl - oirl,vspan,ct->s[k].name);
+                msymSetErrorDetails("Orthogonal subspace of dimension (%d) inconsistent with span (%d) in %s",nirl - oirl,vspan,ct->s[k].name);
                 goto err;
                 
             }
@@ -1352,7 +1352,7 @@ msym_error_t generateSubrepresentationSpacesLowMem(msym_point_group_t *pg, int s
     
     if(lmax < 0 || nmax < 1){
         if(nmax == -1) msymSetErrorDetails("Basis functions are not of the same type");
-        else msymSetErrorDetails("Invalid sperical harmonics quantum numbers");
+        else msymSetErrorDetails("Invalid spherical harmonics quantum numbers");
         ret = MSYM_INVALID_BASIS_FUNCTIONS;
         return ret;
     } else if (ftype != MSYM_BASIS_TYPE_REAL_SPHERICAL_HARMONIC){
@@ -1368,7 +1368,7 @@ msym_error_t generateSubrepresentationSpacesLowMem(msym_point_group_t *pg, int s
     
     double (*lspan)[ct->d] = calloc(esl, sizeof(*lspan));           // total span of basis function on each ES
     double *rspan = calloc(ct->d, sizeof(*rspan));                  // total direct product symmetrized basis
-    double *dspan = calloc(ct->d, sizeof(*dspan));                  // decoposed total span of symmetrized basis (double)
+    double *dspan = calloc(ct->d, sizeof(*dspan));                  // decomposed total span of symmetrized basis (double)
     
     double *mspan = calloc(ct->d, sizeof(double));                  // span decomposition memory
     double (*mproj)[projm] = calloc(projm, sizeof(*mproj));         // projection operator memory
@@ -1377,7 +1377,7 @@ msym_error_t generateSubrepresentationSpacesLowMem(msym_point_group_t *pg, int s
     double (*mperm)[pg->order] = calloc(pg->order, sizeof(*mperm)); // permutation memory
     double (*morth)[pg->order] = calloc(pg->order, sizeof(*morth)); // permutation orthoginalization memory
     double (*mbasis)[projm] = calloc(basisl, sizeof(*mbasis));      // basis function coefficients
-    double (*mdec)[projm] = calloc(basisl, sizeof(*mdec));          // directo product decomposition memory
+    double (*mdec)[projm] = calloc(basisl, sizeof(*mdec));          // direct product decomposition memory
     double (*sgc)[5][pg->order] = calloc(ct->d,sizeof(*sgc));
     
     const msym_subgroup_t **rsg = calloc(ct->d, sizeof(*rsg));
@@ -1387,7 +1387,7 @@ msym_error_t generateSubrepresentationSpacesLowMem(msym_point_group_t *pg, int s
     int *mdfound = NULL;
     
     int (*sgd)[5] = calloc(ct->d,sizeof(*sgd));
-    int *ispan = calloc(ct->d, sizeof(int));                               // decoposed total span of symmetrized basis (int)
+    int *ispan = calloc(ct->d, sizeof(int));                               // decomposed total span of symmetrized basis (int)
     int *isalc = calloc(ct->d, sizeof(int));                               // number of added salcs to irrep
     int *esnmax = calloc(esl, sizeof(int));                                     // max n in eqset
     
@@ -1526,7 +1526,7 @@ msym_error_t generateSubrepresentationSpacesLowMem(msym_point_group_t *pg, int s
             if(nirl - oirl != vspan){
                 debug_printTransform(d, d, st[pg->order]);
                 ret = MSYM_SUBSPACE_ERROR;
-                msymSetErrorDetails("Ortogonal subspace of dimension (%d) inconsistent with span (%d) in %s",nirl - oirl,vspan,ct->s[k].name);
+                msymSetErrorDetails("Orthogonal subspace of dimension (%d) inconsistent with span (%d) in %s",nirl - oirl,vspan,ct->s[k].name);
                 goto err;
                 
             }
@@ -1615,7 +1615,7 @@ msym_error_t generateSubrepresentationSpacesLowMem(msym_point_group_t *pg, int s
             
             if(nirl - oirl != vspan){
                 ret = MSYM_SUBSPACE_ERROR;
-                msymSetErrorDetails("Ortogonal ES subspace of dimension (%d) inconsistent with span (%d) in %s",nirl - oirl,vspan,ct->s[k].name);
+                msymSetErrorDetails("Orthogonal ES subspace of dimension (%d) inconsistent with span (%d) in %s",nirl - oirl,vspan,ct->s[k].name);
                 goto err;
                 
             }
@@ -1666,7 +1666,7 @@ msym_error_t generateSubrepresentationSpacesLowMem(msym_point_group_t *pg, int s
                             dnirl = mgs(dd, dproj, mbasis, doirl, thresholds->orthogonalization/basisl);
                             if(dnirl - doirl != dvspan){
                                 ret = MSYM_SUBSPACE_ERROR;
-                                msymSetErrorDetails("Ortogonal subspace decomposition of dimension (%d) inconsistent with span (%d) in %s",dnirl - doirl,vspan,ct->s[dk].name);
+                                msymSetErrorDetails("Orthogonal subspace decomposition of dimension (%d) inconsistent with span (%d) in %s",dnirl - doirl,vspan,ct->s[dk].name);
                                 goto err;
                                 
                             }
@@ -1678,7 +1678,7 @@ msym_error_t generateSubrepresentationSpacesLowMem(msym_point_group_t *pg, int s
                         double (*sbasis)[dd] = mbasis;
                         double (*sdec)[dd] = mdec;
                         if(ct->s[sk].d > 1){
-                            //icosahedral symmetry map (dependant on getSplittingFieldCharacters)
+                            //icosahedral symmetry map (dependent on getSplittingFieldCharacters)
                             int ihdim[] = {0,1,1,2,2};
                             int ihsub[] = {0,3,4,3,4};
                             double (*ihproj)[dd] = mpih;
@@ -1702,7 +1702,7 @@ msym_error_t generateSubrepresentationSpacesLowMem(msym_point_group_t *pg, int s
                                 if(sgd[sk][pdim] == 2){ // only icosahedral
                                     int c2dim = ihsub[dim];
                                     memset(ihproj, 0, sizeof(double[dd][dd]));
-                                    //getting rediculous
+                                    //getting ridiculous
                                     for(int s = 0;s < pg->order;s++){
                                         if(sgc[sk][c2dim][s] == 0) continue;
                                         permutationMatrix(&perm[i][s], mperm);
@@ -1728,7 +1728,7 @@ msym_error_t generateSubrepresentationSpacesLowMem(msym_point_group_t *pg, int s
                                 dnirl = mgs(dd, dproj, sdec, doirl, thresholds->orthogonalization/basisl);
                                 if(dnirl - doirl != round(mspan[sk])){
                                     ret = MSYM_SUBSPACE_ERROR;
-                                    msymSetErrorDetails("Multi-dimensional subspace decomposition of %s dimension (%d) inconsistent with representaion (%d) in subgroup irrep %d",ct->s[sk].name, dnirl - doirl,(int) round(mspan[sk]),dim);
+                                    msymSetErrorDetails("Multi-dimensional subspace decomposition of %s dimension (%d) inconsistent with representation (%d) in subgroup irrep %d",ct->s[sk].name, dnirl - doirl,(int) round(mspan[sk]),dim);
                                     goto err;
                                 }
                                 

@@ -942,7 +942,7 @@ msym_error_t getRepresentationName(msym_point_group_type_t type, int n, msym_rep
     msym_error_t ret = MSYM_SUCCESS;
     if(rep->d < 1 || rep->d > 5 || abs(rep->eig.p) > 1 || abs(rep->eig.v) > 1 || abs(rep->eig.h) > 1 || abs(rep->eig.i) > 1) {
         ret = MSYM_INVALID_CHARACTER_TABLE;
-        msymSetErrorDetails("Invalid character table represenation");
+        msymSetErrorDetails("Invalid character table representation");
         goto err;
     }
     

@@ -408,7 +408,7 @@ void mmtlmul(int rla, int cla, const double A[rla][cla], int rlb, const double B
             for(int c=0; c < rlb; c++){
                 C[r][c] = 0.0;
                 for(int k=0; k < cla; k++){
-                    C[r][c]+=A[r][k]*B[c][k]; //Possibly thrashing cashe, but better than repeated mallocs if reasonably small
+                    C[r][c]+=A[r][k]*B[c][k]; //Possibly thrashing cache, but better than repeated mallocs if reasonably small
                 }
             }
         }
@@ -472,7 +472,7 @@ void mlFilterSmall(int l, double A[l][l]){
     }
 }
 
-//only square matrixes for now
+//only square matrices for now
 void kron(int al, const double A[al][al], int bl, const double B[bl][bl], int cl, double C[cl][cl]){
     for(int ai = 0; ai < al;ai++){
         for(int aj = 0; aj < al;aj++){
@@ -497,7 +497,7 @@ void kron2(int ar, int ac, const double A[ar][ac], int br, int bc, const double 
     }
 }
 
-/* Graam-Schmidt */
+/* Gram-Schmidt */
 int mgsold(int l, const double M[l][l], double O[l][l], int n, double t){
     double *tmp = malloc(sizeof(double[l]));
     for(int i = 0; i < l;i++){
@@ -530,7 +530,7 @@ int mgs(int l, const double m[l][l], double o[l][l], int n, double t){
 #define MGS_ADD 0
 #endif
 
-/* Graam-Schmidt */
+/* Gram-Schmidt */
 int mgs2(int l, int lm, const double m[l][l], double o[l][l], int n, double t){
     
     int nm = n + lm + MGS_ADD;

@@ -268,7 +268,7 @@ msym_error_t findSymmetryPlanarRegular(msym_equivalence_set_t *es, double cm[3],
     for (int i = 0; i < order && n < sopsl; i++) {
         double r[3];
         vrotate(i*theta, v_init, ev[prim], r);
-        vnorm(r); //Not really nessecary
+        vnorm(r); //Not really necessary
         vcrossnorm(r,ev[prim],sops[n].v);
         sops[n].type = REFLECTION;
         
@@ -438,7 +438,7 @@ msym_error_t findSymmetrySymmetricPolyhedron(msym_equivalence_set_t *es, double 
             if(fabs(theta - 2*M_PI/es->length) < asin(thresholds->angle)){
                 staggered = 1;
             }
-            // if we have not yet found that we are are staggerd/eclipsed or split this will either be over-written or this is a C2 axis for Dn
+            // if we have not yet found that we are are staggered/eclipsed or split this will either be over-written or this is a C2 axis for Dn
             if(!split && !staggered && !sigma_h){
                 if(LT(theta, 2*M_PI/es->length, asin(thresholds->angle))){
                     vadd(v0_proj, vi_proj, v_init);
@@ -464,7 +464,7 @@ msym_error_t findSymmetrySymmetricPolyhedron(msym_equivalence_set_t *es, double 
     //n x C2
     //n x sigma_v if we are in staggered or eclipsed form
     //Possible inversion (see above)
-    //Smax*2 if staggerd Sn (n > 2) for sigma_h
+    //Smax*2 if staggered Sn (n > 2) for sigma_h
     
     sopsl = (div_len + sigma_h + order + order*(sigma_h || staggered) + inversion + staggered + sigma_h*(div_len - even));
     sops = malloc(sopsl*sizeof(msym_symmetry_operation_t));
@@ -520,7 +520,7 @@ msym_error_t findSymmetrySymmetricPolyhedron(msym_equivalence_set_t *es, double 
     theta = M_PI/order;
     for (int i = 0; i < order; i++) {
         vrotate(theta_C2 + i*theta, v_init, ev[prim], sops[n].v);
-        vnorm(sops[n].v); //Not really nessecary
+        vnorm(sops[n].v); //Not really necessary
         sops[n].type = PROPER_ROTATION;
         sops[n].order = 2;
         sops[n].power = 1;
@@ -728,7 +728,7 @@ msym_error_t findSymmetryCubic(msym_equivalence_set_t *es, double cm[3], double 
 
                     if(!findSymmetryOperation(&sopsigma, sops, sopsl, thresholds)){
                         if(MSYM_SUCCESS == findPermutation(&sopsigma, es->length, esv, thresholds, &perm)){
-                            //sigmad = d; //This is a bit dangerous, but the C2 axes dhould generate the rest
+                            //sigmad = d; //This is a bit dangerous, but the C2 axes should generate the rest
                             copySymmetryOperation(&sops[sopsl], &sopsigma);
                             sigma[nsigma++] = &sops[sopsl++];
                             free(perm.p);

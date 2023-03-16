@@ -55,7 +55,7 @@ msym_error_t msymFindSymmetry(msym_context ctx){
     }
     
     if(NULL != fpg || isLinearPointGroup(pg)){
-        // Reuild equivalence sets after determining poing group in case they are very similar
+        // Rebuild equivalence sets after determining point group in case they are very similar
         if(MSYM_SUCCESS != (ret = ctxReduceLinearPointGroup(ctx))) goto err;
         
         if(MSYM_SUCCESS != (ret = splitPointGroupEquivalenceSets(pg, esl, es, &sesl, &ses, t))) goto err;
@@ -404,7 +404,7 @@ msym_error_t msymSymmetrizeElements(msym_context ctx, double *oerr){
     }
     if(MSYM_SUCCESS != (ret = ctxGetEquivalenceSetPermutations(ctx, &perml, &sopsl, &perm))) goto err;
     if(sopsl != pg->order || perml != esl) {
-        msymSetErrorDetails("Detected inconsistency between point group, equivalence sets and permutaions");
+        msymSetErrorDetails("Detected inconsistency between point group, equivalence sets and permutations");
         ret = MSYM_INVALID_PERMUTATION;
         goto err;
     }
@@ -444,7 +444,7 @@ msym_error_t msymApplyTranslation(msym_context ctx, msym_element_t *ext, double 
     
     if(MSYM_SUCCESS != (ret = ctxGetEquivalenceSetPermutations(ctx, &perml, &sopsl, &perm))) goto err;
     if(sopsl != pg->order || perml != esl) {
-        msymSetErrorDetails("Detected inconsistency between point group, equivalence sets and permutaions");
+        msymSetErrorDetails("Detected inconsistency between point group, equivalence sets and permutations");
         ret = MSYM_INVALID_PERMUTATION;
         goto err;
     }

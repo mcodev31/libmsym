@@ -41,7 +41,7 @@ const struct _errordesc {
     { MSYM_SYMMETRY_ERROR, "Error determining symmetry operations" },
     { MSYM_PERMUTATION_ERROR, "Error determining permutation" },
     { MSYM_POINT_GROUP_ERROR, "Error determining point group" },
-    { MSYM_SYMMETRIZATION_ERROR, "Error symmetrizing molecule/orbtials" },
+    { MSYM_SYMMETRIZATION_ERROR, "Error symmetrizing molecule/orbitals" },
     { MSYM_SUBSPACE_ERROR, "Error generating subspaces" },
     { MSYM_MEMORY_ERROR, "Error allocating memory" }
 };
@@ -54,7 +54,7 @@ void msymSetErrorDetails(const char *format, ...){
 }
 
 const char MSYM_EXPORT *msymGetErrorDetails(){
-    snprintf(err_details_ext, sizeof(err_details_ext), "%s",err_details); // Not really neccessary
+    snprintf(err_details_ext, sizeof(err_details_ext), "%s",err_details); // Not really necessary
     msymSetErrorDetails("");
     return err_details_ext;
 }

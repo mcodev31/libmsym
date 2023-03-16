@@ -910,7 +910,7 @@ msym_error_t pointGroupFromSubgroup(const msym_subgroup_t *sg, msym_thresholds_t
     
     if(MSYM_SUCCESS != (ret = getPointGroupOrder(pg->type, pg->n, &pg->order))) goto err;
     if(pg->order != sg->order){
-        msymSetErrorDetails("Point group order %d does not equal nuber of operations in subgroup %d for point gropu %s",pg->order,sg->order,pg->name);
+        msymSetErrorDetails("Point group order %d does not equal number of operations in subgroup %d for point group %s",pg->order,sg->order,pg->name);
         ret = MSYM_POINT_GROUP_ERROR;
         goto err;
     }
@@ -985,7 +985,7 @@ msym_error_t reorientAxes(msym_symmetry_operation_t *primary, int sopsl, msym_sy
                 vinv(sop->v);
             }
             
-        } else if(vdot(primary->v,sop->v) < 0.0) vinv(sop->v); //not in xy-plane reorient to positive along primary axiz
+        } else if(vdot(primary->v,sop->v) < 0.0) vinv(sop->v); //not in xy-plane reorient to positive along primary axis
     }
     
     return MSYM_SUCCESS;
@@ -2184,7 +2184,7 @@ int classifySymmetryOperations(msym_point_group_t *pg){
     
 }
 
-//cant be bothereed writing an efficient sorting alg for this
+//cant be bothered writing an efficient sorting alg for this
 void sortSymmetryOperations(msym_point_group_t *pg, int classes){
     msym_symmetry_operation_t *tmp = malloc(pg->order*sizeof(msym_symmetry_operation_t));
     int n = 0;
