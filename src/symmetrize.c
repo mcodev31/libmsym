@@ -22,7 +22,7 @@
 
 /* This is a projection into the fully symmetric space.
  * A little more computation than if we just recreate it from one atom,
- * but it is independant of the chosen atom and we can get the size
+ * but it is independent of the chosen atom and we can get the size
  * of the fully symmetric component.
  * The sizes of the individual equivalence sets are rather small anyways.
  */
@@ -94,7 +94,7 @@ msym_error_t symmetrizeWavefunctions(msym_point_group_t *pg, int srsl, msym_subr
     /* This is a bit of overkill since we only need the sign of the component
      * We could just as well have used a basis change, but the sign in degenerate
      * representations can't be used for partner function determination,
-     * and this is a sparce matrix
+     * and this is a sparse matrix
      */
     double (*psalc)[basisl][psalcl] = calloc(md+1,sizeof(*psalc));
     double (*bfd)[md] = calloc(basisl+1, sizeof(*bfd));
@@ -134,13 +134,13 @@ msym_error_t symmetrizeWavefunctions(msym_point_group_t *pg, int srsl, msym_subr
     
     for(int k = 0;k < pg->ct->d;k++){
         if(ispan[k] != span[k]*pg->ct->s[k].d){
-            msymSetErrorDetails("Projected orbitals do not span the expected irredicible representations. Expected %d%s, got %d",span[k],pg->ct->s[k].name,ispan[k]);
+            msymSetErrorDetails("Projected orbitals do not span the expected irreducible representations. Expected %d%s, got %d",span[k],pg->ct->s[k].name,ispan[k]);
             ret = MSYM_SYMMETRIZATION_ERROR;
             goto err;
         }
     }
     
-    /* Find parner functions */
+    /* Find partner functions */
     for(int o = 0;o < basisl;o++){
         int ko = species[o], dim = pg->ct->s[ko].d;
         
@@ -153,7 +153,7 @@ msym_error_t symmetrizeWavefunctions(msym_point_group_t *pg, int srsl, msym_subr
         
         if(dim <= 1) continue;
         
-        /* check if this functions has alredy been assigned partners */
+        /* check if this functions has already been assigned partners */
         for(int i = 0;i < o && !fpf.j;i++){
             for(int j = 1;j < md;j++){
                 if(pf[i][j] == o){

@@ -55,7 +55,7 @@ msym_error_t findCenterOfMass(int length, msym_element_t *elements[length], doub
 #define EQUAL(A,B,T) ((fabs(((A)-(B)))) < (T))
 #define EQUAL_REL(A,B,T) (fabs(((A)-(B))/((A)+(B))) < T)
 
-//Lookup table would look alot nicer
+//Lookup table would look a lot nicer
 msym_geometry_t eigenvaluesToGeometry(double e[3], msym_thresholds_t *thresholds){
     int e01 = EQUAL(0.0, e[0], thresholds->geometry);
     int e12, e23, planar;
@@ -135,7 +135,7 @@ void printGeometry(msym_geometry_t g){
         case MSYM_GEOMETRY_PLANAR_IRREGULAR	: s = "planar irregular polygon"; break;
         case MSYM_GEOMETRY_POLYHEDRAL_PROLATE	: s = "prolate symmetric polyhedron"; break;
         case MSYM_GEOMETRY_POLYHEDRAL_OBLATE	: s = "oblate symmetric polyhedron"; break;
-        case MSYM_GEOMETRY_ASSYMETRIC		: s = "assymetric polyhedron"; break;
+        case MSYM_GEOMETRY_ASSYMETRIC		: s = "asymmetric polyhedron"; break;
         default			: s = "unknown geometry";
     }
     clean_debug_printf("%s\n",s);

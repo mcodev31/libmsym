@@ -227,7 +227,7 @@ msym_error_t partitionPointGroupEquivalenceSets(msym_point_group_t *pg, int leng
             if(f < length && eqi[f] >= 0 && eqi[f] != gesl-1){
                 char buf[64];
                 symmetryOperationName(s, 64, buf);
-                msymSetErrorDetails("Symmetry operation %s on element %d yeilded element (%d) in two diffenrent equivalence sets (%d and %d)",buf,i,f,eqi[f],gesl-1);
+                msymSetErrorDetails("Symmetry operation %s on element %d yielded element (%d) in two different equivalence sets (%d and %d)",buf,i,f,eqi[f],gesl-1);
                 ret = MSYM_INVALID_EQUIVALENCE_SET;
                 goto err;
             } else if(f < length && eqi[f] == gesl-1){
@@ -244,7 +244,7 @@ msym_error_t partitionPointGroupEquivalenceSets(msym_point_group_t *pg, int leng
                 goto err;
             }
         }
-        //printf("generated equivalance set %d of length %d\n",gesl-1,aes->length);
+        //printf("generated equivalence set %d of length %d\n",gesl-1,aes->length);
         pelementsl += aes->length;
     }
     

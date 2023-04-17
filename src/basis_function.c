@@ -13,7 +13,7 @@
 
 #include "basis_function.h"
 
-//These are real shperical harmonics cannot handle complex
+//These are real spherical harmonics cannot handle complex
 msym_error_t basisFunctionFromQuantumNumbers(int n, int l, int m, msym_basis_function_t *bf){
     
     if(l > n || abs(m) > l) goto err;
