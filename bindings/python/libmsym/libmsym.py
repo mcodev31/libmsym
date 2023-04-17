@@ -71,12 +71,12 @@ class SymmetryOperation(Structure):
             orientation = self._proper_rotation_type_names[self.orientation]
         elif self.type == self.REFLECTION:
             orientation = self._reflection_type_names[self.orientation]
-            axis = " with normal vector " + repr(self.vector)
+            axis = " with normal vector " + "[ {: >.3f}, {: >.3f}, {: >.3f}]".format(self.vector[0],self.vector[1],self.vector[2])
 
         if self.type in [self.PROPER_ROTATION, self.IMPROPER_ROTATION]:
             order = str(self.order)
             power = "^" + str(self.power)
-            axis = " around " + repr(self.vector)
+            axis = " around " + "[ {: >.3f}, {: >.3f}, {: >.3f}]".format(self.vector[0],self.vector[1],self.vector[2])
 
         return __name__ + "." + self.__class__.__name__ + "( " + self._names[self.type] + order + orientation + power + axis + ", conjugacy class: " + str(self.conjugacy_class) + " )"
     def __repr__(self):
@@ -365,6 +365,9 @@ def init(library_location=None):
 
     _lib.msymSymmetrizeElements.restype = _ReturnCode
     _lib.msymSymmetrizeElements.argtypes = [_Context]
+    
+    _lib.msymAlignAxes.restype = _ReturnCode
+    _lib.msymAlignAxes.argtypes = [_Context]
 
     _lib.msymSetBasisFunctions.restype = _ReturnCode
     _lib.msymSetBasisFunctions.argtypes = [_Context, c_int, POINTER(BasisFunction)]
@@ -610,6 +613,15 @@ class Context(object):
         self._assert_success(_lib.msymSymmetrizeElements(self._ctx, byref(cerror)))
         self._update_elements()
         return self._elements
+    
+    def align_axes(self):
+        if not self._ctx:
+            raise RuntimeError
+        cerror = c_double(0)
+        self._assert_success(_lib.msymAlignAxes(self._ctx))
+        self._update_elements()
+        return self._elements
+
 
     @property
     def subrepresentation_spaces(self):
