@@ -11,7 +11,7 @@
 from distutils.core import setup
 import sys
 
-if (not sys.version_info[0] is 3):
+if ( sys.version_info[0] != 3):
     sys.exit('libmsym module requires python 3')
     
 setup(name='libmsym',
