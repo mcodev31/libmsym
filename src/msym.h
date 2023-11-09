@@ -162,10 +162,10 @@ extern "C" {
     } msym_character_table_t;
 
     
-    msym_context MSYM_EXPORT msymCreateContext();
+    msym_context MSYM_EXPORT msymCreateContext(void);
     msym_error_t MSYM_EXPORT msymReleaseContext(msym_context ctx);
     
-    const msym_thresholds_t MSYM_EXPORT *msymGetDefaultThresholds();
+    const msym_thresholds_t MSYM_EXPORT *msymGetDefaultThresholds(void);
     msym_error_t MSYM_EXPORT msymSetThresholds(msym_context ctx, const msym_thresholds_t *thresholds);
     msym_error_t MSYM_EXPORT msymGetThresholds(msym_context ctx, const msym_thresholds_t **thresholds);
     msym_error_t MSYM_EXPORT msymSetElements(msym_context ctx, int length, msym_element_t *elements);
