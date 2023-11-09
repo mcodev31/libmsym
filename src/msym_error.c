@@ -53,7 +53,7 @@ void msymSetErrorDetails(const char *format, ...){
     va_end(args);
 }
 
-const char MSYM_EXPORT *msymGetErrorDetails(){
+const char MSYM_EXPORT *msymGetErrorDetails(void){
     snprintf(err_details_ext, sizeof(err_details_ext), "%s",err_details); // Not really necessary
     msymSetErrorDetails("");
     return err_details_ext;

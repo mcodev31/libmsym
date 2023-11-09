@@ -44,7 +44,7 @@ extern "C" {
     
     const char *msymErrorString(msym_error_t error);
     void msymSetErrorDetails(const char *format, ...);
-    const char *msymGetErrorDetails();
+    const char *msymGetErrorDetails(void);
     
     
 #ifdef __cplusplus
