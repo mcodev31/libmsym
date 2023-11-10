@@ -175,7 +175,7 @@ extern "C" {
     msym_error_t MSYM_EXPORT msymGetPointGroupType(msym_context ctx, msym_point_group_type_t *t, int *n);
     msym_error_t MSYM_EXPORT msymSetPointGroupByName(msym_context ctx, const char *name);
     msym_error_t MSYM_EXPORT msymSetPointGroupByType(msym_context ctx, msym_point_group_type_t type, int n);
-    msym_error_t MSYM_EXPORT msymGetPointGroupName(msym_context ctx, int l, char *buf);
+    msym_error_t MSYM_EXPORT msymGetPointGroupName(msym_context ctx, int l, char buf[l]);
     msym_error_t MSYM_EXPORT msymGetSubgroups(msym_context ctx, int *l, const msym_subgroup_t **subgroups);
     msym_error_t MSYM_EXPORT msymSelectSubgroup(msym_context ctx, const msym_subgroup_t *subgroup);
     msym_error_t MSYM_EXPORT msymGetSymmetryOperations(msym_context ctx, int *sopsl, const msym_symmetry_operation_t **sops);
@@ -198,7 +198,7 @@ extern "C" {
     msym_error_t MSYM_EXPORT msymGetSALCs(msym_context ctx, int l, double c[l][l], int species[l], msym_partner_function_t pf[l]);
 #endif
     msym_error_t MSYM_EXPORT msymSymmetrySpeciesComponents(msym_context ctx, int wfl, double *wf, int sl, double *s);
-    msym_error_t MSYM_EXPORT msymGenerateElements(msym_context ctx, int length, msym_element_t *elements);
+    msym_error_t MSYM_EXPORT msymGenerateElements(msym_context ctx, int length, msym_element_t elements[length]);
     msym_error_t MSYM_EXPORT msymGenerateSubrepresentationSpaces(msym_context ctx);
     msym_error_t MSYM_EXPORT msymAlignAxes(msym_context ctx);
     
