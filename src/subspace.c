@@ -1821,7 +1821,6 @@ msym_error_t generateSubrepresentationSpacesLowMem(msym_point_group_t *pg, int s
     free(rsg);
     free(sgc);
     free(sgd);
-    free(mpih);
     free(mdcomp);
     free(mdproj);
     free(mdfound);
