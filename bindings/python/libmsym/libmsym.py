@@ -145,23 +145,29 @@ class EquivalenceSets(Structure):
         return self.__str__()
 
 class SALC_wf(object):
-    def __init__(self, data, partners, spec):
-        self.data = data
+    def __init__(self, coeff, partners, spec):
+        self.coeff = coeff
         self.partners = partners
-        self.sparse = ssparse.csr_array(data)
+        self.sparse = ssparse.csr_array(coeff)
         self.spec = spec # symmetry species
-        
+        self._nonzeros = self.sparse.count_nonzero()
+
     def __str__(self):
-        return f"<{self.__class__.__name__}> {self.species.name}{self.data.shape} with {self.sparse.count_nonzero()} nonzeros and {len(self.partners)} parter functions"
+        return f"<{self.__class__.__name__}> {self.spec.name}{self.coeff.shape} with {self._nonzeros} nonzeros and {len(self.partners)} parter functions"
     
     def __repr__(self):
         return self.__str__()
     
-    def print(self, basis_functions):
-        print(self.spec)
+    def print_coeff(self, basis_functions):
+        if self._nonzeros == 0:
+            print(self.spec, end="")
+            return
+        else:
+            print(self.spec)
+            
         for k, vec in enumerate(self.sparse):
             idx = vec.nonzero()[1]
-            print(f"{k:>3d} ", end ="")
+            print(f"{k+1:>3d} ", end ="")
             for i in idx:
                 print(f" {basis_functions[i].comment:15s}", end="")
             print("\n    ", end ="")
@@ -542,6 +548,11 @@ def init(library_location=None):
     _lib.msymGetSubgroups.restype = _ReturnCode
     _lib.msymGetSubgroups.argtypes = [_Context, POINTER(c_int), POINTER(POINTER(Subgroup))]
 
+    _lib.msymSelectSubgroup.restype = _ReturnCode
+    _lib.msymSelectSubgroup.argtypes = [_Context, POINTER(Subgroup)]
+
+
+
     _lib.msymGetEquivalenceSets.restype = _ReturnCode
     _lib.msymGetEquivalenceSets.argtypes = [_Context, POINTER(c_int), POINTER(POINTER(EquivalenceSets))]
 
@@ -784,15 +795,35 @@ class Context(object):
             s._update_elements(self._elements)
         self._equivalence_sets = sets
 
-    def _update_subgroups(self):
+    def _update_subgroups(self, group_sel = None):
         num_subgroups = c_int(0)
         subgroups = POINTER(Subgroup)()
         self._assert_success(_lib.msymGetSubgroups(self._ctx, byref(num_subgroups), byref(subgroups)))
         sgs = subgroups[0:num_subgroups.value]
-        
         for s in sgs:
             s._update_symmetry_operations(self._symmetry_operations)
         self._subgroups = sgs
+        return self._select_subgroup(group_sel)
+
+    def _select_subgroup(self, group_sel):
+        if group_sel is None:
+            return 0
+        if isinstance(group_sel, int):
+            if group_sel == 0:
+                return 0
+            else:
+                subgroup = self._subgroups[group_sel-1]
+        elif isinstance(group_sel, str):
+            for i, subgroup in enumerate(self._subgroups):
+                if subgroup.name == group_sel:
+                    group_sel = i + 1
+                    break
+        self._assert_success(_lib.msymSelectSubgroup(self._ctx, byref(subgroup)))
+        self._update_point_group()
+        self._update_symmetry_operations()
+        return group_sel
+
+            
     
     def _update_SALC_wavefunctions(self):
         salcs, species, partner_functions = self.salcs
@@ -808,7 +839,7 @@ class Context(object):
             element = bf.element
             bf.element = self.elements[element.index-1]
 
-    def find_misc(self, to_print = True):
+    def find_misc(self, group_sel = None, to_print = True):
         if not self._ctx:
             raise RuntimeError
         result = (c_double * 3)()
@@ -818,16 +849,24 @@ class Context(object):
         radius = c_double()
         self._assert_success(_lib.msymGetRadius(self._ctx, byref(radius)))
         self.radius = float(radius.value)
+        subgroup_index = self._update_subgroups(group_sel)
         self.symmetrize_elements()
+        
         self._update_equivalence_sets()
         self._update_basis_function_element()
 
         if to_print:
             print(f"Molecule COM: {self.COM} and radius: {self.radius:.6f}")
             print(f"Found point group [0] {self._point_group} with {len(self.subgroups)} subgroups:")
-            print(f"\t[0] {self._point_group}\n\t-------")
-            for i, s in enumerate(self.subgroups):
-                print(f"\t[{i}] {s.name}")
+            print(f"\t[{subgroup_index}] {self._point_group}\n\t-------")
+            n = len(self.subgroups)
+            m = n // 4
+            for i in range(m):
+                for j in range(4):
+                    k = j * m + i
+                    if k < n:
+                        print(f"\t[{k+1:3}] {self.subgroups[k].name:8}", end = "")
+                print("")
             
             print(f"There are {len(self.equivalence_sets)} symmetrically equivalent sets:");
             for i, s in enumerate(self.equivalence_sets):
@@ -851,9 +890,17 @@ class Context(object):
                     eset_index = self.equivalence_sets.index(eset)
                     print(f"\t[{j:3d}] {element.name:>3}({eset_index}) {eset.length} x {bf.l*2+1}{atomic_orbital_symbols[bf.l]} = {salc._fl} orbitals")
 
+            calc_cbr = 0
+            n_wf = 0
             for i, wf in enumerate(self.salc_wf):
                 print(f"\n({i:d}) ", end= "")
-                wf.print(self.basis_functions)
+                wf.print_coeff(self.basis_functions)
+                n = wf.coeff.shape[0]
+                if n != 0:
+                    n_wf += 1
+                    calc_cbr += n**3
+            n_bf_cbr = len(self.basis_functions)**3
+            print(f"non-empty SALCs: {n_wf}, Cost: {calc_cbr} vs {n_bf_cbr}, Acc.: {n_bf_cbr/calc_cbr:.6f}")
 
                 
     def _find_equivalent_set(self, element):
