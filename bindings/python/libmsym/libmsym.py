@@ -133,6 +133,7 @@ class EquivalenceSets(Structure):
         addresses = [addressof(ele) for ele in elements]
         self.elements = []
         for ele in self._elements[0:self.length]:
+            
             pyEle = elements[addresses.index(addressof(ele.contents))]
             pyEle.equiv = self
             self.elements.append(pyEle)
@@ -198,8 +199,8 @@ class Subgroup(Structure):
     def _update_symmetry_operations(self, symmetry_operations):
         addresses = [addressof(sop) for sop in symmetry_operations]
         self.symmetry_operations = [symmetry_operations[addresses.index(addressof(sop.contents))] for sop in self._sops[0:self.n]]
-        index = addresses.index(addressof(self._primary.contents))
-        if index != -1:
+        if self._primary:
+            index = addresses.index(addressof(self._primary.contents))
             self.primary_operations = symmetry_operations[index]
 
 Subgroup._fields_ = [("type", c_int),
@@ -580,7 +581,7 @@ class Context(object):
     def __init__(self, elements=[], basis_functions=[], point_group=""):
         if(_lib is None):
             raise Error("Shared library not loaded")
-            
+        
         self._elements = []
         self._basis_functions = []
         self._salc_wf = None
@@ -805,7 +806,7 @@ class Context(object):
     def _update_basis_function_element(self):
         for bf in self.basis_functions:
             element = bf.element
-            bf.element = self.elements[self.elements.index(element)]
+            bf.element = self.elements[element.index-1]
 
     def find_misc(self, to_print = True):
         if not self._ctx:
