@@ -16,6 +16,7 @@ from . import _libmsym_install_location, export
 
 _lib = None
 
+atomic_orbital_symbols = "spdfghik"
 @export
 class Error(Exception):
     def __init__(self, value, details=""):
@@ -29,8 +30,10 @@ class Error(Exception):
 
 try:
     import numpy as np
+    import scipy.sparse as ssparse
 except ImportError:
     np = None
+    ssparse = None
 
 @export
 class SymmetryOperation(Structure):
@@ -78,7 +81,8 @@ class SymmetryOperation(Structure):
             power = "^" + str(self.power)
             axis = " around " + "[ {: >.3f}, {: >.3f}, {: >.3f}]".format(self.vector[0],self.vector[1],self.vector[2])
 
-        return __name__ + "." + self.__class__.__name__ + "( " + self._names[self.type] + order + orientation + power + axis + ", conjugacy class: " + str(self.conjugacy_class) + " )"
+        return f"<{self.__class__.__name__}> ({self._names[self.type]}{order+orientation+power+axis}, conjugacy class: {self.conjugacy_class})"
+
     def __repr__(self):
         return self.__str__()
 
@@ -89,10 +93,11 @@ class Element(Structure):
                 ("_v", c_double*3),
                 ("charge", c_int),
                 ("_name",c_char*4)]
+    equiv = None
     
     @property
     def coordinates(self):
-        return self._v[0:3]
+        return np.array(self._v[0:3])
     @coordinates.setter
     def coordinates(self, coordinates):
         self._v = (c_double*3)(*coordinates)
@@ -102,6 +107,108 @@ class Element(Structure):
     @name.setter
     def name(self, name):
         self._name = name.encode('ascii')
+        
+    def __str__(self):
+        res = "{}[{}] {:.6f} {:.6f} {:.6f}".format(self.name, self.index, *self.coordinates)
+        if self.equiv is None:
+            return res
+        else:
+            return f"{res} from {self.equiv}"
+
+    def __repr__(self):
+        return self.__str__()
+
+    def __eq__(s, o):
+        if not isinstance(o, Element):
+            return False
+        return np.allclose(s.coordinates, o.coordinates) and s.name == o.name
+@export
+class EquivalenceSets(Structure):
+    _fields_ = [("_elements", POINTER(POINTER(Element))),
+                ("error", c_double),
+                ("length", c_int)]
+    
+    elements = []
+    def _update_elements(self, elements):
+        addresses = [addressof(ele) for ele in elements]
+        self.elements = []
+        for ele in self._elements[0:self.length]:
+            pyEle = elements[addresses.index(addressof(ele.contents))]
+            pyEle.equiv = self
+            self.elements.append(pyEle)
+
+    def __str__(self):
+        return f"<{self.__class__.__name__}> {self.elements[0].name} x {self.length}"
+    
+    def __repr__(self):
+        return self.__str__()
+
+class SALC_wf(object):
+    def __init__(self, data, partners, spec):
+        self.data = data
+        self.partners = partners
+        self.sparse = ssparse.csr_array(data)
+        self.spec = spec # symmetry species
+        
+    def __str__(self):
+        return f"<{self.__class__.__name__}> {self.species.name}{self.data.shape} with {self.sparse.count_nonzero()} nonzeros and {len(self.partners)} parter functions"
+    
+    def __repr__(self):
+        return self.__str__()
+    
+    def print(self, basis_functions):
+        print(self.spec)
+        for k, vec in enumerate(self.sparse):
+            idx = vec.nonzero()[1]
+            print(f"{k:>3d} ", end ="")
+            for i in idx:
+                print(f" {basis_functions[i].comment:15s}", end="")
+            print("\n    ", end ="")
+            for i in idx:
+                print(f"{vec[0, i]:>14.11f}  ", end="")
+            print("")
+@export
+class Subgroup(Structure):
+    TYPE_Kh  = 0,
+    TYPE_K   = 1,
+    TYPE_Ci  = 2,
+    TYPE_Cs  = 3,
+    TYPE_Cn  = 4,
+    TYPE_Cnh = 5,
+    TYPE_Cnv = 6,
+    TYPE_Dn  = 7,
+    TYPE_Dnh = 8,
+    TYPE_Dnd = 9,
+    TYPE_Sn  = 10,
+    TYPE_T   = 11,
+    TYPE_Td  = 12,
+    TYPE_Th  = 13,
+    TYPE_O   = 14,
+    TYPE_Oh  = 15,
+    TYPE_I   = 16,
+    TYPE_Ih  = 17
+    
+    primary_operations = None
+    symmetry_operations = []
+
+    @property
+    def name(self):
+        return self._name.decode()
+    
+    def _update_symmetry_operations(self, symmetry_operations):
+        addresses = [addressof(sop) for sop in symmetry_operations]
+        self.symmetry_operations = [symmetry_operations[addresses.index(addressof(sop.contents))] for sop in self._sops[0:self.n]]
+        index = addresses.index(addressof(self._primary.contents))
+        if index != -1:
+            self.primary_operations = symmetry_operations[index]
+
+Subgroup._fields_ = [("type", c_int),
+                ("n", c_int),
+                ("order", c_int),
+                ("_primary", POINTER(SymmetryOperation)),
+                ("_sops", POINTER(POINTER(SymmetryOperation))),
+                ("generators", POINTER(Subgroup)*2),
+                ("_name",c_char*8)]
 
 class _RealSphericalHarmonic(Structure):
     _fields_ = [("n", c_int),
@@ -118,12 +225,14 @@ class BasisFunction(Structure):
                 ("_element", POINTER(Element)),
                 ("_f", _BasisFunctionUnion),
                 ("_name",c_char*8)]
-
-    def __init__(self, element=None):
+    
+    _comment = None
+    def __init__(self, element=None, comment = None):
         if element == None:
             raise Error("Basis function requires an element")
         super().__init__()
         self.element = element
+        self._comment = comment
 
     def _set_element_pointer(self, element):
         self._element = pointer(element)
@@ -134,11 +243,18 @@ class BasisFunction(Structure):
     @name.setter
     def name(self, name):
         self._name = name.encode('ascii')
+    
+    @property
+    def comment(self):
+        if self._comment is None:
+            return self.name
+        else:
+            return self._comment
 
 @export
 class RealSphericalHarmonic(BasisFunction):
-    def __init__(self, element=None, n=0, l=0, m=0, name=""):
-        super().__init__(element=element)
+    def __init__(self, element=None, n=0, l=0, m=0, name="", comment = None):
+        super().__init__(element=element, comment = comment)
         self._type = 0
         self._f._rsh.n = n
         self._f._rsh.l = l
@@ -156,16 +272,24 @@ class RealSphericalHarmonic(BasisFunction):
     def l(self):
         return self._f._rsh.l
     @l.setter
-    def l(self, n):
+    def l(self, l):
         self._f._rsh.n = l
 
     @property
     def m(self):
         return self._f._rsh.m
     @m.setter
-    def m(self, n):
+    def m(self, m):
         self._f._rsh.n = m
+        
+    def __str__(self):
+        name = self.comment.strip()
+        return f"<RealSH> {name} {self.n}{atomic_orbital_symbols[self.l]},m={self.m}"
 
+    
+    def __repr__(self):
+        return self.__str__()
+    
 class SALC(Structure):
     _fields_ = [("_d", c_int),
                 ("_fl", c_int),
@@ -177,7 +301,7 @@ class SALC(Structure):
 
     def _update_basis_functions(self, basis_function_addresses, basis):
         self.basis_functions = [basis[basis_function_addresses.index(addressof(p.contents))] for p in self._f[0:self._fl]]
-    
+
     #@property
     #def partner_functions(self):
     #    if self._pf_array is None:
@@ -196,7 +320,16 @@ class SALC(Structure):
 
         return self._pf_array
 
-        
+    def __str__(self):
+        basis = self.basis_functions[0]
+        if isinstance(basis, RealSphericalHarmonic):
+            type_name = "realSHs"
+        else:
+            type_name = "orbitals"
+        return f"<{self.__class__.__name__}> from {self._fl} {type_name} with n={basis.n} and l={basis.l}"
+
+    def __repr__(self):
+        return self.__str__()
 @export
 class SubrepresentationSpace(Structure):
     _fields_ = [("symmetry_species", c_int),
@@ -210,7 +343,13 @@ class SubrepresentationSpace(Structure):
         if self._salcarray is None:
             self._salcarray = self._salcs[0:self._salc_length]
         return self._salcarray
+        
+    def __str__(self):
+        return f"<{self.__class__.__name__}> for {self.symmetry_species}th symmetry species with {self._salc_length} SALCs"
 
+    def __repr__(self):
+        return self.__str__()
+    
 @export
 class PartnerFunction(Structure):
     _fields_ = [("index", c_int),
@@ -233,6 +372,13 @@ class SymmetrySpecies(Structure):
     @property
     def name(self):
         return self._name.decode()
+    
+    def __str__(self):    
+        return f"<{self.__class__.__name__}> {self.name} ({self._d} partner functions each)"
+
+    def __repr__(self):
+        return self.__str__()
+    
     
 class _Thresholds(Structure):
     _fields_ = [("zero", c_double),
@@ -281,7 +427,12 @@ class CharacterTable(Structure):
             self._symmetry_species = self._s[0:self._d]
             
         return self._symmetry_species
-        
+    
+    def __str__(self):    
+        return f"<{self.__class__.__name__}> with {self._d} symmetry species"
+
+    def __repr__(self):
+        return self.__str__()
 class _ReturnCode(c_int):
 
     SUCCESS = 0
@@ -381,6 +532,19 @@ def init(library_location=None):
     _lib.msymGetCharacterTable.restype = _ReturnCode
     _lib.msymGetCharacterTable.argtypes = [_Context, POINTER(POINTER(CharacterTable))]
 
+    _lib.msymGetCenterOfMass.restype = _ReturnCode
+    _lib.msymGetCenterOfMass.argtypes = [_Context, POINTER(c_double)]
+
+    _lib.msymGetRadius.restype = _ReturnCode
+    _lib.msymGetRadius.argtypes = [_Context, POINTER(c_double)]
+    
+    _lib.msymGetSubgroups.restype = _ReturnCode
+    _lib.msymGetSubgroups.argtypes = [_Context, POINTER(c_int), POINTER(POINTER(Subgroup))]
+
+    _lib.msymGetEquivalenceSets.restype = _ReturnCode
+    _lib.msymGetEquivalenceSets.argtypes = [_Context, POINTER(c_int), POINTER(POINTER(EquivalenceSets))]
+
+
     if np is None:
         _SALCsMatrix = c_void_p
         _SALCsSpecies = POINTER(c_int)
@@ -419,9 +583,12 @@ class Context(object):
             
         self._elements = []
         self._basis_functions = []
+        self._salc_wf = None
         self._point_group = None
         self._subrepresentation_spaces = None
         self._character_table = None
+        self._subgroups = None
+        self._equivalence_sets = None
         self._ctx = _lib.msymCreateContext()
         if not self._ctx:
             raise RuntimeError('Failed to create libmsym context')
@@ -512,6 +679,8 @@ class Context(object):
         self._assert_success(_lib.msymGetElements(self._ctx,byref(csize),byref(celements)))
         self._elements_array = celements
         self._elements = celements[0:csize.value]
+        for i, ele in enumerate(self._elements):
+            ele.index = i+1
 
     def _update_symmetry_operations(self):
         if not self._ctx:
@@ -569,7 +738,6 @@ class Context(object):
             setattr(self._thresholds, key, kwargs[key])
         self._assert_success(_lib.msymSetThresholds(self._ctx, pointer(self._thresholds)))
         
-        
     @property
     def elements(self):
         return self._elements
@@ -605,7 +773,94 @@ class Context(object):
         self._update_point_group()
         self._update_symmetry_operations()
         return self._point_group
+    
+    def _update_equivalence_sets(self):
+        num = c_int(0)
+        sets_ptr = POINTER(EquivalenceSets)()
+        self._assert_success(_lib.msymGetEquivalenceSets(self._ctx, byref(num), byref(sets_ptr)))
+        sets = sets_ptr[0:num.value]
+        for s in sets:
+            s._update_elements(self._elements)
+        self._equivalence_sets = sets
 
+    def _update_subgroups(self):
+        num_subgroups = c_int(0)
+        subgroups = POINTER(Subgroup)()
+        self._assert_success(_lib.msymGetSubgroups(self._ctx, byref(num_subgroups), byref(subgroups)))
+        sgs = subgroups[0:num_subgroups.value]
+        
+        for s in sgs:
+            s._update_symmetry_operations(self._symmetry_operations)
+        self._subgroups = sgs
+    
+    def _update_SALC_wavefunctions(self):
+        salcs, species, partner_functions = self.salcs
+        self._salc_wf = []
+        for i, spec in enumerate(self.character_table.symmetry_species):
+            sel = species == i
+            data = salcs[sel, :]
+            partners = [partner_functions[i] for i, v in enumerate(sel) if v == True]
+            self._salc_wf.append(SALC_wf(data, partners, spec))
+    
+    def _update_basis_function_element(self):
+        for bf in self.basis_functions:
+            element = bf.element
+            bf.element = self.elements[self.elements.index(element)]
+
+    def find_misc(self, to_print = True):
+        if not self._ctx:
+            raise RuntimeError
+        result = (c_double * 3)()
+        self._assert_success(_lib.msymGetCenterOfMass(self._ctx, result))
+        self.COM = np.ctypeslib.as_array(result)
+        
+        radius = c_double()
+        self._assert_success(_lib.msymGetRadius(self._ctx, byref(radius)))
+        self.radius = float(radius.value)
+        self.symmetrize_elements()
+        self._update_equivalence_sets()
+        self._update_basis_function_element()
+
+        if to_print:
+            print(f"Molecule COM: {self.COM} and radius: {self.radius:.6f}")
+            print(f"Found point group [0] {self._point_group} with {len(self.subgroups)} subgroups:")
+            print(f"\t[0] {self._point_group}\n\t-------")
+            for i, s in enumerate(self.subgroups):
+                print(f"\t[{i}] {s.name}")
+            
+            print(f"There are {len(self.equivalence_sets)} symmetrically equivalent sets:");
+            for i, s in enumerate(self.equivalence_sets):
+                print(f"\t[{i}] {s.length} {s.elements[0].name} atoms:")
+            print(f"\nThere are {len(self.symmetry_operations)} symmetry operations:");
+            for i, s in enumerate(self.symmetry_operations):
+                print(f"\t[{i}] {s}")
+            
+            symmetry_species = self.character_table.symmetry_species
+            print(f"\nGenerated SALCs from {len(self.basis_functions)} basis functions of {len(symmetry_species)} symmetry species.")
+            for i, spec in enumerate(symmetry_species):
+                print(f"\t[{i}] {spec.name} "
+                f"({self.subrepresentation_spaces[i]._salc_length} SALCs with {spec._d} partner functions each)")
+            
+            for i, spec in enumerate(symmetry_species):
+                print(f"\n---- {spec.name}({i}) ----")
+                for j, salc in enumerate(self.subrepresentation_spaces[i].salcs):
+                    bf = salc.basis_functions[0]
+                    element = bf.element
+                    eset = bf.element.equiv
+                    eset_index = self.equivalence_sets.index(eset)
+                    print(f"\t[{j:3d}] {element.name:>3}({eset_index}) {eset.length} x {bf.l*2+1}{atomic_orbital_symbols[bf.l]} = {salc._fl} orbitals")
+
+            for i, wf in enumerate(self.salc_wf):
+                print(f"\n({i:d}) ", end= "")
+                wf.print(self.basis_functions)
+
+                
+    def _find_equivalent_set(self, element):
+        for equivalent_set in self.equivalence_sets:
+            if element in equivalent_set.elements:
+                return equivalent_set
+        return None
+    
     def symmetrize_elements(self):
         if not self._ctx:
             raise RuntimeError
@@ -617,7 +872,7 @@ class Context(object):
     def align_axes(self):
         if not self._ctx:
             raise RuntimeError
-        cerror = c_double(0)
+        #cerror = c_double(0)
         self._assert_success(_lib.msymAlignAxes(self._ctx))
         self._update_elements()
         return self._elements
@@ -638,11 +893,33 @@ class Context(object):
         return self._character_table
 
     @property
+    def equivalence_sets(self):
+        if self._equivalence_sets is None:
+            self._update_equivalence_sets()
+            
+        return self._equivalence_sets
+    
+    @property
+    def subgroups(self):
+        if self._subgroups is None:
+            self._update_subgroups()
+            
+        return self._subgroups
+    
+    @property
     def salcs(self):
         if self._salcs is None:
             self._update_salcs()
 
         return self._salcs
+
+    @property
+    def salc_wf(self):
+        if self._salc_wf is None:
+            self._update_SALC_wavefunctions()
+
+        return self._salc_wf
+
 
     def symmetrize_wavefunctions(self,m):
         if not self._ctx:
