@@ -15,6 +15,11 @@
 
 #include "debug.h"
 
+#define EXTRA_NUM 1024
+
+static char extra_elements[EXTRA_NUM][4];
+static int n_extra = 0;
+
 const struct _periodic_table {
     int n;
     char *name;
@@ -204,11 +209,32 @@ msym_error_t complementElementData(msym_element_t *element){
         }
         
         if(fi == fil){
+            for (fi =0; fi < n_extra; fi++) {
+                if (0 == strncmp(element->name, extra_elements[fi], sizeof(extra_elements[fi]))) {
+                    int n = fi + 1000;
+                    if(element->m <= 0.0) element->m = (double) n;
+                    if(element->n <= 0) element->n = n;
+                }
+            }
+            if (fi == n_extra) {
+                if (n_extra == EXTRA_NUM) {
+                    msymSetErrorDetails("Cannot set extra elements more than %d", EXTRA_NUM);
+                    ret = MSYM_INVALID_ELEMENTS;
+                    goto err;
+                }
+                strncpy(extra_elements[n_extra], element->name, sizeof(extra_elements[n_extra]));
+                int n = n_extra + 1000;
+                if(element->m <= 0.0) element->m = (double) n;
+                if(element->n <= 0) element->n = n;
+                n_extra++;
+            }
+            /*
             char buf[sizeof(element->name)];
             snprintf(buf, sizeof(element->name), "%s",element->name); //in case someone forgets to null terminate
             msymSetErrorDetails("Unknown element with name %s",buf);
             ret = MSYM_INVALID_ELEMENTS;
             goto err;
+            */
         }
     } else if(element->m > 0.0 && (strl <= 0 || element->n <= 0)){
         int fim = 0, fil = sizeof(periodic_table)/sizeof(periodic_table[0]);
