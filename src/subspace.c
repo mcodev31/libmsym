@@ -680,7 +680,7 @@ msym_error_t generateSplittingOperation(msym_point_group_t *pg, msym_permutation
                 sop = pg->primary;
             } else {
                 for(int i = 0;i < pg->order;i++){
-                    if(IMPROPER_ROTATION == pg->sops[i].type && 2*pg->n == pg->sops[i].order){
+                    if(IMPROPER_ROTATION == pg->sops[i].type && 2*pg->n == pg->sops[i].order && 1 == pg->sops[i].power){
                         sop = &pg->sops[i];
                         break;
                     }
@@ -1833,7 +1833,6 @@ msym_error_t generateSubrepresentationSpacesLowMem(msym_point_group_t *pg, int s
     free(mspan);
     free(mproj);
     free(mscal);
-    free(mpih);
     free(mperm);
     free(morth);
     free(mbasis);
