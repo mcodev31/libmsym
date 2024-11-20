@@ -67,7 +67,7 @@ struct _msym_context {
  * Public API
  ***********************/
 
-msym_context msymCreateContext(){
+msym_context msymCreateContext(void){
     msym_context ctx = malloc(sizeof(struct _msym_context));
     msym_thresholds_t *threshols = malloc(sizeof(msym_thresholds_t));
     
@@ -90,7 +90,7 @@ msym_context msymCreateContext(){
     return NULL;
 }
 
-const msym_thresholds_t *msymGetDefaultThresholds(){
+const msym_thresholds_t *msymGetDefaultThresholds(void){
     return &default_thresholds;
 }
 
