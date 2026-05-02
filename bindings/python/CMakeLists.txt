@@ -1,7 +1,7 @@
-cmake_minimum_required (VERSION 2.8.11)
+cmake_minimum_required (VERSION 3.12)
 
-find_program(PYTHON "python")
-if (PYTHON)
+find_package(Python COMPONENTS Interpreter)
+if (Python_FOUND)
 	set(MSYM_PYTHON_PACKAGE_DIR  "${CMAKE_CURRENT_BINARY_DIR}/libmsym")
 	set(MSYM_PYTHON_SETUP_IN     "${CMAKE_CURRENT_SOURCE_DIR}/cmake/setup.py.in")
 	set(MSYM_PYTHON_INIT_C_IN    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/__init__.py.in")
@@ -23,12 +23,12 @@ if (PYTHON)
 	file(COPY ${MSYM_PYTHON_CODE_IN} DESTINATION ${MSYM_PYTHON_PACKAGE_DIR}) 
 
 	add_custom_command(OUTPUT ${MSYM_PYTHON_STAMP}
-			COMMAND ${PYTHON} ${MSYM_PYTHON_SETUP} build
+			COMMAND ${Python_EXECUTABLE} ${MSYM_PYTHON_SETUP} build
 			COMMAND ${CMAKE_COMMAND} -E touch ${MSYM_PYTHON_STAMP}
 			DEPENDS ${MSYM_PYTHON_INIT_IN} ${MSYM_PYTHON_SETUP_IN} ${MSYM_PYTHON_CODE_IN})
 
 	add_custom_target(target ALL DEPENDS ${MSYM_PYTHON_STAMP})
 
-	install(CODE "execute_process(COMMAND ${PYTHON} ${MSYM_PYTHON_SETUP} install ${MSYM_PYTHON_INSTALL_OPTS})")
+	install(CODE "execute_process(COMMAND ${Python_EXECUTABLE} ${MSYM_PYTHON_SETUP} install ${MSYM_PYTHON_INSTALL_OPTS})")
 endif()
 
